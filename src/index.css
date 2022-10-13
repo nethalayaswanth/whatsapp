@@ -1,13 +1,277 @@
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  #app, body, html {
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    margin: 0;
+    overflow: hidden;
+}
+  body {
+    margin: 0;
+  font-family: Segoe UI,Helvetica Neue,Helvetica,Lucida Grande,Arial,Ubuntu,Cantarell,Fira Sans,sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  user-select: none;
+    text-rendering: optimizeLegibility;
+    font-feature-settings: "kern";
+    color:theme("colors.primary.default");
+    background-color:theme("colors.app.default");
+    background-image:linear-gradient(180deg,theme("colors.app.default"),theme("colors.app.deeper"))
+  }
+
+  #app{
+   position: absolute;
+    top: 0;
+    left: 0;
+    --panel-header:59px
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+button {
+    outline: none;
+    padding: 0;
+    cursor: pointer;
+    background: none;
+    border: 0;
+}
+
+em-emoji img {
+
+top:0 !important;
+height:'18px'
+}
+
+::-webkit-scrollbar {
+    width: 6px!important;
+    height: 6px!important;
+}
+
+::-webkit-scrollbar-thumb {
+     @apply bg-black bg-opacity-[.2] ;
+}
+::-webkit-scrollbar-track {
+    @apply bg-transparent  ;
+}
+
+
+
+
+em-emoji-picker {
+
+ --rgb-accent: 0,128,105;
+ --rgb-background:240 242 245;
+ --rgb-color:84 101 111;
+ position:absolute;
+ top:0;
+ left:0;
+ bottom:0;
+ right:0;
+ width:100%;
+ height:100%;
+ 
+
+ 
+  }
+
+em-emoji-picker  #preview{
+display:none 
+}
+
+#nav button[aria-selected] {
+   @apply  text-panel-header-icon
+}
+em-emoji-picker button {
+
+}
+
+
+
+
+
+
+  }
+
+
+@layer components {
+  .sidebar {
+    @apply relative h-full overflow-hidden flex-shrink-0 flex-grow-0 basis-[40%] lg:basis-[35%];
+  }
+  .main{
+  @apply relative w-full h-full overflow-hidden flex-grow}
+   .header{
+  @apply  px-4 py-2.5 flex justify-end flex-none relative w-full items-center h-[var(--panel-header)] bg-panel-header
+}
+.giphy-grid {
+  @apply w-full h-full
+}
+
+.image-swiper .swiper {
+    position: relative;
+    list-style: none;
+    padding: 0;
+    z-index: 2;
+    height: 100%;
+    display: flex;
+    max-height: max-content;
+    justify-content: flex-start;
+    top: 0;
+   @apply overflow-hidden w-full xs:overflow-visible 
+  }
+ .image-swiper  .wrapper {
+    position: relative;
+    align-items: flex-start;
+    display: flex;
+    height: 100%;
+    justify-content: flex-end;
+    overflow: hidden;
+    top: 0;
+  }
+ .image-swiper  .swiper-wrapper {
+    transform: translate3d(0px, 0, 0);
+    height: 100%;
+   
+    box-sizing: content-box;
+    flex: auto;
+    display:flex;
+    max-height: min-content;
+  }
+
+ .image-swiper  .swiper-slide {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+   
+  }
+
+  .thumb .swiper-slide {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    flex-shrink:1
+  }
+
+  
+.thumb .swiper {
+    overflow: visible;
+    justify-content: center;
+    align-items:center;
+  }
+
+.thumb .swiper-wrapper {
+   width:100%
+  }
+
+
+.message{
+align-items:flex-end;
+--bg:theme("colors.message.outgoing.DEFAULT");
+--deeper:theme("colors.message.outgoing.deeper");
+--label:theme("colors.message.label.green");
+--label-text:theme("colors.message.label.green");
+--audio-track:'#e7e8e9';
+--overlay-rgb: 11,20,26
+
+}
+
+
+.message .down{
+background: radial-gradient(at top right,theme("colors.message.outgoing.DEFAULT") 60%,transparent 80%)
+}
+.message.incoming{
+
+align-items:flex-start;
+--bg:theme("colors.message.incoming.DEFAULT");
+--deeper:theme("colors.message.incoming.deeper");
+--label:theme("colors.message.label.blue");
+--label-text:theme("colors.message.label.blue")
+
+}
+
+.message.incoming .down{
+background: radial-gradient(at top right,theme("colors.message.incoming.DEFAULT") 60%,transparent 80%)
+
+}
+
+
+.message.image .down{
+background: linear-gradient(15deg,rgba(var(--overlay-rgb),0),rgba(var(--overlay-rgb),0) 45%,rgba(var(--overlay-rgb),.12) 70%,rgba(var(--overlay-rgb),.33));
+width: 156px;
+max-width: 90%;
+height: 40px;
+color:white
+}
+
+.ReactCrop__child-wrapper{
+
+@apply flex-grow-1
+}
+
+.giphy-gif img{
+background:inherit !important
+}
+
+.emoji-mart-emoji {
+display:inline-block;
+height:'100%';
+width:'100%'
+
+}
+
+
+
+.ReactCrop__child-wrapper{
+
+height:'100%'
+}
+}
+
+
+@layer utilities{
+
+   .divider-before {
+  content: "";
+	position: absolute;
+	top: 0;
+	width: 100%;
+	height: 1px;
+	background-image: linear-gradient(to left, transparent, theme(colors.slate.200), transparent);
+  }
+
+  .scrollbar::-webkit-scrollbar {
+    width: 6px!important;
+    height: 6px!important;
+}
+
+  .scrollbar::-webkit-scrollbar-track {
+    background: rgba(var(--white-rgb),.1);
+}
+
+  .scrollbar::-webkit-scrollbar-thumb {
+    background-color: rgba(var(--black-rgb),.2);
+}
+
+.overlay-gradient{
+  background: linear-gradient(15deg,rgba(11,20,26,0),rgba(11,20,26,0) 45%,rgba(11,20,26,.12) 70%,rgba(11,20,26,.33))
+}
+
+.thumb-gradient{
+  background: linear-gradient(rgba(0,0,0,0) 70%,rgba(0,0,0,.6) 100%)
+}
+
+.image-b-gradient{
+  background:linear-gradient(to top,rgba(var(--overlay-rgb),.5),rgba(var(--overlay-rgb),0))
+}
+
+.stroke-dasharray{
+stroke-dasharray:1,150
+}
+
+.audio{
+@apply p-1.5 
+}
 }
