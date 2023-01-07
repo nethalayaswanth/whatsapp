@@ -1,16 +1,22 @@
-import { anotherAccount } from "../../requests.js/api";
+import { LoginView } from ".";
+import { useAnotherAccount } from "../../queries.js/useRequests";
+const Verification = ({ user }) => {
 
-const Verification = ({ verification }) => {
+  const verification=user.verification
+  const {dp,username}=user
+  const src=dp?.url
+  
+  const anotherAccount = useAnotherAccount()
   const handleAnotherAccount = async () => {
     try {
-      await anotherAccount();
+       anotherAccount.mutate();
     } catch (e) {
       console.log(e);
     }
   };
 
   return (
-    <>
+    <LoginView src={src} title={username} caption='welcome'>
       <div
         className={`px-[30px] mb-[3px] pb-[10px] outline-none    flex-shrink-0  bg-white basis-auto relative py-[10px] animate-land   `}
       >
@@ -37,7 +43,7 @@ const Verification = ({ verification }) => {
           </div>
         </div>
       </div>
-    </>
+    </LoginView>
   );
 };
 

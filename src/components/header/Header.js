@@ -3,10 +3,9 @@ import { ReactComponent as DefaultAvatar } from "../../assets/avatar.svg";
 import { ReactComponent as ChatIcon } from "../../assets/chat.svg";
 import { ReactComponent as MenuIcon } from "../../assets/menu.svg";
 import { useSidebar } from "../../contexts/sidebarContext";
-import Menu from "../Menu";
-import ToolTip from "../tooltip";
-import { MenuContainer } from "../Menu";
 import { callAll } from "../../utils";
+import { MenuContainer } from "../Menu";
+import ToolTip from "../tooltip";
 
  const items = ["New Group", "New Chat", "Log out"];
 
@@ -30,7 +29,7 @@ export const HeaderItem = ({ children, name, style, className, onClick }) => {
   );
 };
 
-const Header = () => {
+const Header = ({user}) => {
   const [state, dispatch] = useSidebar();
 
   const handleClick = useCallback(
@@ -71,12 +70,16 @@ const Header = () => {
     <div className="header z-[1000] ">
       <div className="flex-grow ">
         <div
-          className="h-[40px] w-[40px] cursor-pointer"
+          className="h-[40px] w-[40px]  rounded-full relative overflow-hidden cursor-pointer"
           onClick={() => {
             handleClick("profile");
           }}
         >
-          <DefaultAvatar />
+          {user && user.dp ? (
+            <img src={user.dp.previewUrl} alt="" />
+          ) : (
+            <DefaultAvatar />
+          )}
         </div>
       </div>
       <div className="text-panel-header-icon flex-none flex items-center"></div>
@@ -98,7 +101,6 @@ const Header = () => {
               onClick={callAll(handleMenuAction, closeToolTip)}
             />
           )}
-          
         </ToolTip>
       </span>
     </div>

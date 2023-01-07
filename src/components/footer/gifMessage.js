@@ -12,9 +12,13 @@ import Textarea from "react-textarea-autosize";
 import Disclosure from "../Disclosure";
 import { ReactComponent as Close } from "../../assets/close.svg";
 import { ReactComponent as Send } from "../../assets/send.svg";
+import { ReactComponent as Emoji } from "../../assets/emoji.svg";
 import useDisclosure from "../../hooks/useDisclosure";
 
 import { useFooter } from "../../contexts/footerContext";
+import { TextInputView } from "./input";
+import EmojiPicker from "../PropPickers/emojiPicker";
+import useResizeObserver from "use-resize-observer";
 
 const GifMessageWrapper = forwardRef(({...props}, ref) => {
  
@@ -36,7 +40,7 @@ const GifMessageWrapper = forwardRef(({...props}, ref) => {
 
   const setInputRef = useCallback(
     (node) => {
-      setFooterState({ type: "set state", payload: { propInputRef: node } });
+      setFooterState({ type: "set propInputRef",propInputRef: node });
     },
     [setFooterState]
   );
@@ -50,11 +54,11 @@ const GifMessageWrapper = forwardRef(({...props}, ref) => {
 
     
      onSubmit?.({
-       text: footer.text,
+       text: footer.propInputRef.value,
        type: "image/gif",
-       url: gif?.original?.url,
-       previewUrl: gif?.preview?.url,
-       dimensions:{width,height}
+       original: gif?.original?.url,
+       preview: gif?.preview?.url,
+       dimensions: { width, height },
      });
 
 
@@ -63,15 +67,11 @@ const GifMessageWrapper = forwardRef(({...props}, ref) => {
        payload: { bottomSheetOpened: false, gifDialogOpened: false,propInputRef:null },
      });
      
-   }, [footer.text, gif?.original?.url, gif?.preview?.url, onSubmit, setFooterState, url]);
+   }, [footer.propInputRef?.value, gif?.original?.url, gif?.preview?.url, height, onSubmit, setFooterState, url, width]);
 
-  const handleSubmit = () => {
-    onSubmit?.();
-  };
+ 
 
-  const handleInputChange = (e) => {
-    setFooterState({ type: "set text", text: e.target.value });
-  };
+ 
 
   useLayoutEffect(() => {
     (async () => {
@@ -96,6 +96,39 @@ const GifMessageWrapper = forwardRef(({...props}, ref) => {
     };
   }, []);
 
+
+  const [mountEmojiPicker,setEmojiPicker]=useState(false)
+  const { mount, getDisclosureProps, getParentProps } = useDisclosure({
+    isExpanded: mountEmojiPicker,
+    direction: "bottom",
+    onCollapseEnd: () => {
+      // setFooterState({ type: "reset" });
+    },
+  });
+
+  const handleEmojiSelect = useCallback(
+    (value, emojiObject) => {
+      const emoji = value.native;
+      const input = footer.propInputRef;
+      const start = input?.selectionStart;
+      const end = input?.selectionEnd;
+      input.setSelectionRange(start, start);
+
+      const splitted = input.value.split("");
+
+      splitted.splice(start, end - start, emoji);
+
+      input.value = splitted.join("");
+      input.focus();
+      input.setSelectionRange(start + emoji.length, start + emoji.length);
+    },
+    [footer.propInputRef]
+  );
+
+    const { ref: resizeRef, width:resizeWidth, height:resizeHeight } = useResizeObserver();
+
+
+
   return (
     <>
       <div className="flex justify-between item-center px-[18px] py-[8px] min-h-[44px] bg-panel-bg-deeper">
@@ -116,29 +149,55 @@ const GifMessageWrapper = forwardRef(({...props}, ref) => {
       </div>
       <div className="flex   px-[16px] py-[8px] min-h-[56px] items-center justify-center text-input-placeHolder">
         <div className="w-[full] flex items-center flex-1 justify-center max-w-[650px] relative mx-[80px]">
-          <Textarea
-            className="flex-1 min-h-[20px] min-w-0 text-[15px] font-normal outline-none leading-[20px] will-change-[width] rounded-[8px] my-[5px] mx-[10px] px-[12px] pt-[9px] pb-[11px] bg-panel w-[inherit]"
-            placeholder="Type a Message"
-            id="message"
-            name="message"
-            maxRows={3}
-            ref={setInputRef}
-            value={footer.text}
-            onChange={handleInputChange}
-            style={{
-              resize: "none",
-              border: 0,
-              boxSizing: "border-box",
-            }}
-          />
-          <div className="py-[5px] px-[10px] w-[37px] flex items-center justify-center min-h-[52px]">
-            <button
-              onClick={handleGifSubmit}
-              className="flex-shrink-0 basis-auto flex-grow-0 text text-panel-header-icon"
-            >
-              <Send />
-            </button>
+          <div className="absolute top-0 bg-panel-header  left-0 w-full">
+            <div ref={resizeRef} className="absolute   left-0 bottom-0 w-full">
+              {mount && (
+                <div
+                  {...getParentProps({
+                    style: {
+                      height: "100%",
+                      width: "100%",
+                      overflow: "hidden",
+                    },
+                  })}
+                >
+                  <div
+                    {...getDisclosureProps()}
+                    // ref={ref}
+                    className={`rounded-[8px] rounded-b-none ${
+                      footer.activeTab !== "attachment"
+                        ? "bg-panel-header"
+                        : "bg-transparent"
+                    } `}
+                  >
+                    <EmojiPicker
+                      width={resizeWidth}
+                      onSelect={handleEmojiSelect}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
+
+          <TextInputView
+            className={`bg-panel-header rounded-[8px] transition-[border-radius ] ${
+              mount ? "rounded-tl-none rounded-t-none " : ""
+            }`}
+            ref={setInputRef}
+            handleSubmit={handleGifSubmit}
+          >
+            <button
+              onClick={() => {
+                setEmojiPicker((x) => !x);
+              }}
+              setEmojiPicker
+              className="mr-[8px] last:mr-0 p-0 outline-none border-0 cursor-pointer h-full  transition-all duration-300"
+            >
+              <Emoji />
+            </button>
+          </TextInputView>
+          
         </div>
       </div>
     </>

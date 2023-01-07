@@ -9,6 +9,7 @@ import DrawerHeader from "../header/drawer";
 import Profile from "../profile";
 import NewChat from "../NewChat";
 import NewGroup from "../NewGroup";
+import CreateNewGroup from "../NewGroup/createGroup";
 import useTransition from "../../hooks/useTransition";
 
 import Login from "../login";
@@ -19,49 +20,74 @@ const MenuSideBar = () => {
   const newChatActive = sideBar.open && sideBar.active === "new chat";
   const newGroupActive = sideBar.open && sideBar.active === "new group";
   const profileActive = sideBar.open && sideBar.active === "profile";
+    const createGroupActive = sideBar.open && sideBar.active === "create group";
   const fromGroupChat = sideBar.from === "new group";
+    const fromNewChat = sideBar.from === "new chat";
 
-  // const { mount, getDisclosureProps, getParentProps } = useTransition({
-  //   //isExpanded: detailsOpened,
-  //   direction: "right",
-  // });
-
-console.log(newChatActive, newGroupActive);
+ 
+console.log({ fromGroupChat, fromNewChat });
   return (
-    <div className="relative flex  top-0 bottom-0 left-0 right-0 h-full w-full  ">
+    <>
       <Disclosure
+        key="New chat"
         isExpanded={newChatActive}
         direction="left"
         duration={300}
         style={{ height: "100%", width: "100%", position: "absolute" }}
         {...(newGroupActive && { duration: 800 })}
       >
-        <div className="h-full w-full  " style={{ position: "absolute" }}>
+        <div
+          className="h-full w-full bg-panel-header "
+          style={{ position: "absolute" }}
+        >
           <NewChat name="New chat" to="new group" />
         </div>
       </Disclosure>
       <Disclosure
+        key="New group"
         isExpanded={newGroupActive}
-        direction="right"
+        direction={fromNewChat ? "right":"left" }
         duration={300}
         style={{ height: "100%", width: "100%", position: "absolute" }}
         {...(newChatActive && fromGroupChat && { duration: 500 })}
       >
-        <div className="h-full w-full " style={{ position: "absolute" }}>
+        <div
+          className="h-full w-full bg-panel-header"
+          style={{ position: "absolute" }}
+        >
           <NewGroup name="New group" to="new chat" />
         </div>
       </Disclosure>
       <Disclosure
+        key="Create group"
+        isExpanded={createGroupActive}
+        direction={fromGroupChat ? "right" : "left"}
+        duration={300}
+        style={{ height: "100%", width: "100%", position: "absolute" }}
+        {...(newGroupActive && { duration: 500 })}
+      >
+        <div
+          className="h-full w-full bg-panel-header"
+          style={{ position: "absolute" }}
+        >
+          <CreateNewGroup name="Create group" />
+        </div>
+      </Disclosure>
+      <Disclosure
+        key="Profile"
         isExpanded={profileActive}
         direction="left"
         style={{ height: "100%", width: "100%", position: "absolute" }}
         duration={300}
       >
-        <div className="h-full w-full " style={{ position: "absolute" }}>
+        <div
+          className="h-full w-full bg-panel-header "
+          style={{ position: "absolute" }}
+        >
           <Profile name="Profile" />
         </div>
       </Disclosure>
-    </div>
+    </>
   );
 };
 export default MenuSideBar;

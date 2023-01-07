@@ -1,15 +1,17 @@
 export const StrokeSpinner = ({
   fill,
   className,
-  width,
-  height,
+  width=32,
+  height=32,
+  style,
   stroke = "#9db99e",
 }) => {
   return (
     <svg
       className={`animate-spinner ${className ? className : ""}`}
-      width={`${width ? width : "32"}`}
-      height={`${height ? height : "32"}`}
+      width={width}
+      height={height}
+      style={style}
       viewBox="0 0 43 43"
       role="status"
     >
@@ -28,10 +30,13 @@ export const StrokeSpinner = ({
   );
 };
 
-const Spinner = ({ fill, className }) => {
+const Spinner = ({ fill,width,height,style, className }) => {
   return (
     <svg
       aria-hidden="true"
+      width={32}
+      height={32}
+      style={style}
       className={` w-6 h-6 text-gray-200 animate-spin dark:text-gray-600 ${
         fill ? fill : `fill-white`
       } ${className && className}`}

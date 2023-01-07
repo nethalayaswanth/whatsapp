@@ -1,41 +1,55 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { useForm } from "react-hook-form";
 import whatsapp from "../../assets/whatsapp.png";
 import { useSidebar } from "../../contexts/sidebarContext";
-import { checkUsername } from "../../requests.js/api";
-import { useLoginUser, useSignUpUser, useUser } from "../../requests.js/useRequests";
+import { checkUsername } from "../../queries.js/api";
+import {
+  useLogin,
+  useSignUp,
+  useUser
+} from "../../queries.js/useRequests";
 import SpriteRenderer from "../spriteRender";
 import Form from "./form";
-import Verification from "./verification";
-
-
-
 
 const Login = () => {
   const [sideBar, dispatch] = useSidebar();
   const {
-    data: { verified },
+    data: { verification },
   } = useUser();
-
-
 
   const [loginRoute, setLoginRoute] = useState(true);
   const {
     register,
-
     handleSubmit,
     watch,
     control,
     setError,
+    setFocus,
     clearErrors,
     formState: { errors, isValid },
   } = useForm();
 
-  const onError = (data) => {};
-  const onSuccess = (data) => {};
-  const login = useLoginUser({ onSuccess });
-  const signUp = useSignUpUser({ onSuccess });
+  const onError = (error) => {};
+  const onSuccess = (data) => {
+ 
+  };
+  const login = useLogin({
+    mutationOptions: {
+      onSuccess,
+      onError: (e) => {
+        setError("username", { message: e.message });
+      },
+    },
+  });
+  const signUp = useSignUp({
+    mutationOptions: {
+      onSuccess,
+      onError: (e) => {
+        setError("email", { message: e.message });
+      },
+    },
+  });
   const onSubmit = (data) => {
     if (loginRoute) {
       login.mutate({
@@ -48,18 +62,20 @@ const Login = () => {
       });
     }
   };
-  const [state, render] = useState(false);
-  const passwordRef = useRef();
+
+  const [usernameChecking,setUsernameChecking]=useState(false)
+
   const onWatchChange = useCallback(
     async (name, value) => {
       try {
         if (name === "username") {
+          setUsernameChecking(true)
           const data = await checkUsername({ username: value });
-
-          clearErrors("usernameCheck");
+          setUsernameChecking(false)
+          clearErrors("username");
 
           if (data.taken) {
-            setError("usernameCheck", {
+            setError("username", {
               type: "server side",
 
               message: data.message,
@@ -68,26 +84,54 @@ const Login = () => {
 
           return;
         }
-
-        if (name === "email") {
-          if (!state) {
-            render(true);
-          }
-
-          passwordRef.current = value;
-
-          return;
-        }   
       } catch (e) {}
     },
-    [clearErrors, setError, state]
+    [clearErrors, setError]
   );
 
+  useEffect(()=>{
+    setFocus("username", { shouldSelect: true });
+  },[setFocus])
+  
  
-  const verification =
-    verified || signUp?.data?.verified || login?.data?.verified;
-  const verificationPending =verification?.pending 
-    
+  const loading = login.isLoading || signUp.isLoading
+  
+const title=loginRoute ? "Login" : "SignUp"
+
+const caption = loginRoute ? "Hi, Welcome back 👋" : "join our community";
+  return (
+    <LoginView title={title} caption={caption} >
+    <Form
+              onSubmit={onSubmit}
+              loginRoute={loginRoute}
+              onWatchChange={onWatchChange}
+              onError={onError}
+              loading={loading}
+              usernameChecking={usernameChecking}
+              form={{
+                register,
+                handleSubmit,
+                watch,
+                control,
+                errors,
+                isValid,
+              }}
+              toggle={() => {
+                setLoginRoute((x) => !x);
+              }}
+            />
+    </LoginView>
+          // {!verificationPending ? (
+            
+          // ) : (
+          //   <Verification verification={verification} />
+          // )}
+      
+  );
+};
+
+
+export const LoginView = ({ title, caption, children,src}) => {
   return (
     <span className="absolute top-0 left-0 h-full w-full overflow-x-hidden overflow-y-hidden  ">
       <div className="absolute top-0 left-0 h-full w-full overflow-x-hidden overflow-y-hidden pointer-events-auto bg-drawer-bg flex flex-col ">
@@ -95,12 +139,12 @@ const Login = () => {
           className={`flex flex-col justify-end h-[80px] pr-[20px] pl-[23px] flex-none text-panel-header-coloured `}
         >
           <div className="flex items-center w-[full] p-0 bg-inherit font-semibold text-[14px] mb-[4px] ">
-            {loginRoute ? "Login" : "SignUp"}
+            {title}
           </div>
           <div
             className={`align-left text-primary-teal   font-normal text-[12px] leading-[12px] `}
           >
-            {loginRoute ? "Hi, Welcome back 👋" : "join our community"}
+            {caption}
           </div>
         </header>
         <div
@@ -111,25 +155,12 @@ const Login = () => {
             <div className="mx-[auto] animate-pop  w-[200px] h-[200px]  relative ">
               <div className="cursor-pointer mx-[auto] bg-center rounded-full relative overflow-hidden h-full w-full">
                 <div className="absolute z-[500] top-0 left-0 h-full w-full">
-                  <SpriteRenderer src={whatsapp} size={200} />
+                {  src?<img  src={src} alt='' /> : <SpriteRenderer src={whatsapp} size={200} />}
                 </div>
               </div>
             </div>
           </div>
-
-          {!verificationPending ? (
-            <Form
-              onSubmit={onSubmit}
-              loginRoute={loginRoute}
-              toggle={() => {
-                setLoginRoute((x) => !x);
-              }}
-            />
-          ) : (
-            <Verification verification={verification} />
-          )}
-
-          {/* <Verification verification={verification} /> */}
+          {children}
         </div>
       </div>
     </span>

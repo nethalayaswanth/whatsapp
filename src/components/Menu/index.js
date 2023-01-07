@@ -1,11 +1,9 @@
-import { useLayoutEffect, useEffect, useState } from "react";
-import ToolTip from "../tooltip";
 import { useSidebar } from "../../contexts/sidebarContext";
 
 export const MenuItem = ({ index, name, onClick }) => {
   const handleClick = () => {
    
-    onClick?.({ name });
+    onClick?.( name);
   };
   return (
     <li

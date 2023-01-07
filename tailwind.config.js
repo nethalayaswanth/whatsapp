@@ -1,4 +1,7 @@
 /** @type {import('tailwindcss').Config} */
+
+const defaultTheme = require("tailwindcss/defaultTheme");
+
 module.exports = {
   content: ["./src/**/*.{js,jsx,ts,tsx}"],
   theme: {
@@ -17,9 +20,13 @@ module.exports = {
           teal: "#008069",
           green: "#00a884",
           backdrop: "#f5f6f6",
+          danger: "#ea0038",
+          background: "#f0f2f5",
         },
+        danger: { DEFAULT: "#ea0038", lighter: "#fcf0ed" },
         icon: {
           active: "rgba(11,20,26,0.1)",
+          startup: "#bbc5cb",
         },
         text: {
           primary: "#111b21",
@@ -27,6 +34,7 @@ module.exports = {
         },
         secondary: {
           stronger: "#3b4a54",
+          lighter: "#8696a0",
         },
         tab: {
           active: "#008069",
@@ -42,7 +50,7 @@ module.exports = {
         },
         panel: {
           header: { DEFAULT: "#f0f2f5", icon: "#54656f", coloured: "#008069" },
-          bg: { lighter: "#f7f8fa", deeper: "#e9edef" },
+          bg: { lighter: "#f7f8fa", deeper: "#e9edef", hover: "#f5f6f6" },
           primary: "rgba(17,27,33,0.35)",
           secondary: "#667781",
           deeper: "rgba(11,20,26,0.05)",
@@ -64,19 +72,17 @@ module.exports = {
           thumb: {
             active: "#d1d7db",
           },
-          input: {
-            active: "#00a884",
-            inactive: "#667781",
-          },
+        },
+        input: {
+          active: "#00a884",
+          inactive: "#667781",
+          placeHolder: "#667781",
+          panel: "#e9edef",
         },
         media: {
           thumb: {
             bg: "#dfe3e7",
           },
-        },
-        input: {
-          placeHolder: "#667781",
-          panel: "#e9edef",
         },
         message: {
           primary: "#111b21",
@@ -111,17 +117,14 @@ module.exports = {
         //   active: "#008069",
         // },
       },
-      screens: {
-        xs: { max: "438px" },
-        sm: { max: "540px" },
-        "2xl": "1441px",
-      },
       animation: {
         slide: "slide 1s cubic-bezier(.1,.82,.25,1) ",
         pop: "pop .75s cubic-bezier(.1,.82,.25,1) ",
-        land: "land 1s cubic-bezier(.1,.82,.25,1)",
+        land: "land 0.5s cubic-bezier(.1,.82,.25,1)",
         zoomIn: "zoomIn 0.3s cubic-bezier(.1,.82,.25,1)",
         fadeIn: "fadeIn 0.3s cubic-bezier(.1,.82,.25,1)",
+        fade: "fade 0.3s cubic-bezier(.1,.82,.25,1)",
+        collapse: "collapse 0.3s cubic-bezier(.1,.82,.25,1)",
         spinner: "spinner 2s linear infinite",
         stroke: "stroke 1.5s ease-in-out infinite",
       },
@@ -148,14 +151,25 @@ module.exports = {
 
           "100%": { transform: "translateZ(0px) scale(1)" },
         },
-        fadeIn: {
+        fade: {
           "0%": {
-            transform: "translate3d(0px,-5px,3px) scale(0) ",
+            transform: "translate3d(0px,-5px,3px) ",
             opacity: 0,
           },
 
           "100%": {
-            transform: "translate3d(0px,0px,0px) scale(1)",
+            transform: "translate3d(0px,0px,0px)",
+            opacity: 1,
+          },
+        },
+        fadeIn: {
+          "0%": {
+         
+            opacity: 0,
+          },
+
+          "100%": {
+           
             opacity: 1,
           },
         },
@@ -167,7 +181,24 @@ module.exports = {
           "100%": { "stroke-dasharray": "90,150", "stroke-dashoffset": -124 },
           "50%": { "stroke-dasharray": "90,150", "stroke-dashoffset": -35 },
         },
+        shimmer: {
+          from: {
+            left: " calc(50% - 72px * 2 - 72px / 2)",
+          },
+
+          to: {
+            left: " calc(50% - 72px / 2)",
+          },
+        },
       },
+    },
+    screens: {
+      mobile: { max: "420px" },
+      xs: { min: "421px", max: "540px" },
+      tablet: "540px",
+      ...defaultTheme.screens,
+      sm: { min: "541px", max: "739px" },
+      md: "740px",
     },
   },
   plugins: [require("tailwind-scrollbar"), require("@tailwindcss/line-clamp")],

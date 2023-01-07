@@ -1,22 +1,18 @@
 import {
-  useState,
-  useRef,
-  useEffect,
   createContext,
-  useContext,
   useCallback,
   useLayoutEffect,
-  cloneElement,
+  useRef,
+  useState,
 } from "react";
 
-import useEffectAfterMount from "./useEffectAfterMount";
 import useControlledState from "./useControlledState";
 
-import { flushSync } from "react-dom";
 import raf from "raf";
+import { flushSync } from "react-dom";
 import usePrevious from "./usePrevious";
 
-import { mergeRefs, callAll } from "../utils";
+import { callAll, mergeRefs } from "../utils";
 
 export const noop = () => {};
 
@@ -90,7 +86,6 @@ export default function useDisclosure({
   const initialStyles = {
     visibility: "hidden",
     transform: "translateX(9999px) translateY(9999px)",
-    
   };
 
   const parentStyles = {
@@ -111,18 +106,23 @@ export default function useDisclosure({
     setStyles((oldStyles) => ({ ...oldStyles, ...newStyles }));
   }, []);
 
-  const prevChild=usePrevious()
+  const prevChild = usePrevious();
 
   const getTranslate = useCallback(() => {
     if (!parentEl?.current || !el?.current) {
       return [`translateY(${0}px)`, `translateY(${0}px)`, 0];
     }
 
-   
     const parent = parentEl.current.getBoundingClientRect();
     const child = el.current.getBoundingClientRect();
 
-    return getTransfrom(parent.width, parent.height, child.width, child.height,direction);
+    return getTransfrom(
+      parent.width,
+      parent.height,
+      child.width,
+      child.height,
+      direction
+    );
   }, [getTransfrom]);
 
   function getDuration(x) {
@@ -152,7 +152,6 @@ export default function useDisclosure({
 
   useLayoutEffect(() => {
     if (isExpanded) {
- 
       setMount(true);
     }
   }, [isExpanded]);
@@ -160,22 +159,21 @@ export default function useDisclosure({
   const [prevIsExpanded] = usePrevious(isExpanded);
 
   useLayoutEffect(() => {
-  
     if (isExpanded) {
       raf(() => {
         onExpandStart();
-        const [initial,final, value] = getTranslate();
+        const [initial, final, value] = getTranslate();
 
         mergeStyles({
           position: "relative",
           willChange: "transform",
           visibility: "visible",
           transform: initial,
-          top:0,
-          left:0
+          top: 0,
+          left: 0,
         });
         raf(() => {
-          const [initial,final,value] = getTranslate();
+          const [initial, final, value] = getTranslate();
           mergeStyles({
             ...getTransitionStyles(value),
             transform: final,
@@ -232,7 +230,7 @@ export default function useDisclosure({
     onTransitionEnd = noop,
     refKey = "ref",
     ...rest
-  }) {
+  } = {}) {
     const theirRef = rest[refKey];
     return {
       id: `react-disclosure-parent`,
@@ -246,8 +244,6 @@ export default function useDisclosure({
       },
     };
   }
-
- 
 
   function getDisclosureProps({
     style = {},

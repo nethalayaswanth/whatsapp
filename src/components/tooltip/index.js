@@ -1,20 +1,16 @@
 import raf from "raf";
 import {
+  cloneElement,
+  memo,
   useCallback,
   useLayoutEffect,
-  useMemo,
-  memo,
   useRef,
   useState,
 } from "react";
-import { createElement, cloneElement } from "react";
-import { flushSync } from "react-dom";
 import { createPortal } from "react-dom";
-import { ReactComponent as MenuIcon } from "../assets/menu.svg";
-import usePrevious from "../hooks/usePrevious";
-import ClickAway from "./OutSideClick";
-
-
+import usePrevious from "../../hooks/usePrevious";
+import { ReactComponent as MenuIcon } from "../../assets/menu.svg";
+import ClickAway from "../OutSideClick";
 
 const Portal = memo(
   ({
@@ -39,8 +35,6 @@ const Portal = memo(
       visibility: "hidden",
     };
 
-   
-
     const [toolTipStyles, setToolStyles] = useState(initialStyles);
 
     const toolRef = useRef();
@@ -54,7 +48,6 @@ const Portal = memo(
       const childHeight = toolRef.current.scrollHeight;
       const childWidth = toolRef.current.scrollWidth;
 
-      
       const alignLeft = align === "left" ? "right" : false;
       const alignCenter = align === "center" ? "center" : false;
       const bottom = document.body.clientHeight - triggerRect.bottom;
@@ -82,14 +75,13 @@ const Portal = memo(
       return {
         top: topPos,
         left: leftPos,
-        maxWidth:'340px',
+        maxWidth: "340px",
         transformOrigin,
       };
     }, [align, offset, trigger]);
 
     useLayoutEffect(() => {
       if (childRef.current && active) {
-        
         raf(() => {
           setToolStyles((x) => ({
             ...x,
@@ -193,7 +185,7 @@ const ToolTip = ({
 
   const openToolTip = useCallback((e) => {
     setActive((x) => !x);
-    e.stopPropagation()
+    e.stopPropagation();
   }, []);
 
   const closeToolTip = useCallback(() => {
@@ -202,7 +194,6 @@ const ToolTip = ({
 
   useLayoutEffect(() => {
     if (isActive) {
-      
       setOpened(true);
     }
   }, [isActive]);
@@ -212,7 +203,6 @@ const ToolTip = ({
     onCollapse?.();
   }, [onCollapse]);
 
-  
   return (
     <>
       <ClickAway onClickAway={closeToolTip}>

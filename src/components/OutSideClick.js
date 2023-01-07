@@ -39,7 +39,7 @@ const ClickAway = ({ onClickAway,onClick, children, ...props }) => {
   if (typeof children === "function") {
     return children(getProps());
   }
-
+ 
   return createElement(props.component || "span", getProps(), children);
 };
 

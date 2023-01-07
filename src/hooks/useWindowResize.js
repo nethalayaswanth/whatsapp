@@ -1,18 +1,24 @@
-import { useState, useEffect,useRef, useCallback } from "react";
+import { useState, useLayoutEffect, useRef, useCallback } from "react";
 import throttle from "lodash/throttle";
 
-export default function useWindowSize() {
-  const [windowSize, setWindowSize] = useState({
-    width: window.innerWidth,
-    height: window.innerHeight,
+export default function useReSize(ref) {
+  const [size, setSize] = useState({
+    width:ref?0: window.innerWidth,
+    height:ref?0: window.innerHeight,
   });
 
    const handleResize = () => {
-     setWindowSize({ width: window.innerWidth, height: window.innerHeight });
+    if(ref){
+const {width,height}=ref.current.getBoundingClientRect()
+  setSize({ width, height });
+  return
+    }
+     setSize({ width: window.innerWidth, height: window.innerHeight });
    };
-   const throttleFn = useRef(throttle(handleResize, 100)).current;
+   
+  const throttleFn = useRef(throttle(handleResize, 100)).current;
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     window.addEventListener("resize", throttleFn);
 
     return () => {
@@ -20,5 +26,5 @@ export default function useWindowSize() {
     };
   }, [throttleFn]);
 
-  return windowSize;
+  return size;
 }

@@ -1,47 +1,63 @@
-import { useLayoutEffect } from "react";
-import { useCallback } from "react";
-import { useRef, useState, useEffect } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 
 const useAnimationFrame = (
   callback,
-  { duration = Number.POSITIVE_INFINITY, shouldAnimate = true } = {}
+  {onComplete, duration = Number.POSITIVE_INFINITY,trigger,triggerAlways=false, shouldAnimate = true } = {}
 ) => {
   const frame = useRef(0);
   const cbRef = useRef(callback);
+  const onCompleteRef = useRef(onComplete);
 
   const firstFrameTime = useRef(performance.now());
+  const [animating,setAnimating]=useState(false)
 
-  const animate = useCallback(
+  const animateCb = useCallback(
     (now) => {
       let timeFraction = (now - firstFrameTime.current) / duration;
 
       timeFraction = timeFraction > 1 ? 1 : timeFraction < 0 ? 0 : timeFraction;
 
-      if (timeFraction <= 1) {
+      
+
+      if (timeFraction <1) {
         cbRef.current(timeFraction);
 
-        if (timeFraction !== 1) frame.current = requestAnimationFrame(animate);
+        frame.current = requestAnimationFrame(animateCb);
+      }else if( timeFraction >=1 ){
+                cbRef.current(timeFraction);
+                onCompleteRef.current?.();
+                setAnimating(false)
       }
     },
     [duration]
   );
 
+// const prevTriggerState=  usePrevious(trigger)
+
   useLayoutEffect(() => {
     cbRef.current = callback;
-  }, [callback]);
+    onCompleteRef.current=onComplete
+  }, [callback, onComplete]);
 
   useEffect(() => {
-    if (shouldAnimate) {
-      firstFrameTime.current = performance.now();
-      frame.current = requestAnimationFrame(animate);
-    } else {
-      cancelAnimationFrame(frame.current);
-    }
 
+   
+    if (!!shouldAnimate) {
+      firstFrameTime.current = performance.now();
+      setAnimating(true);
+      frame.current = requestAnimationFrame(animateCb);
+    }
+ 
     return () => {
+      
+      setAnimating(false)
       cancelAnimationFrame(frame.current);
     };
-  }, [animate, shouldAnimate]);
+
+  }, [animateCb,trigger, shouldAnimate]);
+
+  return animating;
 };
+
 
 export default useAnimationFrame;

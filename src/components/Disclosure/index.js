@@ -30,12 +30,14 @@ export default function Disclosure({
   ...props
 } = {}) {
 
+ 
   const { mount, getDisclosureProps, getParentProps } = useTransition({
     isExpanded: isExpanded,
     direction,
     duration,
   });
 
+  
   return (
     <>
       {mount && (
@@ -51,9 +53,9 @@ export default function Disclosure({
         >
           <div
             {...getDisclosureProps()}
-            className="bg-panel-header h-full w-full"
+            className=" h-full w-full"
           >
-           { children}
+           { typeof children === 'function'?children():children}
           </div>
         </div>
       )}

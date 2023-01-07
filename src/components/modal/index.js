@@ -1,6 +1,7 @@
 import raf from "raf";
 import { useLayoutEffect, useEffect, useState, useMemo } from "react";
 import { createPortal } from "react-dom";
+import useMedia from "../../hooks/useMedia";
 
 export function Modal({
   width = "500px",
@@ -14,7 +15,7 @@ export function Modal({
 
   const root = useMemo(() => document.getElementById("globalmodal"), []);
 
-  const initialStyles = animate
+  const initialStyles =  animate
     ? {
         ...style,
         transform: "scaleX(0) scaleY(0)",
@@ -25,8 +26,11 @@ export function Modal({
         transform: "scaleX(1) scaleY(1)",
         opacity: 1,
       };
+       
 
   const [styles, setStyles] = useState(initialStyles);
+
+    
   useLayoutEffect(() => {
     if (show) {
       setMount(true);
@@ -37,15 +41,15 @@ export function Modal({
     }
   }, [show, animate]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!animate) return;
     if (show) {
       raf(() => {
-        setStyles((old) => ({
+        setStyles((old) =>{ return({
           ...old,
           transform: "scaleX(0) scaleY(0)",
           opacity: 0,
-        }));
+        })});
 
         raf(() => {
           setStyles((old) => ({
@@ -75,17 +79,23 @@ export function Modal({
     }
   };
 
+  
+  const device = useMedia();
+  const mobile = device === "mobile";
+
+
+
   return (
     <>
       {mount &&
         createPortal(
           <div className="absolute t-0 l-0 b-0 r-0 z-[1000]">
-            <div className="fixed top-0 l-0 w-full h-full bg-[hsla(0,0%,100%,0.85)]">
-              <div className="flex flex-col items-center justify-center w-full h-[600px] min-w-[748px] min-h-full ">
+            <div className="fixed  flex items-center  justify-center  top-0 l-0 w-full h-full bg-[hsla(0,0%,100%,0.85)]">
+              <div className="flex items-center justify-center  w-full h-full ">
                 <div
-                  style={{ width, height, ...styles }}
+                  style={{ ...mobile?{width:'100%',height:'100%'}:{width}, ...styles }}
                   onTransitionEnd={handleTransitionEnd}
-                  className="pt-[22px] px-[24px] pb-[26px] bg-white rounded-[3px] relative"
+                  className=" bg-white relative"
                 >
                   {children}
                 </div>

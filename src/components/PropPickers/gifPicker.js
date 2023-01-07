@@ -214,9 +214,16 @@ const GifPicker = ({ onSelect, sticker = false }) => {
             noLink={true}
             onGifClick={(gif) => {
               const images = gif?.images;
+              const {height,width,url,size}=images.original
+              const preview=images.preview_gif.url
+              const aspectRatio=width/height
+       
               onSelect({
-                original: images.original,
-                preview: images.preview_gif,
+                original: url,
+                size,
+                preview,
+                type:'gif',
+                dimensions: { width, height, aspectRatio },
               });
             }}
           />

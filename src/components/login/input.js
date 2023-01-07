@@ -10,23 +10,14 @@ const Input = forwardRef(
     const watchedValue = useWatch({ name, control });
 
     
-
-    // const debounceFn = useRef(
-    //   debounce((value) => {console.log(value)
-    //     onWatchChange?.(name, value);
-    //   }, 300)
-    // ).current;
-
-    console.log(watchedValue)
     const showIcon = watchedValue
       ? watchedValue.trim().length !== 0
       : !!watchedValue;
 
-    console.log(showIcon)
 
     const debounceFn = useMemo(()=>
       debounce((value) => {
-        console.log(value);
+        
         onWatchChange?.(name, value);
       }, 300)
     ,[name, onWatchChange]);
@@ -39,48 +30,40 @@ const Input = forwardRef(
       <div
         className={`px-[30px] mb-[3px] outline-none   flex-shrink-0 flex-grow-0 bg-white basis-auto relative py-[10px] animate-land  ${className} `}
       >
-        <div className="p-0 mb-[7px] xl:mb-[7px]">
-          <div className="flex items-center">
+        <div className="relative z-0 pt-[14px] w-full group flex justify-start items-center">
+          <input
+            type="text"
+            name={name}
+            id={name}
+            className={`block py-[8px] px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 focus:border-primary-teal ${
+              error && `border-app-danger focus:border-app-danger`
+            }  appearance-none dark:text-white dark:border-gray-600 dark:focus:text-primary-default focus:outline-none focus:ring-0 focus:text-primary-default peer`}
+            placeholder=" "
+            required
+            ref={ref}
+            {...props}
+          />
+          <label
+            htmlFor={name}
+            className={`absolute pointer-events-none text-sm text-primary-teal dark:text-gray-400 duration-300 transform -translate-y-0 scale-85 top-0 z-10 origin-[0] peer-focus:left-0 peer-focus:text-primary-teal   ${
+              error && `text-app-danger peer-focus:text-app-danger`
+            }  peer-placeholder-shown:text-gray-500  peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-[22px] peer-focus:scale-85 peer-focus:-translate-y-[0px]`}
+          >
+            {label}
+          </label>
+          <div className="h-full flex justify-center absolute right-0 items-center">
             <span
-              className={`align-left text-primary-teal  ${
-                error && `text-app-danger`
-              } font-normal text-[12px] leading-[12px] `}
+              className={`w-[24px] h-[24px]    ${
+                error ? "text-app-danger" : "text-primary-green"
+              }  `}
             >
-              {label}
+              <div className="w-full h-full flex justify-center items-center">
+                <span className="text-inherit">
+                  {children && showIcon && children}
+                </span>
+              </div>
             </span>
           </div>
-        </div>
-        <div
-          className={`relative break-words flex items-center outline-none 
-         
-           ${
-             error
-               ? `border-b-[2px] border-app-danger`
-               : `focus-within:border-b-[2px] focus-within:border-border-input-active`
-           }
-         `}
-        >
-          <div className="flex justify-start flex-1 relative z-[2]">
-            <div className="p-0 cursor-text outline-none relative flex flex-1 overflow-hidden align-top">
-              <input
-                name={name}
-                {...props}
-                ref={ref}
-                className="my-[8px] xl:my-[6px]  cursor-text align-middle border-none outline-none bg-transparent p-0 min-w-[5px] relative w-full min-h-[22px] text-[12px] leading-[12px] break-words whitespace-pre-wrap text-select text-primary-default  "
-              />
-            </div>
-          </div>
-          <span
-            className={`w-[24px] h-[24px] relative ${
-              error ? "text-app-danger" : "text-primary-green"
-            }  `}
-          >
-            <button className="w-full h-full flex justify-center items-center">
-              <span className="text-inherit">
-                {children && showIcon && children}
-              </span>
-            </button>
-          </span>
         </div>
         {error && (
           <p className="text-[10px] mt-[2px] leading-[10px] text-app-danger">

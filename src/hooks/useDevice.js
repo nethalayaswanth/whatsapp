@@ -26,7 +26,7 @@ function useMedia({
 
   const getValue = useCallback(() => {
     const index = mediaQueryLists.findIndex((mql) => mql.matches);
-    console.log(mediaQueryLists, index);
+
     return typeof breakPointValues[index] !== "undefined"
       ? breakPointValues[index]
       : defaultValue;

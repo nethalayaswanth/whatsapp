@@ -1,310 +1,227 @@
-import { useCallback, useState, memo, useMemo, useRef } from "react";
-import DrawerHeader from "../header/drawer";
-import { useSidebar } from "../../contexts/sidebarContext";
-import { ReactComponent as Edit } from "../../assets/edit.svg";
+import { useCallback, useRef, useState, useEffect } from "react";
+import Textarea from "react-textarea-autosize";
 import { ReactComponent as Done } from "../../assets/done.svg";
-import { ReactComponent as Close } from "../../assets/close.svg";
+import { ReactComponent as Edit } from "../../assets/edit.svg";
+import { useSidebar } from "../../contexts/sidebarContext";
+import DrawerHeader from "../header/drawer";
 
 import {
+  useAboutUpdate,
   useNameUpdate,
   useUser,
-  useAboutUpdate,
-} from "../../requests.js/useRequests";
-import useHover from "../../hooks/useHover";
+} from "../../queries.js/useRequests";
+import { DpUpload, ImageCropper } from "../dpUpload";
 
-import { useDpUpdate } from "../../requests.js/useRequests";
+import { useDpUpdate } from "../../queries.js/useRequests";
 
 import { Modal } from "../modal";
 
-import ReactCrop from "react-image-crop";
-import "react-image-crop/dist/ReactCrop.css";
+import { forwardRef, useMemo } from "react";
+import { useUpdateProfile } from "../../queries.js/user";
+import { useLayoutEffect } from "react";
 
-import { generatecroppedImage, createImage } from "../../utils";
-import Spinner from "../spinner";
-import { useEffect } from "react";
+export const Input = forwardRef(
+  (
+    { error, name, edit, children, label, value, onToggle, as,refCb, ...props },
+    ref
+  ) => {
+    console.log(name, edit, children, label, value, ref);
 
-const Input = memo(({ name, label, value, onSave, as, ...props }) => {
-  const [edit, setEdit] = useState(false);
-
-  const ref = useRef();
-  const handleEdit = () => {
-    if (edit) {
-      onSave?.(name, ref.current.value);
-    }
-    setEdit(!edit);
-  };
-
-  const refCb = (node) => {
-    node && edit && node.focus();
-    ref.current = node;
-  };
-
-  const Element = as || "input";
-  return (
-    <div className="px-[30px] mb-[10px] outline-none   flex-shrink-0 flex-grow-0 bg-white basis-auto relative py-[10px] animate-land ">
-      <div className="p-0 mb-[14px]">
-        <div className="flex items-center">
-          <span className="align-left text-primary-teal font-normal leading-normal text-[14px]">
-            {label}
-          </span>
-        </div>
-      </div>
-      <div
-        className={`relative break-words flex items-start outline-none ${
-          edit &&
-          `focus-within:border-b-[2px] focus-within:border-border-input-active`
-        } `}
-      >
-        <div className="flex justify-start w-[80%] min-w-0 flex-1 relative z-[2]">
-          <div className="p-0 cursor-text relative flex flex-1 overflow-hidden align-top">
-            <Element
-              readOnly={!edit}
-              ref={refCb}
-              name={name}
-              {...props}
-              className="my-[8px] cursor-text align-middle border-none outline-none bg-transparent p-0 min-w-[5px] relative w-full min-h-[20px] leading-[22px] text-[17px] break-words whitespace-pre-wrap text-select text-primary-default  "
-            />
-          </div>
-        </div>
-        <span className="w-[24px] h-[24px] pt-[8px] relative  ">
-          <button onClick={handleEdit}>
-            <span className="text-panel-header-icon">
-              {edit ? <Done /> : <Edit />}
-            </span>
-          </button>
-        </span>
-      </div>
-    </div>
-  );
-});
-
-const ImageCropper = memo(({ file, close }) => {
-  const [blobUrl] = useState(() => URL.createObjectURL(file));
-
-  const [crop, setCrop] = useState({
-    unit: "%",
-    width: 50,
-    height: 50,
-    x: 25,
-    y: 25,
-  });
-
-  const [croppedAreaPixels, setCroppedAreaPixels] = useState({
-    unit: "%",
-    width: 50,
-    height: 50,
-    x: 25,
-    y: 25,
-  });
-
-  const [uploading, setUploading] = useState(false);
-
-  const onCropComplete = useCallback((crop, percentCrop) => {
-    setCroppedAreaPixels(percentCrop);
-  }, []);
-
-  function onImageLoad(e) {
-    const { width, height } = e.currentTarget;
-
-    const x = width > height ? height / 2 : width / 2;
-
-    console.log(x / 2, width / 2, height / 2);
-
-    setCrop({
-      unit: "px",
-      width: x,
-      height: x,
-      x: width / 2 - x / 2,
-      y: height / 2 - x / 2,
-    });
-  }
-
-  const [croppedImage, setCroppedImage] = useState();
-
-  const dpUpdate = useDpUpdate();
-
-  const handleSubmit = async (event) => {
-    try {
-      setUploading(true);
-      const image = await createImage(blobUrl);
-
-      console.log(croppedAreaPixels);
-
-      const files = await generatecroppedImage({
-        imageSrc: image,
-        crop: croppedAreaPixels,
-        resize: 0.5,
-        quality: 0.66,
-      });
-
-      dpUpdate.mutate({ files });
-
-      setUploading(false);
-    } catch (e) {
-      console.log(e);
-    }
-  };
-
-  useEffect(() => {
-    return () => {
-      if (blobUrl) {
-        URL.revokeObjectURL(blobUrl);
-      }
+    const handleClick = () => {
+      onToggle?.(name);
     };
-  }, [blobUrl]);
 
-  return (
-    <div className="absolute top-0 left-0 right-0 bottom-0 w-full h-full flex flex-col justify-center bg-panel-bg-deeper">
-      <header className="py-0 pr-[20px] pl-[25px] flex flex-none items-center h-[49px] text-white bg-primary-green">
-        <button
-          onClick={() => {
-            close();
-          }}
+    const Element = as ? Textarea : "input";
+    return (
+      <div className="px-[30px] mb-[10px] outline-none   flex-shrink-0 flex-grow-0 bg-white basis-auto relative py-[14px] animate-land pointer-events-auto ">
+        <div
+          className={`relative flex items-center z-0 pt-[24px]  w-full group  ${
+            edit
+              ? "focus-within:border-primary-teal focus-within:border-b-2"
+              : ""
+          }  ${error ? `focus-within:border-app-danger` : ""} `}
         >
-          <Close />
-        </button>
-      </header>
-      <div className="flex justify-center h-full relative">
-        <ReactCrop
-          crop={crop}
-          onChange={setCrop}
-          onComplete={onCropComplete}
-          keepSelection={true}
-          aspect={1}
-          circularCrop={true}
-          style={{
-            maxHeight: "100%",
-            position: "relative",
-            display: "flex",
-          }}
-        >
-          <div className="w-full h-full flex justify-center">
-            {" "}
-            <img
-              style={{
-                height: "100%",
-              }}
-              src={blobUrl}
-              alt=""
-              onLoad={onImageLoad}
-            />
+          <Element
+            type="text"
+            name={name}
+            id={name}
+            className={`block py-[8px] px-0 w-full text-[17px] leading-[20px] text-gray-900 bg-transparent border-0  ${
+              error ? `border-app-danger ` : ""
+            }  appearance-none dark:text-white dark:border-gray-600 dark:focus:text-primary-default focus:outline-none focus:ring-0 focus:text-primary-default peer`}
+            placeholder=" "
+            required
+            readOnly={!edit}
+            ref={refCb}
+            {...props}
+          />
+          <label
+            htmlFor={name}
+            className={`absolute text-[17px] top-0 leading-[20px] text-primary-teal dark:text-gray-400 duration-300 transform -translate-y-[0px] scale-85  z-10 origin-[0] peer-focus:left-0  peer-placeholder-shown:text-gray-500  peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-[32px] peer-focus:text-primary-teal peer-focus:translate-y-[0px] peer-focus:scale-85 ${
+              error
+                ? `peer-focus:text-app-danger text-app-danger peer-placeholder-shown:text-app-danger `
+                : ""
+            }`}
+          >
+            {label}
+          </label>
+          <div className=" flex justify-center items-center pointer-events-auto ">
+            <span className="w-[24px] h-[24px]  relative  ">
+              <button onClick={handleClick}>
+                <span className="text-panel-header-icon">
+                  {edit ? <Done /> : <Edit />}
+                </span>
+              </button>
+            </span>
           </div>
-        </ReactCrop>
+        </div>
+        {error && (
+          <p className="text-[10px] mt-[4px] leading-[10px] text-app-danger">
+            {error.message}
+          </p>
+        )}
       </div>
-      <div className="pt-0 px-[20px] pb-[6px] relative justify-center items-center z-[3] flex min-h-[90px]">
-        <span>
-          <div className=" top-0 left-[auto] right-[40px] mt-[-30px] absolute">
-            <button
-              onClick={handleSubmit}
-              className="w-[60px] h-[60px] rounded-full p-0 flex items-center justify-center text-[14px] font-normal text-[white] bg-primary-green"
-            >
-              <span className="flex justify-center items-center ">
-                {uploading ? <Spinner /> : <Done />}
-              </span>
-            </button>
-          </div>
-        </span>
-      </div>
-    </div>
+    );
+  }
+);
+
+const Profile = () => {
+  const [sideBar, dispatch] = useSidebar();
+  const { data: user } = useUser();
+
+  const updateProfile = useUpdateProfile();
+
+  const nameEmpty = !user.name || user.name.trim().length === 0;
+
+  const aboutEmpty = !user.about || user.about.trim().length === 0;
+
+  const backDisabled = nameEmpty || aboutEmpty;
+
+  const [editMode, setEditMode] = useState({
+    name: nameEmpty,
+    about: aboutEmpty,
+  });
+
+  const [errors, setErrors] = useState({});
+
+  const inputRefs = useRef({});
+
+  const register = useCallback(
+    ({ name, label, required }) => {
+      const onChange = (e) => {
+        if (
+          (!e.target.value || e.target.value.trim().length === 0) &&
+          required
+        ) {
+          setErrors((old) => ({
+            ...old,
+            [name]: { message: `${name} shouldn't be empty` },
+          }));
+
+          inputRefs.current[name].focus();
+        } else if (e.target.value.trim().length <=1){
+          setErrors((old) => ({
+            ...old,
+            [name]: null,
+          }));}
+      };
+
+       
+      const onToggle = async (id) => {
+        if (!editMode[name]) {
+          setEditMode((old) => ({ ...old, [id]: true }));
+          inputRefs.current[name].focus();
+          return;
+        }
+        const value = inputRefs.current[id].value;
+
+        if ((!value || value.trim().length === 0) && required) {
+          setErrors((old) => ({
+            ...old,
+            [name]: { message: `${name} shouldn't be empty` },
+          }));
+
+          inputRefs.current[name].focus();
+          return;
+        }
+
+        await updateProfile({ [id]: value });
+
+
+        setEditMode((old) => ({ ...old, [id]: false }));
+
+        return;
+      };
+
+      return {
+        refCb: (node) => {
+          if (!node) return;
+          inputRefs.current[name] = node;
+        },
+        onChange,
+       
+        name,
+        onToggle,
+        error: errors[name],
+        label,
+        edit: editMode[name],
+        required,
+      };
+    },
+    [editMode, errors, updateProfile]
   );
-});
-const Dpupload = ({ src }) => {
-  const [ref, isHovering] = useHover();
 
-  const inputRef = useRef();
-  const handleClick = () => {
-    inputRef.current.click();
-  };
+  useLayoutEffect(()=>{
+
+      if (nameEmpty && aboutEmpty) {
+
+        console.log({ input: inputRefs.current["name"] }) 
+
+        setTimeout(()=>{ inputRefs.current["name"].focus()},0)
+       
+      }
+  },[aboutEmpty, nameEmpty])
+
 
   const [file, setFile] = useState();
 
   const [showModal, setShowModal] = useState();
 
-  const onSelectFile = async (event) => {
+  const onFileSelect = async (event) => {
+    console.log(event.target.files.length, event.target.files);
     if (event.target.files && event.target.files.length > 0) {
       const file = event.target.files[0];
-
       setFile(file);
       setShowModal(true);
     }
   };
+  const handleDpSubmit = useCallback(
+    async (files) => {
+      await updateProfile({ ...files });
 
-  return (
-    <div className="flex-none my-[28px] flex justify-center ">
-      <div
-        ref={ref}
-        className="mx-[auto] animate-pop  w-[200px] h-[200px] relative "
-      >
-        <div className="cursor-pointer mx-[auto] bg-center rounded-full relative overflow-hidden h-full w-full">
-          <div className="absolute z-[500] flex justify-center items-center top-0 left-0 h-full w-full">
-            {src && <img src={src} alt="" />}
-          </div>
-          <span>
-            {isHovering && (
-              <div
-                onClick={handleClick}
-                className="absolute t-0 l-0 w-full h-full flex uppercase flex-col justify-center items-center pt-[15px] rounded-full leading-[1.2] text-[0.8125rem] bg-[rgba(84,101,111,0.7)] text-[rgba(255,255,255,0.8)] z-[1000]"
-              >
-                <div className="w-[100px] break-words text-center">
-                  Change Profile Picture
-                </div>
-              </div>
-            )}
-          </span>
-          <input
-            ref={inputRef}
-            onChange={onSelectFile}
-            type="file"
-            className="hidden"
-          />
-          <Modal animate={false} show={showModal}>
-            <ImageCropper
-              file={file}
-              close={() => {
-                setShowModal(false);
-              }}
-            />
-          </Modal>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const Profile = () => {
-  const [sideBar, dispatch] = useSidebar();
-
-  const { data: {user} } = useUser();
-  const [height, setHeight] = useState(1);
-
-  const aboutRef = useRef(null);
-  const nameRef = useRef(null);
-
-  const mutateName = useNameUpdate();
-  const mutateAbout = useAboutUpdate();
-
-  const handleSave = useCallback(
-    (name, value) => {
-      if (value.length !== 0) {
-        if (name === "name") {
-          mutateName.mutate({ name: value });
-          return;
-        }
-
-        mutateAbout.mutate({ about: value });
-      }
+      setShowModal(false);
+      setFile(null);
     },
-    [mutateAbout, mutateName]
+    [updateProfile]
   );
 
-  console.log(user?.dp);
   const dp = user?.dp?.url || user?.dp?.previewUrl;
+
   return (
     <span className="absolute top-0 left-0 h-full w-full overflow-x-hidden overflow-y-hidden  ">
       <div className="absolute top-0 left-0 h-full w-full overflow-x-hidden overflow-y-hidden pointer-events-auto bg-drawer-bg flex flex-col ">
         <DrawerHeader
           onClick={() => {
-            dispatch({ type: "toggle" });
+            for (const [input, notFilled] of Object.entries({
+              name: nameEmpty,
+              about: aboutEmpty,
+            })) {
+              if (notFilled) {
+                setEditMode((old) => ({ ...old, [input]: true }));
+                inputRefs.current[input].focus();
+                break;
+              }
+            }
+            if (!backDisabled) dispatch({ type: "toggle" });
           }}
           name={"Profile"}
         />
@@ -312,29 +229,32 @@ const Profile = () => {
           onClick={() => {}}
           className="w-full flex flex-col overflow-x-hidden overflow-y-auto z-[100] relative flex-1  "
         >
-          <Dpupload src={dp} />
+          <DpUpload src={dp} onFileSelect={onFileSelect} />
+          <Modal animate={false} show={showModal}>
+            <ImageCropper
+              file={file}
+              close={() => {
+                setShowModal(false);
+              }}
+              onSubmit={handleDpSubmit}
+            />
+          </Modal>
           <Input
-            label="Your name"
-            name="name"
-            onSave={handleSave}
             defaultValue={user.name}
             type="text"
-            placeholder="type your name"
+            required={true}
+            {...register({ name: "name", label: "Your name", required: true })}
           />
           <Input
-            label="About"
-            name="about"
-            value="Mony nethala"
-            as="textarea"
-            cols={10}
-            rows={2}
-            onSave={handleSave}
-            defaultValue={user.about}
+            as="Textarea"
+            maxRows={3}
             style={{
-              maxWidth: "100%",
               resize: "none",
-              overflowY: "visible",
+              border: 0,
+              boxSizing: "border-box",
             }}
+            {...register({ name: "about", label: "About", required: true })}
+            defaultValue={user.about}
           />
         </div>
       </div>

@@ -26,7 +26,7 @@ function ChatReducer(state, action) {
   }
 }
 
-function ChatProvider({ children }) {
+function ChatProvider({ children, props }) {
   const [state, dispatch] = React.useReducer(ChatReducer, initialState);
 
   const value = [state, dispatch];
@@ -42,3 +42,4 @@ function useChat() {
 }
 
 export { ChatProvider, useChat };
+

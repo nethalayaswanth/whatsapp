@@ -22,6 +22,10 @@ import { mergeRefs, callAll } from "../utils";
 export const noop = () => {};
 
 const easeInOut = "cubic-bezier(0.4, 0, 0.2, 1)";
+ const lerp = (a, b, t) => a + (b - a) * t;
+ const easeIn =t => t*t
+
+ const  easeOut = t => t*(2-t)
 
 const DisclosureContext = createContext();
 
@@ -94,7 +98,7 @@ export default function useTransition({
 
   const initialStyles = {
     visibility: "hidden",
-    transform: "translateX(9999px) translateY(9999px)",
+    transform: "translateX(0px) translateY(0px)",
   };
 
   const parentStyles = {
@@ -119,24 +123,16 @@ export default function useTransition({
     const parent = parentEl.current.getBoundingClientRect();
     const child = el.current.getBoundingClientRect();
 
-    return getTransfrom(
+     return getTransfrom(
       parent.width,
       parent.height,
       child.width,
       child.height,
       direction
     );
-  }, [getTransfrom]);
+  }, [direction]);
 
-  function getDuration(x) {
-    if (!x || typeof x === "string") {
-      return 0;
-    }
-
-    const constant = x / 36;
-
-    return Math.round((4 + 15 * constant ** 0.25 + constant / 5) * 10);
-  }
+ 
 
   // const elRefCb = (node) => {
   //   if (!node) return;
@@ -171,9 +167,6 @@ export default function useTransition({
 
   const translate = (t) => {
     const x = direction === "left" || direction === "right";
-
-
-
     return x ? `translateX(${t}px)` : `translateY(${t}px)`;
   };
 
@@ -181,20 +174,20 @@ export default function useTransition({
 
   useLayoutEffect(() => {
     if (isExpanded && mount) {
+
       currentStyles.current = getTranslate();
     }
   }, [ getTranslate, isExpanded, mount]);
 
-  const lerp = useCallback((a, b, t) => a + (b - a) * t,[])
+ 
   const easeIn = useCallback((x) => x * x,[])
   const initial = 0;
 
 
-  useAnimationFrame(
+ useAnimationFrame(
     (progress) => {
-      const [i, f, d] = currentStyles.current;
-
-      const t = lerp(i, f, easeIn(progress));
+      const [i, f] = currentStyles.current;
+      const t = lerp(i, f, easeOut(progress));
       el.current.style.transform = translate(t);
 
     },
@@ -204,9 +197,10 @@ export default function useTransition({
     }
   );
 
+
   useAnimationFrame(
     (progress) => {
-      const [i, f, d] = currentStyles.current;
+      const [i, f] = currentStyles.current;
 
       const t = lerp(f, i, easeIn(progress));
       el.current.style.transform = translate(t);
@@ -222,9 +216,6 @@ export default function useTransition({
     }
   );
 
-  const handleClose = useCallback(() => {
-    setExpanded(false);
-  }, [setExpanded]);
 
   function getParentProps({
     style = {},

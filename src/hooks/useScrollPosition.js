@@ -1,6 +1,7 @@
-import { useRef, useLayoutEffect, useState, useCallback } from "react";
+import { useRef, useLayoutEffect, useEffect,useState, useCallback } from "react";
 
 import throttle from "lodash/throttle";
+import { useMemo } from "react";
 
 const isBrowser = typeof window !== `undefined`;
 const zeroPosition = { x: 0, y: 0 };
@@ -16,8 +17,8 @@ const getScrollPosition = ({ element, useWindow, boundingElement }) => {
     return { x: window.scrollX, y: window.scrollY };
   }
 
-  const targetPosition = getClientRect(element?.current || document.body);
-  const containerPosition = getClientRect(boundingElement?.current);
+  const targetPosition = getClientRect(element || document.body);
+  const containerPosition = getClientRect(boundingElement);
 
   if (!targetPosition) {
     return zeroPosition;
@@ -34,65 +35,80 @@ const getScrollPosition = ({ element, useWindow, boundingElement }) => {
 export const useScrollPosition = ({
   onScrollChange,
   useWindow,
-  wait = 500,
+  wait = 400,
+  element: elementProp,
+  boundingElement: boundingElementProp,
+  trackPosition=false
 } = {}) => {
-  const element = useRef();
-  const boundingElement = useRef();
-  const position = useRef(getScrollPosition({ useWindow, boundingElement }));
+  const elementRef = useRef();
+  const boundingElementRef = useRef();
+
+const element = elementProp || elementRef
+const boundingElement = boundingElementProp || boundingElementRef;
+
+
+  const position = useRef(
+    getScrollPosition({ useWindow, boundingElement: boundingElement?.current })
+  );
   const [isScrolling, setScrolling] = useState(false);
 
   const scrollRef = useRef(false);
+  const timeoutRef=useRef()
 
-  const handleScrollChange = useCallback(({ prevPos, currPos }) => {
+  const handleScrollChange = useCallback(() => {
     if (scrollRef.current === false) {
       setScrolling(true);
       scrollRef.current = true;
+
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      timeoutRef.current = setTimeout(() => {
+        setScrolling(false);
+        scrollRef.current = false;
+      }, 400);
     }
-    let isScrolling;
-    clearTimeout(isScrolling);
-    isScrolling = setTimeout(() => {
-      setScrolling(false);
-      scrollRef.current = false;
-    }, 100);
   }, []);
 
+
   const callBack = useCallback(() => {
-    const currPos = getScrollPosition({ element, useWindow, boundingElement });
+    
+    if(trackPosition){
+    const currPos = getScrollPosition({
+      element: element?.current,
+      useWindow,
+      boundingElement: boundingElement?.current,
+    });
 
     onScrollChange?.({ prevPos: position.current, currPos });
-    handleScrollChange({ prevPos: position.current, currPos });
+  position.current = currPos;
+  }
+    handleScrollChange();
 
-    position.current = currPos;
-  }, [onScrollChange, handleScrollChange, useWindow]);
+  }, [trackPosition, handleScrollChange, element, useWindow, boundingElement, onScrollChange]);
 
-  const throttlFn = useRef(throttle(callBack, wait)).current;
+  const throttlFn =useMemo(()=>{return throttle(callBack, wait) },[callBack, wait]);
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     if (!isBrowser) {
       return undefined;
     }
 
-    const boundingEl = boundingElement.current;
+    const boundingEl = boundingElement?.current ?? window;
+    
     const handleScroll = () => {
       throttlFn();
     };
 
-    if (boundingEl) {
       boundingEl?.addEventListener("scroll", handleScroll, {
         passive: true,
       });
-    } else {
-      window.addEventListener("scroll", handleScroll, { passive: true });
-    }
+   
 
     return () => {
       if (boundingEl) {
         boundingEl?.removeEventListener("scroll", handleScroll);
-      } else {
-        window.removeEventListener("scroll", handleScroll);
-      }
-    };
-  }, [callBack, wait]);
+     
+    };}
+  }, [boundingElement, callBack, throttlFn, wait]);
 
   const returnValue = [position, isScrolling, boundingElement, element];
 

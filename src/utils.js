@@ -1,5 +1,10 @@
 import moment from "moment";
 
+import { monotonicFactory } from "ulid";
+
+import { format } from "date-fns";
+import formatRelative from "date-fns/formatRelative";
+import enUS from "date-fns/locale/en-US";
 import { customAlphabet } from "nanoid";
 
 const ALPHABETS =
@@ -9,14 +14,15 @@ export const nanoid = (num = 10) => {
   return customAlphabet(ALPHABETS, num)();
 };
 
-export const pascalFormat=(str)=>{
+export const ulid = monotonicFactory();
 
-  const formatted= str.split(' ').map((word)=>{
+export const pascalFormat = (str) => {
+  const formatted = str.split(" ").map((word) => {
     return word.charAt(0).toUpperCase() + word.slice(1).toUpperCase();
-  })
+  });
 
   return formatted;
-}
+};
 
 export const formatFileSize = (size) => {
   let i = Math.floor(Math.log(size) / Math.log(1024));
@@ -107,6 +113,30 @@ export const getOtherUserFromRoomId = (roomId, userId) => {
   return anotherUser;
 };
 
+export const formatDat = (unixTime, day) => {
+  if (!unixTime) return null;
+  const formatRelativeLocale = {
+    lastWeek: "EEEE",
+    yesterday: "'Yesterday'",
+    today: day ? "'Today'" : "h:mm aa",
+    tomorrow: "'Tomorrow'",
+    nextWeek: "'Next' EEEE",
+    other: "d/M/yyyy",
+  };
+
+  const locale = {
+    ...enUS,
+    formatRelative: (token) => {
+      return formatRelativeLocale[token];
+    },
+  };
+
+  const date = formatRelative(unixTime, new Date(), { locale });
+  const time = format(unixTime, "h:mm aa");
+
+  return { date, time };
+};
+
 export const formatDate = (unixTime, calenderDay) => {
   if (!unixTime) return null;
   const day = moment.unix(unixTime).calendar({
@@ -116,7 +146,6 @@ export const formatDate = (unixTime, calenderDay) => {
     lastDay: "[Yesterday]",
     lastWeek: "dddd",
     sameElse: "DD/MM/YYYY",
-    
   });
 
   const time = moment.unix(unixTime).format("h:mm a");
@@ -127,26 +156,29 @@ export const formatDate = (unixTime, calenderDay) => {
 
 export const createImage = (url) => {
   return new Promise((res, rej) => {
-    const img = new Image();
-    img.src = url;
-    img.onload = () => {
-      const ascpectRatio = img.naturalWidth / img.naturalHeight;
+    const image = new Image();
+    image.src = url;
+    image.onload = () => {
+      const width = image.naturalWidth;
+      const height = image.naturalHeight;
+      const aspectRatio = width / height;
 
       res({
+        image,
         url,
-        ascpectRatio,
-        naturalWidth: img.naturalWidth,
-        naturalHeight: img.naturalHeight,
+        aspectRatio,
+        width,
+        height,
       });
     };
   });
 };
-const generateImage = (url, width, height) =>
+const generateImage = (url) =>
   new Promise((resolve, reject) => {
-    const image = new Image(width, height);
-    image.addEventListener("load", () => resolve(image));
-    image.addEventListener("error", (error) => reject(error));
-    image.src = url;
+    const img = new Image();
+    img.addEventListener("load", () => resolve(img));
+    img.addEventListener("error", (error) => reject(error));
+    img.src = url;
   });
 
 function getRadianAngle(degreeValue) {
@@ -163,92 +195,169 @@ export function rotateSize(width, height, rotation) {
       Math.abs(Math.sin(rotRad) * width) + Math.abs(Math.cos(rotRad) * height),
   };
 }
-export default async function getCroppedImg(
-  imageSrc,
-  pixelCrop,
-  resize,
+export default async function getCroppedImg({
+  src,
+  crop,
   blur,
-  rotation = 0
-) {
-  const image = await generateImage(
-    imageSrc.url,
-    imageSrc.naturalWidth * resize,
-    imageSrc.naturalHeight * resize
-  );
+  rotation = 0,
+  maxResolution,
+  minResolution,
+}) {
+  const {
+    image,
+    aspectRatio,
+    width: naturalWidth,
+    height: naturalHeight,
+  } = await createImage(src);
 
   const canvas = document.createElement("canvas");
   const ctx = canvas.getContext("2d");
 
   const { width: bBoxWidth, height: bBoxHeight } = rotateSize(
-    image.width,
-    image.height,
+    naturalWidth,
+    naturalHeight,
     rotation
   );
 
-  canvas.width = bBoxWidth;
-  canvas.height = bBoxHeight;
-  const width = (pixelCrop.width * image.width) / 100;
-  const height = (pixelCrop.height * image.height) / 100;
+  // canvas.width = bBoxWidth;
+  // canvas.height = bBoxHeight;
 
-  ctx.translate(bBoxWidth / 2, bBoxHeight / 2);
-  ctx.rotate(getRadianAngle(rotation));
-  ctx.translate(-image.width / 2, -(image.height / 2));
+  // ctx.translate(bBoxWidth / 2, bBoxHeight / 2);
+  // ctx.rotate(getRadianAngle(rotation));
+  // ctx.translate(-naturalWidth / 2, -(naturalHeight / 2));
 
-  ctx.drawImage(image, 0, 0, image.width, image.height);
+  const croppedX = (crop.x * naturalWidth) / 100;
+  const croppedY = (crop.y * naturalHeight) / 100;
+  const croppedWidth = (crop.width * naturalWidth) / 100;
+  const croppedHeight = (crop.height * naturalHeight) / 100;
 
-  const data = ctx.getImageData(
-    (pixelCrop.x * image.width) / 100,
-    (pixelCrop.y * image.height) / 100,
-    width,
-    height
-  );
+  const getClampedWidth = () => {
+    const aspectRatio = croppedWidth / croppedHeight;
+    if (aspectRatio > 1) {
+      const width = Math.max(
+        minResolution,
+        Math.min(croppedWidth, maxResolution)
+      );
 
-  canvas.width = width;
-  canvas.height = height;
+      const height = croppedWidth < width ? croppedHeight : width / aspectRatio;
 
-  ctx.putImageData(data, 0, 0);
+      return { width, height };
+    } else {
+      const height = Math.max(
+        minResolution,
+        Math.min(croppedHeight, maxResolution)
+      );
+
+      const width =
+        croppedHeight < height ? croppedWidth : height * aspectRatio;
+
+      return { width, height };
+    }
+  };
+
+  const { width: clampedWidth, height: clampedHeight } = getClampedWidth();
+
+  
+  canvas.width = clampedWidth;
+  canvas.height = clampedHeight;
 
   ctx.filter = `blur(${blur}px)`;
+
+  ctx.drawImage(
+    image,
+    croppedX,
+    croppedY,
+    croppedWidth,
+    croppedHeight,
+    0,
+    0,
+    clampedWidth,
+    clampedHeight
+  );
+
+  // const data = ctx.getImageData(
+  //   (crop.x * naturalWidth) / 100,
+  //   (crop.y * naturalHeight) / 100,
+  //   croppedWidth,
+  //   croppedHeight
+  // );
+
+  // ctx.putImageData(data, 0, 0, 0, 0,clampedWidth,clampedHeight);
 
   return canvas;
 }
 
-const croppedFile = (imageSrc, crop, resize, quality, blur, rotation) => {
+const croppedFile = ({
+  src,
+  crop,
+  minResolution,
+  maxResolution,
+  quality,
+  blur,
+  rotation,
+}) => {
   return new Promise(async (res, rej) => {
-    if (!crop || !imageSrc) {
+    if (!crop || !src) {
       rej("something went wrong");
     }
 
-    const canvas = await getCroppedImg(imageSrc, crop, resize, blur, rotation);
+    try {
+      const canvas = await getCroppedImg({
+        src,
+        crop,
+        maxResolution,
+        blur,
+        rotation,
+        minResolution,
+      });
 
-    canvas.toBlob(
-      (blob) => {
-        if (!blob) rej("something went wrong");
-        const file = new File([blob], "image.jpeg", {
-          type: blob.type,
-        });
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) rej("something went wrong");
+          const file = new File([blob], "image.jpeg", {
+            type: blob.type,
+          });
 
-        res(file);
-      },
-      "image/jpeg",
-      quality
-    );
+          res(file);
+        },
+        "image/jpeg",
+        quality
+      );
+    } catch (e) {
+      console.error(e);
+    }
   });
 };
 
-export const generatecroppedImage = ({
-  imageSrc,
+export const generatecroppedImage = async ({
+  src,
   crop,
-  resize = 0.125,
-  quality = 0.25,
-  blur = 100,
+  quality = 0.33,
+  blur = 0,
   rotation = 0,
+  dp,
 }) => {
   return Promise.all([
-    croppedFile(imageSrc, crop, 1, 0.66, 0, rotation),
-    croppedFile(imageSrc, crop, resize, quality, blur, rotation),
+    croppedFile({
+      src,
+      crop,
+      maxResolution: dp ? 640 : 1280,
+      minResolution: dp ? 640 : 200,
+      quality: 0.66,
+      blur: 0,
+      rotation,
+    }),
+    croppedFile({
+      src,
+      crop,
+      minResolution: 0,
+      maxResolution: dp ? 96 : 100,
+      quality,
+      blur,
+      rotation,
+    }),
   ]).catch((e) => {
-    console.log(e);
+   throw e
   });
 };
 
@@ -281,4 +390,71 @@ export const generateThumbNail = (video) => {
     video.play();
     video.addEventListener("timeupdate", snapImage);
   });
+};
+
+export const createVideo = (url) => {
+  return new Promise((res, rej) => {
+    var video = document.createElement("video");
+    video.src = url;
+
+    video.preload = "metadata";
+    video.muted = true;
+    video.playsInline = true;
+    video.play();
+    video.onloadedmetadata = async (event) => {
+      const ascpectRatio = video.videoWidth / video.videoHeight;
+
+      const thumbnail = await generateThumbNail(video);
+
+      video.pause();
+
+      res({
+        ascpectRatio,
+        height: video.videoHeight,
+        width: video.videoWidth,
+        url,
+        thumbnail,
+        duration: video.duration,
+      });
+    };
+  });
+};
+
+export const calculateBoundingBoxes = (children) => {
+  const boundingBoxes = {};
+
+  children.forEach((child) => {
+    const domNode = child;
+    const nodeBoundingBox = domNode.getBoundingClientRect();
+
+    boundingBoxes[child.id] = nodeBoundingBox;
+  });
+
+  return boundingBoxes;
+};
+
+export const wrapPromise = (promise) => {
+  let status = "pending";
+  let result;
+  let suspend = promise().then(
+    (res) => {
+      status = "success";
+      result = res;
+    },
+    (err) => {
+      status = "error";
+      result = err;
+    }
+  );
+  return {
+    read() {
+      if (status === "pending") {
+        throw suspend;
+      } else if (status === "error") {
+        throw result;
+      } else if (status === "success") {
+        return result;
+      }
+    },
+  };
 };

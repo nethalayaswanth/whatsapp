@@ -13,7 +13,9 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       cacheTime: 1000 * 60 * 60 * 24,
-      retry: 3,
+      staleTime: 1000 * 10,
+      retry: 3,  
+      // notifyOnChangeProps: "tracked",
     },
   },
 });

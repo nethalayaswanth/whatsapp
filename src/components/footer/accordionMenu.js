@@ -1,106 +1,281 @@
-import { useRef, useState, cloneElement, useCallback, useEffect } from "react";
-import { ReactComponent as Gif } from "../../assets/gif.svg";
-import { ReactComponent as Emoji } from "../../assets/emoji.svg";
-import { ReactComponent as Sticker } from "../../assets/sticker.svg";
-import { ReactComponent as Close } from "../../assets/close.svg";
-import { ReactComponent as AttachmentIcon } from "../../assets/attachment.svg";
-import { useFooter } from "../../contexts/footerContext";
 
-const Menu = {
-  close: <Close />,
-  emoji: <Emoji />,
-  gif: <Gif />,
-  sticker: <Sticker />,
+import { useMemo } from "react";
+import { forwardRef, useCallback, useLayoutEffect, useRef, useState } from "react";
+import { ReactComponent as AttachmentIcon } from "../../assets/attachment.svg";
+import { ReactComponent as Close } from "../../assets/close.svg";
+import { ReactComponent as Emoji } from "../../assets/emoji.svg";
+import { ReactComponent as Gif } from "../../assets/gif.svg";
+import { ReactComponent as Sticker } from "../../assets/sticker.svg";
+import { useFooter } from "../../contexts/footerContext";
+import usePrevious from "../../hooks/usePrevious";
+// import { calculateBoundingBoxes } from "../../utils";
+
+
+export const calculateBoundingBoxes = (children) => {
+  const boundingBoxes = {};
+
+  children.forEach((child) => {
+    const domNode = child;
+    const {left} =  domNode.getBoundingClientRect();
+    const opacity = domNode.style.opacity;
+
+    
+
+    boundingBoxes[child.id] = { left,opacity};
+  });
+
+  return boundingBoxes;
 };
 
-export const Button = ({ children, ...props }) => {
+export const Button = forwardRef(({ active,children,absolute,id,className,style, ...props },ref) => {
+  
   return (
     <button
+      ref={ref}
+      id={id}
+      style={{ ...style }}
       {...props}
-      className="mr-[8px] last:mr-0 p-0 outline-none border-0 cursor-pointer h-full absolute top-0 left-0 transition-all duration-300"
+      className={`mr-[8px] pointer-events-auto  p-0 outline-none border-0 cursor-pointer h-full   top-0 ${active?'text-primary-teal':''}  ${
+        absolute ? "absolute" : ""
+      } ${className ? className : ""}`}
     >
       {children}
     </button>
   );
-};
+});
 
-const AccordionMenu = () => {
+const AccordionMenu = ({mobile}) => {
 
   const [footer, setFooterState] = useFooter();
 
-  const handleClose = useCallback(() => {
+ 
+
+  const handleClose = useCallback((e) => {
    
-    setFooterState({ type: "toggle bottomSheet" });
+    
+      setFooterState({
+        type: "close bottomSheet",
+      });
   }, [setFooterState]);
 
   const handleNavigation = useCallback(
     (active) => {
-      
-      setFooterState({
-        type: "set activeTab",
-        activeTab: active ,
-      });
+
+  setFooterState({
+          type: "set activeTab",
+          active: active,
+        });
     },
     [setFooterState]
   );
 
-  const open = footer.bottomSheetOpened;
+  
+
+  const attachmentActive= footer.attachmentDialogOpened;
+
+  const openMenu = footer.bottomSheetOpened 
+
+
+   const menu = useMemo(
+     () => ({
+       close: {
+         Icon: <Close />,
+         style: {
+           zIndex: attachmentActive ? 3 : 1,
+           opacity: attachmentActive || openMenu ? 1 : 0,
+           transition: "none",
+         },
+         handler: handleClose,
+       },
+       emoji: {
+         Icon: <Emoji />,
+         style: {
+           zIndex: attachmentActive ? 1 : 3,
+           opacity: attachmentActive ? 0 : 1,
+           transition: "none",
+         },
+         handler: handleNavigation,
+       },
+       gif: {
+         Icon: <Gif />,
+         style: { zIndex: 1, opacity: openMenu ? 1 : 0, transition: "none" },
+         handler: handleNavigation,
+       },
+       sticker: {
+         Icon: <Sticker />,
+         style: { zIndex: 1, opacity: openMenu ? 1 : 0, transition: "none" },
+         handler: handleNavigation,
+       },
+       attachment: {
+         Icon: <AttachmentIcon />,
+         style: {
+           zIndex: 1,
+           opacity: 1,
+           marginRight: "0px",
+           transition: "none",
+         },
+         handler: handleNavigation,
+       },
+     }),
+     [attachmentActive, handleClose, handleNavigation, openMenu]
+   );
+
+   const {close,attachment,...pickers}=menu
+  
+  const buttonRefs=useRef({})
+  const containerRef=useRef()
+
+   const prevBoundingBoxRef=useRef()
+   const prevContainerRef=useRef()
+
+   useLayoutEffect(() => {
+
+    console.log('mobile changed')
+    prevBoundingBoxRef.current=null
+   }, [mobile]);
+
+   useLayoutEffect(() => {
+     if ( !buttonRefs.current ) return;
+     const boundingBox = calculateBoundingBoxes(
+       Object.values(buttonRefs.current)
+     );
+     const prevBoundingBox = prevBoundingBoxRef.current;
+     const prevContainerWidth = prevContainerRef.current;
+     const conatainerWidth=containerRef.current.getBoundingClientRect().width
+
+     if (prevBoundingBox) {
+      
+
+         requestAnimationFrame(() => {
+          containerRef.current.style.width = prevContainerWidth;
+          containerRef.current.style.transition = "width 0ms";
+           Object.values(buttonRefs.current).forEach((child) => {
+             const domNode = child;
+
+             const prev = prevBoundingBox[child.id];
+
+             const current = boundingBox[child.id];
+
+             const changeInX = prev.left - current.left;
+
+             domNode.style.transform = `translateX(${changeInX}px)`;
+             domNode.style.opacity = prev.opacity;
+             domNode.style.transition = "transform 0s,opacity 0ms";
+            //  domNode.style.pointerEvents = "none";
+            })
+             
+             
+           requestAnimationFrame(() => {
+             containerRef.current.style.width = conatainerWidth;
+             containerRef.current.style.transition = "width 300ms";
+               Object.values(buttonRefs.current).forEach((child) => {
+                 const domNode = child;    
+                 const current = boundingBox[child.id];
+                 domNode.style.transform = "";
+                 domNode.style.opacity = current.opacity;
+                 domNode.style.pointerEvents = "auto";
+                 domNode.style.transition = "transform 300ms,opacity 300ms";
+               });
+
+               
+           });
+       });
+
+       
+     }
+prevBoundingBoxRef.current = boundingBox;
+prevContainerRef.current = conatainerWidth;
+     
+   }, [ openMenu,mobile]);
+
+  
+
   return (
-    
-      <>
+    <>
+      <div
+        ref={containerRef}
+        style={{
+          willChange: "width",
+
+          ...(openMenu
+            ? !mobile
+              ? { margin: "0px", width: "162px" }
+              : { width: "100%", flex: 1 }
+            : { flexShrink: 1, width: "66px", flexBasis: "auto" }),
+        }}
+        className="px-[5px] py-[10px] relative  flex items-center min-h-[52px] text-panel-header-icon"
+      >
         <div
-          style={{ ...(open && { width: "152px", margin: "0px" }) }}
-          className=" flex mr-[8px] relative w-[26px] h-full transition-all duration-300"
-        >
-          {Object.entries(Menu).map(([key, Icon], i) => {
-            const opacity = key === "emoji" ? 1 : open ? 1 : 0;
-            const close = key === "close";
-            const visibility =
-              key === "emoji" || key === "close"
-                ? "visible"
-                : open
-                ? "visible"
-                : "hidden";
-
-            const x = i * 26 + i * (152 / 4 - 26);
-
-            const transform = `translate(${x}px,0px)`;
-
-            return (
-              <Button
-                onClick={
-                  close
-                    ? handleClose
-                    : open
-                    ? () => {
-                        handleNavigation(key);
-                      }
-                    : undefined
-                }
-                style={{
-                  opacity: opacity,
-                  visibility,
-                  ...(open && { transform }),
-                  ...(close && { zIndex: 2 }),
-                }}
-                key={key}
-                name={key}
-              >
-                {Icon}
-              </Button>
-            );
-          })}
-        </div>
-        <button
-          onClick={() => {
-            handleNavigation("attachment");
+          style={{
+            willChange: "transform width",
+            ...(openMenu
+              ? !mobile
+                ? { width: "162px", margin: "0px" }
+                : { width: "100%", flex: 1 }
+              : { flexShrink: 1, width: "66px", flexBasis: "auto" }),
           }}
-          className="mr-[8px]"
+          className="absolute left-0  pointer-events-auto h-full px-[5px] py-[10px] flex items-center  justify-center min-h-[52px] text-panel-header-icon"
         >
-          <AttachmentIcon />
-        </button>
-      </>
-   
+          <Button
+            onClick={handleClose}
+            id="close"
+            style={close.style}
+            ref={(node) => {
+              buttonRefs.current["close"] = node;
+            }}
+          >
+            <Close />
+          </Button>
+          <div
+            className={`flex flex-1  z-[2] relative   items-center  h-full ${
+              openMenu ? "justify-center " : "justify-end "
+            } `}
+          >
+            {Object.entries(pickers).map(
+              ([key, { Icon, style, handler }], i) => {
+                return (
+                  <Button
+                    style={{ ...style }}
+                    onClick={(e) => {
+                      handler(key);
+                    }}
+                    ref={(node) => {
+                      buttonRefs.current[key] = node;
+                    }}
+                    key={key}
+                    id={key}
+                    name={key}
+                    absolute={!openMenu}
+                    active={
+                      footer.bottomSheetOpened && footer.activeTab === key
+                    }
+                  >
+                    {Icon}
+                  </Button>
+                );
+              }
+            )}
+          </div>
+          <Button
+            key={"attachment"}
+            id={"attachment"}
+            name={"attachment"}
+            ref={(node) => {
+              buttonRefs.current["attachment"] = node;
+            }}
+            onClick={() => {
+              handleNavigation("attachment");
+            }}
+            style={attachment.style}
+            active={
+              footer.bottomSheetOpened && footer.activeTab === "attachment"
+            }
+          >
+            {attachment.Icon}
+          </Button>
+        </div>
+      </div>
+    </>
   );
 };
 

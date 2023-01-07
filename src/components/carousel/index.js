@@ -1,17 +1,22 @@
-import { forwardRef } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { forwardRef, useCallback, useMemo } from "react";
+import { useModalDispatch } from "../../contexts/modalContext";
 import useMediaFetch from "../../hooks/useMediaFetch";
+import { useMessage } from "../../queries.js/messages";
+import { useProps } from "../mediaModal/mediaModal";
+import { useModal } from "../mediaModal/modalWrapper";
+import { getDimensions } from "../mediaModal/utils";
 
-export const SlideView = forwardRef(
+export const MainView = forwardRef(
   (
     {
-      visible,
       video,
       preview,
-      mobile,
       original,
-      width,
-      height,
-      loading = true,
+      aspectRatio,
+      mediaWidth,
+      mediaHeight,
+      onOutSideClick,
     },
     ref
   ) => {
@@ -23,118 +28,139 @@ export const SlideView = forwardRef(
       }
       ref.current = node;
     };
-    const aspectRatio = width / height;
-    const potrait = aspectRatio <= 1;
+
+    const { containerHeight, containerWidth, opened } = useModal();
+
+    const { width, height } = useMemo(() => {
+      if (!containerWidth || !containerHeight) return { width: 0, height: 0 };
+
+      return getDimensions({
+        containerWidth,
+        containerHeight,
+        aspectRatio,
+        height: mediaHeight,
+        width: mediaWidth,
+        paddingLeft: 92,
+      });
+    }, [aspectRatio, containerHeight, containerWidth, mediaHeight, mediaWidth]);
 
     return (
       <div
-        style={{ ...(mobile && { maxWidth: "100%", overflow: "visible" }) }}
-        className="  swiper-zoom-container  flex flex-auto flex-shrink-0 flex-col  justify-center h-full   max-w-[calc(100%-184px)]  "
+        className="main-container h-full w-full flex justify-center items-center"
+        onClick={onOutSideClick}
       >
         <div
-          style={{
-            overflow: mobile ? "visible" : " hidden",
-          }}
-          className="flex w-full h-full flex-grow-1 basis-auto items-center justify-center min-w-0 "
+          ref={refCb}
+          style={{ width, height, opacity: opened ? 1 : 0 }}
+          className="   main-target relative flex overflow-hidden  flex-shrink-0 flex-col  justify-center   "
         >
-          <div
-            className={`relative  max-w-full max-h-full flex justify-center items-center`}
-            style={{
-              ...(mobile && { width: "100%", overflow: "visible" }),
-              ...(!mobile && {
-                height: potrait
-                  ? `max(100%, ${height}px)`
-                  : `max(75%, ${height}px)`,
-                ...(aspectRatio && { aspectRatio }),
-              }),
-            }}
-          >
+          {video ? (
             <div
-              style={{
-                ...(!mobile &&
-                  (potrait
-                    ? {
-                        height: `100%`,
-                        ...(aspectRatio && { aspectRatio }),
-                      }
-                    : { width: "100%" })),
-                ...(mobile && { width: "100%", overflow: "visible" }),
-              }}
+              className={` relative h-full  justify-center items-center flex`}
             >
-              <div
+              <img
                 style={{
-                  visibility: visible ? "visible" : "hidden",
-                  overflow: mobile ? "visible" : " hidden",
+                  filter: "blur(10px)",
                 }}
-                className={` h-full w-full z-[2] flex  items-center justify-center`}
-              >
-                {video ? (
-                  <div
-                    ref={refCb}
-                    className={`swiper-zoom-target relative h-full  justify-center items-center flex`}
-                  >
-                    <img
-                      style={{
-                        ...(loading && { filter: "blur(10px)" }),
-                      }}
-                      className={`h-full w-full`}
-                      alt=""
-                      src={preview}
-                    />
-                    {!loading && (
-                      <video
-                        className="absolute z-[1] top-0 left-0 h-full w-full "
-                        controls={true}
-                        src={original}
-                      />
-                    )}
-                  </div>
-                ) : (
-                  <img
-                    ref={refCb}
-                    style={{
-                      ...(loading && { filter: "blur(10px)" }),
-                    }}
-                    className={`h-full w-full swiper-zoom-target`}
-                    alt=""
-                    src={original || preview}
-                  />
-                )}
-              </div>
+                className={`h-full w-full`}
+                alt=""
+                src={preview}
+              />
+              {/* {!loading && (
+                <video
+                  className="absolute z-[1] top-0 left-0 h-full w-full "
+                  controls={true}
+                  src={original}
+                />
+              )} */}
             </div>
-          </div>
+          ) : (
+            <>
+              <img
+                // onLoad={(e) => {
+                //   console.log("loaded", e.target.height);
+                // }}
+                style={{
+                  filter: "blur(10px)",
+                }}
+                className={`h-full w-full swiper-zoom-target`}
+                alt=""
+                src={preview}
+              />
+              <img
+                className={`absolute h-full w-full swiper-zoom-target`}
+                alt=""
+                src={original}
+              />
+            </>
+          )}
         </div>
       </div>
     );
   }
 );
 
-const SlideItem = forwardRef(({ visible = true, src, mobile }, ref) => {
-  const width = src?.dimensions?.width;
-  const height = src?.dimensions?.height;
+const MainItem = forwardRef(({ messageId, roomId }, ref) => {
+  const { data } = useMessage({ messageId, roomId });
 
-  const aspectRatio = width / height;
-  const potrait = aspectRatio <= 1;
+  const message = data?.message;
 
-  const [original, preview, loading] = useMediaFetch({ src });
-  const video = src.type.includes("video");
+  const type = message?.type;
+  const _original = message?.original;
+  const _preview = message?.preview;
+  const mediaWidth = message?.dimensions?.width;
+  const mediaHeight = message?.dimensions?.height;
+  const aspectRatio = message?.dimensions?.aspectRatio;
+
+  const modalDispatch = useModalDispatch();
+
+  const onOutSideClick = () => {
+    modalDispatch({
+      type: "set state",
+      payload: { opened: false },
+    });
+  };
+
+  const queryclient = useQueryClient();
+  const cacheMedia = useCallback(
+    ({ original, preview }) => {
+      queryclient.setQueryData([roomId, "messages"], (old) => {
+        if (original) {
+          old[messageId].message.original.file = original;
+        }
+        if (preview) {
+          old[messageId].message.preview.file = preview;
+        }
+
+        return { ...old };
+      });
+    },
+    [messageId, queryclient, roomId]
+  );
+
+  const [original, preview, loading] = useMediaFetch({
+    original: _original,
+    preview: _preview,
+    type: type,
+    cacheMedia,
+  });
+
+  const video = message?.type.includes("video");
 
   return (
-    <SlideView
+    <MainView
       {...{
-        potrait,
         video,
         original,
         preview,
-        width,
-        height,
-        loading,
+        mediaWidth,
+        mediaHeight,
+        aspectRatio,
         ref,
-        visible,
-        mobile,
+        onOutSideClick,
       }}
     />
   );
 });
 
-export default SlideItem;
+export default MainItem;

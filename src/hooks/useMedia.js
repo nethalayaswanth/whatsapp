@@ -13,21 +13,18 @@ function useMedia({
   breakPoints = breakpointsDefault,
   breakPointValues = defaultValues,
   defaultValue = defaultvalue,
+  width
 } = {}) {
 
 
   const screen=useWindowSize()
-
-  console.log(screen);
-
-  const width=screen.width
+  
+  const variable = width || screen.width;
 
   const getValue = useCallback((screen) => {
     
     const index = breakPoints.findIndex((point) => screen >= point);
-    
-    console.log(index)
-    
+     
     return typeof breakPointValues[index] !== "undefined"
       ? breakPointValues[index] 
       : defaultValue;
@@ -36,10 +33,10 @@ function useMedia({
   const [value, setValue] = useState(getValue);
 
   useLayoutEffect(() => {
-    setValue(getValue(width));
-  }, [getValue, width]);
+    setValue(getValue(variable));
+  }, [getValue, variable]);
 
-  return value;
+  return value; 
 }
 
 export default useMedia;

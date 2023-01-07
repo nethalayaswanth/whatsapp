@@ -4,62 +4,100 @@ import {
   useLayoutEffect,
   useEffect,
   useRef,
+  useMemo,
 } from "react";
 
-export default function useMediaFetch({src}) {
+const fetchMedia = (url, cb) => {
+  fetch(url)
+    .then((response) => response.body)
+    .then((rs) => {
+      const reader = rs.getReader();
 
+      return new ReadableStream({
+        async start(controller) {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) {
+              break;
+            }
+            controller.enqueue(value);
+          }
+          controller.close();
+          reader.releaseLock();
+        },
+      });
+    })
+    .then((rs) => new Response(rs))
+    .then((response) => response.blob())
+    .then((blob) => {
+      cb(blob);
+    })
+    .catch((err) => console.error(err));
+};
 
-  // if(src.type.includes('video')){
+export default function useMediaFetch(props) {
+  const original = useRef();
+  const preview = useRef();
+  const loading = useRef();
 
-  //   console.log(src?.previewUrl, src?.url);
-  // }
-        
-  const preview = src?.previewUrl || src?.url;
-  const [original, setOriginal] = useState();
-   
+  const [_, render] = useState();
 
-  const blobUrl = useRef();
+  const revoke = useMemo(() => {
+    const _original = original.current;
+    const _preview = preview.current;
 
-  const [loading, setLoading] = useState(false);
+    if (!props.type) return;
+    if (props.type === "video") {
+      const video = document.createElement("video");
+      video.src = _original;
+      video.onloadedmetadata = (event) => {
+        video.pause();
+        // setLoading(false);
+      };
+    }
 
-  useEffect(() => {
-
-    if(!src || src.type==='doc') return
-
-    const fetchMedia = async () => {
-      if (blobUrl.current) {
-        URL.revokeObjectURL(blobUrl.current);
-      }
-      try {
-        const blob = await fetch(src.url).then(function (response) {
-          return response.blob();
+    if (props.type.includes("image") || props.type === "gif") {
+      if (props.original.raw) {
+         console.log("%cfrom raw", "color:green");
+        original.current = URL.createObjectURL(props.original.raw);
+      } else if (props.original.url) {
+        console.log('%cfetching original','color:orange')
+        loading.current = true;
+        fetchMedia(props.original.url, (blob) => {
+          original.current = URL.createObjectURL(blob);
+           loading.current = false;
+          props.cacheMedia({ original: blob });
         });
-
-        blobUrl.current = URL.createObjectURL(blob);
-
-        if (src.type.includes("video")) {
-          setOriginal(blobUrl.current);
-          setLoading(false);
-          return;
-        }
-        setOriginal(blobUrl.current);
-        setLoading(false);
-      } catch (e) {
-        console.log(e);
       }
-    };
+      if (props.preview.raw) {
+        preview.current = URL.createObjectURL(props.preview.raw);
+      } else if (props.preview.url) {
+         console.log("%cfetching preview", "color:blue");
+        preview.current = props.preview.url;
 
-    if (src.url) {
-      fetchMedia();
+        fetchMedia(props.preview.url, (blob) => {
+          preview.current = URL.createObjectURL(blob);
+          props.cacheMedia({ preview: blob });
+        });
+      }
     }
 
     return () => {
-      if (blobUrl.current) {
-        URL.revokeObjectURL(blobUrl.current);
+      if (original.current) {
+        URL.revokeObjectURL(_original);
+      }
+      if (preview.current) {
+        URL.revokeObjectURL(_preview);
       }
     };
-  }, []);
+  }, [props]);
 
 
-  return [original, preview, loading];
+  useEffect(() => {
+    return () => {
+      revoke();
+    };
+  }, [revoke]);
+
+  return [original.current, preview.current, loading.current];
 }

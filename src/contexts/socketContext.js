@@ -1,50 +1,55 @@
-import {
-  useEffect,
-  useMemo,
-  useRef,
-  useContext,
-  createContext,
-  useState,
-} from "react";
-import { useUser } from "../requests.js/useRequests";
-import io from "socket.io-client";
-import { useAppState } from "./appStateContext";
-import { parseRoomName } from "../utils";
 import { useQueryClient } from "@tanstack/react-query";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
+import io from "socket.io-client";
+import { useUser } from "../queries.js/useRequests";
 
 const SocketContext = createContext();
 
 export const SocketProvider = ({ children, ...props }) => {
-  const socketRef = useRef(null);
+  const engine = useRef(
+    io("http://localhost:4000", {
+      withCredentials: true,
+    })
+  );
   const [connected, setConnected] = useState(false);
   const queryClient = useQueryClient();
 
-  const { data: {user} } = useUser();
+  const { data: user } = useUser();
 
-  const socket = socketRef.current;
   useEffect(() => {
-    if (user === null) {
-      if (socket !== null) {
+
+    const socket = engine.current;
+    if (user.verification === null) {
+      if (socket !== null && socket.connected) {
         socket.disconnect();
+        setConnected(false);
       }
-      setConnected(false);
+      
     } else {
       if (socket !== null) {
-        
-        socket.connect();
-      } else {
-        socketRef.current = io("http://localhost:4000", {
-          withCredentials: true,
-        });
+        console.log("connec socket");
+        socket.connect()
+      }else{
+   engine.current = io("http://localhost:4000", {
+     withCredentials: true,
+   });
       }
-      setConnected(true);
+      setConnected(true)
     }
-  }, [socket, user]);
+  }, [user.verification]);
 
   useEffect(() => {
-    if (socket && connected && user) {
-      socket.on("user.connected", (recentlyConnectedUser) => {
 
+    if (connected ) {
+      const socket = engine.current;
+
+      socket.on("verification", (user) => {
+        queryClient.setQueryData(["user"], (old) => ({
+          ...old,
+          ...user,
+        }));
+      });
+      socket.on("user.connected", (recentlyConnectedUser) => {
         queryClient.setQueryData(["user", recentlyConnectedUser.id], (old) => ({
           ...old,
           username: recentlyConnectedUser.username,
@@ -61,56 +66,146 @@ export const SocketProvider = ({ children, ...props }) => {
           })
         );
       });
+      
 
-      socket.on("new.room", (newRoom) => {
-        const room = {};
-        socket.emit("room.join", newRoom.roomId);
-        room[newRoom.roomId] = { ...newRoom, connected: true };
+       socket.on("user update", (payload) => {
 
-        queryClient.setQueryData(["rooms"], (old) => ({ ...old, ...room }));
-      });
-      socket.on("message", (message) => {
-        queryClient.setQueryData(["messages", message.roomId], (old) => [
-          ...old,
-          message,
-        ]);
+       
+         queryClient.setQueryData(["user", payload.id], (old) => ({
+           ...old,
+           ...payload,
+         }));
+       });
 
-        
+      socket.on("newRoom", (data) => {
+        // console.log(data,'newroom')
+        const { room, message } = data;
+
+        socket.emit("joinRoom", room.roomId);
+
         queryClient.setQueryData(["rooms"], (old) => ({
+          ...(old && old),
+          [room.roomId]: {
+            ...(old[room.roomId] && old[room.roomId]),
+            ...room,
+            lastMessage: message,
+            unread: old[message.roomId].unread
+              ? old[message.roomId].unread + 1
+              : 1,
+          },
+        }));
+
+        queryClient.setQueryData([message.roomId, "messages"], (old) => ({
           ...old,
-          [message.roomId]: {
-            ...old[message.roomId],
-            lastMessage: message.lastMessage,
-            unread:message.unread 
+          [message.id]: {
+            ...message,
           },
         }));
       });
 
-       socket.on("typing", (message) => {
-         queryClient.setQueryData(["rooms"], (old) => ({
-           ...old,
-           [message.roomId]: {
-             ...old[message.roomId],
-             typing:Date.now(),
-           },
-         }));
+      socket.on("deleteMessage", (message) => {
+        console.log(message);
+        const { messageId, roomId, everyone } = message;
+
+        if (everyone) {
+          queryClient.setQueryData([roomId, "messages"], (old) => {
+            return {
+              ...old,
+              [messageId]: {
+                ...old[messageId],
+                message: { text: "", type: "deleted" },
+              },
+            };
+          });
+          return;
+        }
+
+        queryClient.setQueryData([roomId, "messages"], (old) => {
+          const { [messageId]: removed, ...rest } = old;
+
+          //  console.log(rest)
+          return {
+            ...rest,
+          };
+        });
+      });
+
+      socket.on("message", (data) => {
+        // console.log("%cmessage", "color:red;font-size:54px");
+
+        const { room, message } = data;
+
+        console.log(room, message);
+
+        const lastMessagetime = message?.deliveredTime || message?.sendTime;
+
+        queryClient.setQueryData(["rooms"], (old) => {
+          return {
+            ...(old && old),
+            [message.roomId]: {
+              ...(old && old[message.roomId]),
+              ...(room && { room }),
+              unread: old[message.roomId].unread
+                ? old[message.roomId].unread + 1
+                : 1,
+            },
+          };
+        });
+
+        queryClient.setQueryData([message.roomId, "messages"], (old) => ({
+          ...old,
+          messages: {
+            ...old.messages,
+            [message.id]: {
+              ...message,
+            },
+          },
+        }));
+      });
+
+      socket.on("typing", (payload) => {
+        console.log(payload);
+        queryClient.setQueryData(["rooms"], (old) => {
+          return {
+            ...(old && old),
+            [payload.roomId]: {
+              ...(old && old[payload.roomId]),
+
+              notification: { ...payload, action: "TYPING" },
+            },
+          };
+        });
+      });
+
+       socket.on("connect", () => {
+         console.log(socket.id, "socket connected");
+         setConnected(true);
        });
 
-    } else {
-      if (socket) {
-        socket.off();
-      }
+       socket.on("disconnect", () => {
+         console.log(socket.id,'disconnected'); // undefined
+         setConnected(false);
+       });
     }
-  }, [socket, connected, user, queryClient]);
+    //  else {
+    //   if (socket) {
+    //     socket.off();
+    //   }
+    // }
+  }, [connected, queryClient]);
 
+
+
+  const socket = engine.current;
   const value = [socket, connected];
 
   value.socket = socket;
-  value.connected = connected;
+  value.connected = true;
   return (
     <SocketContext.Provider value={value}>{children}</SocketContext.Provider>
   );
 };
+
 
 function useSocket() {
   const context = useContext(SocketContext);

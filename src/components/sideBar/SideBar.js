@@ -1,125 +1,99 @@
-import React, { useEffect, useMemo, useCallback } from "react";
-import useSocket from "../../contexts/socketContext";
-import Header from "../header/Header";
-import ChatList from "../ChatList/ChatList";
-import { useRooms, useUser } from "../../requests.js/useRequests";
-import { useLayoutEffect } from "react";
-import { useSidebar } from "../../contexts/sidebarContext";
+import { useQueryClient } from "@tanstack/react-query";
+import React, { memo, useCallback, useEffect, useRef } from "react";
 import { useAppState } from "../../contexts/appStateContext";
-import { getOtherUserFromRoomId } from "../../utils";
-import { createRoomId } from "../../utils";
-import { useQueryClient, useIsMutating } from "@tanstack/react-query";
+import useSocket from "../../contexts/socketContext";
+import { useUser } from "../../queries.js/useRequests";
+import Header from "../header/Header";
 
-import { clearUnread, uploadTos3 } from "../../requests.js/api";
-import { StrokeSpinner } from "../spinner";
+import { useMemo } from "react";
+import { createPortal } from "react-dom";
+import { useReorderedRooms, useRoomIds } from "../../queries.js/rooms";
+import ChatItem from "../ChatItem";
+import ListOrderAnimation from "../listOrderAnimation";
+import MenuSideBar from "./MenuSidebar";
+
 const SideBar = () => {
-  const { data: {user} } = useUser();
+
+  const sideOverlayRoot = document.getElementById("side-overlay");
+  const { data: user } = useUser();
 
   const { state, dispatch } = useAppState();
 
   const [socket, socketConnected] = useSocket();
-
   const queryClient = useQueryClient();
 
-  const { data: rooms } = useRooms({
-    enabled: !!(socket && socketConnected),
-    refetchOnMount: false,
-  });
+ 
+const {data:reOrderedRooms} =useReorderedRooms()
 
-  const isMutating = useIsMutating();
 
-  console.log(isMutating);
+
+const {data:rooms}=useRoomIds()
+
 
   const handleRoom = useCallback(
     async (preview) => {
+
+      console.log(preview, "preview");
+
       try {
-        if (rooms && rooms[preview.id]) {
           dispatch({
             type: "set current room",
             payload: {
-              ...preview,
+              ...preview
             },
           });
-        } else {
-          dispatch({
-            type: "new room",
-            payload: {
-              ...preview,
-            },
-          });
-        }
       } catch (e) {
         console.log(e);
       }
     },
-    [dispatch, rooms]
+    [dispatch]
   );
 
-  const list = useMemo(() => {
-    let list = [];
-    if (rooms) {
-      Object.entries(rooms).forEach(([id, item], index) => {
-        const otherUserID = getOtherUserFromRoomId(item.roomId, user.id);
-        if (!otherUserID) return;
-        list.push({
-          roomId: item.roomId,
-          name: item.username,
-          lastMessage: item.lastMessage,
-          targetUserId: otherUserID,
-          typing: item.typing,
-          unread: item.unread,
-        });
-      });
-      return list;
-    }
 
-    return null;
-  }, [rooms, user.id]);
+  useEffect(() => { 
 
-  useEffect(() => {
-    queryClient.setMutationDefaults(["rooms", "messages"], {
-      mutationFn: async ({ ...args }) => {
-        await queryClient.cancelQueries(["messages", args.roomId]);
-        return uploadTos3({ ...args });
-      },
+    if (!rooms || rooms.length === 0 || !socket || !socketConnected) return;
+
+    rooms.forEach((room) => {
+        socket.emit("joinRoom", room, (r) => {
+          console.log("joined", room);
+         });  
     });
 
-    queryClient.resumePausedMutations();
-  }, [queryClient]);
 
-  useEffect(() => {
-    if (!rooms || !socket) return;
+  }, [queryClient, rooms, rooms.length, socket, socketConnected, user.id]);
 
-    Object.keys(rooms).forEach((roomId) => {
-      const otherUserID = getOtherUserFromRoomId(roomId, user.id);
-      const room = rooms[roomId];
-      if (!room.connected) {
-        queryClient.setQueryData(["rooms"], (old) => ({
-          ...old,
-          [roomId]: { ...old[roomId], connected: true },
-        }));
 
-        queryClient.setQueryData(["user", otherUserID], (old) => ({
-          ...(old && old),
-          username: room.username,
-          name: room.name,
-          isOnline: room.isOnline,
-          id: otherUserID,
-        }));
-        socket.emit("room.join", roomId, (r) => {
-          console.log("room joined", r);
-        });
-      }
-    });
-  }, [queryClient, rooms, socket, user.id]);
+const chatList=useMemo(()=>{
+
+if(reOrderedRooms && reOrderedRooms.length !== 0){
+
+ return reOrderedRooms.map((roomId, index) => {
+                return (
+                  <ChatItem
+                    onClick={handleRoom}
+                    key={roomId}
+                    roomId={roomId}
+                  />
+                )
+ })
+}
+},[handleRoom, reOrderedRooms])
+
+
 
   return (
     <>
       <div className="flex-col flex h-full ">
-        <Header />
-        <ChatList list={list} onClick={handleRoom} />
+        <Header user={user} />
+        <div className="flex-grow bg-white flex  z-[1] relative scrollbar">
+          <div className="relative flex-1 scrollbar">
+            <ListOrderAnimation children={chatList} />
+          </div>
+          {sideOverlayRoot && createPortal(<MenuSideBar />, sideOverlayRoot)}
+        </div>
       </div>
     </>
   );
 };
-export default SideBar;
+export default memo(SideBar);

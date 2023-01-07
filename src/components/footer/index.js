@@ -6,15 +6,18 @@ import GifPicker from "../PropPickers/gifPicker";
 
 import { useChat } from "../../contexts/chatContext";
 import useCollapse from "../../hooks/useCollapse";
-import { useUser } from "../../requests.js/useRequests";
+import { useUser } from "../../queries.js/useRequests";
 
+import { forwardRef } from "react";
+import useResizeObserver from "use-resize-observer";
+import useDisclosure from "../../hooks/useDisclosure";
 import useMedia from "../../hooks/useMedia";
-import useTransition from "../../hooks/useTransition";
 import AccordionMenu from "./accordionMenu";
 import Attachment from "./attachment";
-import GifMessage from "./gifMessage";
 import TextInput from "./input";
+import PreviewModal from "./previewModal";
 import ReplyDialog from "./replyDialog";
+import { createPortal } from "react-dom";
 
 export const Button = ({ children, ...props }) => {
   return (
@@ -27,22 +30,50 @@ export const Button = ({ children, ...props }) => {
   );
 };
 
-const Footer = ({ onSubmit, onKeyDown }) => {
-  const [footer, setFooterState] = useFooter();
+export const AttachmentDialog = ({ isExpanded }) => {
+  const { mount, getDisclosureProps, getParentProps } = useDisclosure({
+    isExpanded: isExpanded,
+    direction: "bottom",
+
+    onCollapseEnd: () => {
+      // setFooterState({ type: "reset" });
+    },
+  });
+  return (
+    <>
+      {mount && (
+        <div className="absolute z-index-[5]  left-0 bottom-0 w-full">
+          <div {...getParentProps()} className="h-full w-full overflow-hidden">
+            <div {...getDisclosureProps()}>
+              <Attachment />
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+};
+
+const Footer = forwardRef(({footer, onSubmit, onKeyDown }, ref) => {
+  const [footerState, setFooterState] = useFooter();
 
   const [chatState, chatDispatch] = useChat();
+
+
+    console.log("%cfooter", "color:blue");
+
 
   const { Toggle, getCollapseProps } = useCollapse({
     isExpanded: !!chatState.reply,
   });
 
-  const { data: {user} } = useUser();
+  const { data: user } = useUser();
 
   const handleGifSelect = useCallback(
     (gif) => {
       setFooterState({
         type: "set state",
-        payload: { gifSelected: gif, gifDialogOpened: true },
+        payload: { file: gif, fileType: "gif", previewDialogOpened: true },
       });
     },
     [setFooterState]
@@ -51,66 +82,69 @@ const Footer = ({ onSubmit, onKeyDown }) => {
   const handleEmojiSelect = useCallback(
     (value, emojiObject) => {
       const emoji = value.native;
-      const input = footer.inputRef;
-
+      const input = footerState.inputRef;
       const start = input?.selectionStart;
       const end = input?.selectionEnd;
+      input.setSelectionRange(start, start);
 
-      const splitted = footer.text.split("");
+      const splitted = input.value.split("");
+
       splitted.splice(start, end - start, emoji);
 
-      setFooterState({
-        type: "set text",
-        text: splitted.join(""),
-      });
+      input.value = splitted.join("");
+      input.focus();
+      input.setSelectionRange(start + emoji.length, start + emoji.length);
     },
-    [footer, setFooterState]
+    [footerState.inputRef]
   );
 
-  const tabs = useMemo(() => {
-    return {
-      emoji: { component: <EmojiPicker />, handler: handleEmojiSelect },
-      gif: { component: <GifPicker />, handler: handleGifSelect },
-      sticker: {
-        component: <GifPicker sticker={true} />,
-        handler: handleGifSelect,
-      },
-      attachment: { component: <Attachment />, handler: handleEmojiSelect },
-    };
-  }, [handleEmojiSelect, handleGifSelect]);
 
-  const isSenderUser = chatState?.reply?.from === user.id;
+  const bottomSheetOpened = footerState.bottomSheetOpened;
+  const attachmentDialogOpened = footerState.attachmentDialogOpened;
 
-  const activeTab = tabs[footer.activeTab];
-  const bottomSheetOpened = footer.bottomSheetOpened;
 
-  const { mount, getDisclosureProps, getParentProps } = useTransition({
-    isExpanded: bottomSheetOpened,
-    direction: "bottom",
-  });
+  const { ref: resizeRef, width, height } = useResizeObserver();
 
   const device = useMedia({
     breakPoints: [740, 540, 420],
     breakPointValues: ["xl", "l", "sm"],
     defaultValue: "xs",
+    width,
   });
+
+   
+  const tabs = useMemo(() => {
+    return {
+      emoji: <EmojiPicker onSelect={handleEmojiSelect} width={width} />,
+
+      gif:  <GifPicker onSelect={handleGifSelect} width={width} />,
+    
+      sticker: 
+          <GifPicker
+            key={"sticker"}
+            sticker={true}
+            onSelect={handleGifSelect}
+            width={width}
+          />
+      }
+  }, [handleEmojiSelect, handleGifSelect, width]);
+
+  
+  const activeTab = tabs[footerState.activeTab];
   const mobile = device === "xs";
 
- 
+
+
   return (
     <>
-      <div className="relative flex-none w-full min-h-[62px] z-[20] cursor-pointer bg-panel-header order-3 ">
+      <div
+        ref={resizeRef}
+        className=" w-full min-h-[62px]  cursor-pointer bg-panel-header  "
+      >
         <div className="pr-[17px] pl-[10px] pt-[3px] border-l border-solid border-border-header">
           <span>
             <div className="flex  min-h-0 flex-1 text-input-placeHolder">
-              {
-                <div
-                  // style={{ ...(mobile && { position: "absolute" }) }}
-                  className="px-[5px] py-[10px]  mr-[-10px] flex items-center justify-center min-h-[52px] text-panel-header-icon"
-                >
-                  <AccordionMenu />
-                </div>
-              }
+              {<AccordionMenu mobile={mobile} />}
               {mobile ? (
                 !bottomSheetOpened ? (
                   <TextInput />
@@ -121,44 +155,42 @@ const Footer = ({ onSubmit, onKeyDown }) => {
             </div>
           </span>
         </div>
-        <div className="absolute top-0 bg-panel-header  left-0 w-full">
-          {
-            <div id="bottomSheet" className="absolute  left-0 bottom-0 w-full">
-              {mount && (
-                <div
-                  {...getParentProps({
-                    style: {
-                      width: "100%",
-                      height: "100%",
-                      overflow: "hidden",
-                    },
-                  })}
-                >
-                  {" "}
-                  <div {...getDisclosureProps()} className="bg-panel-header">
-                    {mobile && bottomSheetOpened && <TextInput />}
-                    {activeTab &&
-                      cloneElement(activeTab.component, {
-                        onSelect: activeTab.handler,
-                      })}
-                  </div>
-                </div>
-              )}
-              <div
-                {...getCollapseProps({
-                  style: { width: "100%", height: "100%", overflow: "hidden" },
-                })}
-              >
-                <ReplyDialog />
-              </div>
-            </div>
-          }
-        </div>
       </div>
-
-      <GifMessage />
+      <div className="absolute top-0 bg-panel-header  left-0 w-full">
+        <div className="absolute   left-0 bottom-0 w-full">
+          <div
+            style={{
+              height: "100%",
+              width: "100%",
+              overflow: "hidden",
+            }}
+          >
+            <div ref={footer} id="bottomSheet" className={` bg-panel-header`}>
+              {footerState.bottomSheetMounted && (
+                <>
+                  {mobile && bottomSheetOpened && <TextInput />}
+                  {activeTab}
+                </>
+              )}
+            </div>
+          </div>
+          <div
+            {...getCollapseProps({
+              style: {
+                width: "100%",
+                height: "100%",
+                overflow: "hidden",
+              },
+            })}
+          >
+            <ReplyDialog />
+          </div>
+        </div>
+        <AttachmentDialog isExpanded={attachmentDialogOpened} />
+      </div>
+      <PreviewModal />
     </>
   );
-};
+});
 
 export default Footer;

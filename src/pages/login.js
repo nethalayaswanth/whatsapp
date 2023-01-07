@@ -1,19 +1,13 @@
-import { useEffect, createContext, useState } from "react";
 
-import LoginSideBar from "../components/sideBar/login";
-import Chat from "../components/chat/chat";
-import OverLay from "../components/overlay";
+
 import { SidebarProvider } from "../contexts/sidebarContext";
-import useMedia from "../hooks/useMedia";
+import QueryErrorBoundary from "../components/errorBoundary";
+
+import Login from "../components/login";
 
 const LoginPage = () => {
 
-  const device = useMedia({
-    breakPoints: [740, 540, 420],
-    breakPointValues: ["xl", "l", "sm"],
-    defaultValue: "xs",
-  });
-  const mobile = device === "xs";
+
 
   return (
     <SidebarProvider>
@@ -21,26 +15,25 @@ const LoginPage = () => {
         <div
           style={{
             transform: "translateZ(0px)",
-            ...(mobile && { flexGrow: 1, zIndex: 1, flexBasis: "auto" }),
           }}
-          className="sidebar  z-[200] xl:flex-[30%]"
+          className={`sidebar flex-shrink-0 flex-grow-0 basis-[40%] lg:basis-[35%] xl:basis-[30%] mobile:basis-auto mobile:flex-grow mobile:z-1  `}
         >
-          {" "}
-          <LoginSideBar />
+          <QueryErrorBoundary>
+            <div className="flex-col flex h-full ">
+              <Login />
+            </div>
+          </QueryErrorBoundary>
         </div>
-         <div
+
+        <div
           style={{
             transform: "translateZ(0px)",
-            ...(mobile && {
-              position: "absolute",
-              zIndex: 0,
-              // pointerEvents: "none",
-              flexGrow: 1,
-              flexBasis: "auto",
-            }),
           }}
-          className={`relative w-full  h-full overflow-hidden flex-grow  bg-[#efeae2] `}
-        ></div>
+          className={`relative w-full  h-full overflow-hidden flex-grow z-2 mobile:absolute mobile:pointer-events-none mobile:basis-auto   `}
+        >
+
+        </div>
+
       </div>
     </SidebarProvider>
   );

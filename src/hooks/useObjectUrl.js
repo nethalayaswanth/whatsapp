@@ -23,18 +23,29 @@ const createImage = (url) => {
   });
 };
 
-export function useObjectUrl({ files, revoke }) {
+export function useObjectUrl({ resources, revoke }) {
   
 
   const urls = useMemo(() => {
-    return files ? files.map((file) => URL.createObjectURL(file)) : null;
-  }, [files]);
+    return resources
+      ? resources.map((file) => {
+          if (typeof file === "object") {
+            return URL.createObjectURL(file);
+          } else {
+            return file;
+          }
+        })
+      : null;
+  }, [resources]);
 
   useEffect(() => {
     return () => {
       if (urls) {
         urls.forEach((url) => {
-          URL.revokeObjectURL(url);
+           if (url.includes('blob')) {
+             URL.revokeObjectURL(url);
+           }
+          
         });
       }
     };

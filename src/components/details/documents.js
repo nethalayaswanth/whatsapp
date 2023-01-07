@@ -1,8 +1,7 @@
-import { useRef, useCallback } from "react";
-import { ThumbView } from "../carousel/thumb";
+import { useCallback } from "react";
 import { useChat } from "../../contexts/chatContext";
+import { useUser } from "../../queries.js/useRequests";
 import DocContainer from "../message/document";
-import { useUser } from "../../requests.js/useRequests";
 
 const DocWrapper = ({ data, user }) => {
   const message = data?.message;
@@ -14,7 +13,6 @@ const DocWrapper = ({ data, user }) => {
   const incoming = data?.from !== user?.id;
 
 
-  console.log(fileName, fileSize, fileType,url);
   return (
     <div
       id={data?.id}
@@ -47,7 +45,7 @@ const DocWrapper = ({ data, user }) => {
 export default function Documents({ documents }) {
   const [chatState, chatDispatch] = useChat();
 
-  const { data: {user} } = useUser();
+  const { data: user } = useUser();
 
   const handleClick = useCallback(() => {}, []);
 

@@ -1,48 +1,48 @@
 import { useRef, useCallback } from "react";
 import { ThumbView } from "../carousel/thumb";
 import { useChat } from "../../contexts/chatContext";
+import { useModalDispatch } from "../../contexts/modalContext";
 
-export default function Gallery({ media }) {
-  const [chatState, chatDispatch] = useChat();
+export default function Gallery({ media, roomId }) {
+  const modalDispatch=useModalDispatch()
 
   const handleClick = useCallback(
-    ({ id, preview, src, potrait,width,height, imgRect }) => {
-      chatDispatch({
+    ({ id, preview, width,gif, height, aspectRatio, mediaRect }) => {
+      modalDispatch({
         type: "set state",
         payload: {
-          imageModalOpened: true,
-          imageModal: {
-            previewBlob: preview,
-            src,
-            potrait,
-            width,height,
-            activeId: id,
-            mediaRect: imgRect,
-          },
+          opened: true,
+          preview,
+          aspectRatio,
+          width,
+          height,
+          gif,
+          activeId: id,
+          mediaRect
         },
       });
     },
-    [chatDispatch]
+    [modalDispatch]
   );
 
+  
   return (
     <>
       {media &&
-        media.map((data, i) => {
-          const src = data.message;
+        media.map((messageId, i) => {
           return (
             <ThumbView
-              key={data.id}
+              roomId={roomId}
+              key={messageId}
               onClick={handleClick}
-              src={src}
-              id={data.id}
-              className="min-w-[0px] w-[29%] lg:w-[29%] aspect-[1] h-[auto]  "
+              messageId={messageId}
+              className="min-w-[0px] w-[29%] xs:w-[29%]  aspect-[1] h-[auto] xs:h-[auto]  "
             />
           );
         })}
       {Array(6)
         .fill(0)
-        .map((_,i) => {
+        .map((_, i) => {
           return <div key={i} className="w-[29%] lg:w-[29%] mr-[6px]"></div>;
         })}
     </>

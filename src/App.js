@@ -1,46 +1,40 @@
-import Messenger from "./pages/messenger";
-import {
-  useQueryClient,
-  QueryClient,
-  QueryClientProvider,
-  QueryErrorResetBoundary,
-  useIsRestoring,
-} from "@tanstack/react-query";
+import { QueryErrorResetBoundary, useIsRestoring } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import { ErrorBoundary } from "react-error-boundary";
 import { Suspense } from "react";
-import { useUser } from "./requests.js/useRequests";
+import { ErrorBoundary } from "react-error-boundary";
+import StartUp from "./components/startUp";
 import LoginPage from "./pages/login";
-import { useEffect, useRef, useMemo } from "react";
-import { useCallback } from "react";
+import Messenger from "./pages/messenger";
+import { useUser } from "./queries.js/useRequests";
 
-function App() {
-  const { data,isLoading } = useUser();
+function App({ isRestoring }) {
 
- 
-  const isRestoring = useIsRestoring();
-
+   
   
-if (isLoading ) return null
-
-
+ 
+  const { data } = useUser();
 
   return (
     <>
-      {!isRestoring && (
+      {
         <div id="app" className="App w-full ">
           <div className="relative w-full h-full overflow-hidden z-[100]">
-            {data.user && data.verified==='success'? <Messenger /> : <LoginPage />}
-            {/* <LoginPage /> */}
+            {  data.verification ? (
+              <Messenger />
+            ) : (
+              <LoginPage />
+            )}
+           
             <div className=" z-[-1] w-full h-[127px] fixed top-0 left-0 bg-app-stripe"></div>
           </div>
         </div>
-      )}
+      }
     </>
   );
 }
 
 function Index() {
+  const isRestoring = useIsRestoring();
   return (
     <>
       <QueryErrorResetBoundary>
@@ -55,9 +49,22 @@ function Index() {
             )}
             onReset={reset}
           >
-            <Suspense fallback={<h1>Loading </h1>}>
-              <App />
-            </Suspense>
+            {isRestoring ? (
+              <div
+                style={{
+                  height: "100%",
+                  width: "100%",
+                  position: "absolute",
+                  background: "white",
+                }}
+              >
+                {" "}
+              </div>
+            ) : (
+              <Suspense fallback={<StartUp />}>
+                <App />
+              </Suspense>
+            )}
           </ErrorBoundary>
         )}
       </QueryErrorResetBoundary>

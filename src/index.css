@@ -2,6 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
+@import "react-image-crop/dist/ReactCrop.css";
+
+
+.ReactCrop__child-wrapper{
+
+ @apply h-full w-full
+}
+
+
 @layer base {
   #app, body, html {
     width: 100%;
@@ -15,6 +24,7 @@
   font-family: Segoe UI,Helvetica Neue,Helvetica,Lucida Grande,Arial,Ubuntu,Cantarell,Fira Sans,sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  line-height:1;
   user-select: none;
     text-rendering: optimizeLegibility;
     font-feature-settings: "kern";
@@ -90,8 +100,6 @@ em-emoji-picker button {
 
 
 
-
-
   }
 
 
@@ -152,7 +160,8 @@ em-emoji-picker button {
     align-items: center;
     justify-content: center;
     position: relative;
-    flex-shrink:1
+    flex-shrink:0;
+    width:auto
   }
 
   
@@ -168,7 +177,7 @@ em-emoji-picker button {
 
 
 .message{
-align-items:flex-end;
+  align-items:flex-end;
 --bg:theme("colors.message.outgoing.DEFAULT");
 --deeper:theme("colors.message.outgoing.deeper");
 --label:theme("colors.message.label.green");
@@ -223,6 +232,28 @@ width:'100%'
 }
 
 
+.start-up-icon::after{
+position: absolute;
+    top: 0;
+    left: calc(50% - 72px * 2 - 72px / 2);
+    display: block;
+    width: calc(72px * 3);
+    height: 100%;
+    content: '';
+    background: linear-gradient(to right,rgba(240,242,245,.5) 0,rgba(240,242,245,.5) 33.33%,rgba(240,242,245,0) 44.1%,rgba(240,242,245,0) 55.8%,rgba(240,242,245,.5) 66.66%,rgba(240,242,245,.5) 100%);
+    opacity: 1;
+    animation: shimmer 1.5s linear .6s infinite;
+}
+
+@keyframes shimmer {
+                from {
+                    left: calc(50% - 72px * 2 - 72px / 2)
+                }
+
+                to {
+                    left: calc(50% - 72px / 2)
+                }
+            }
 
 .ReactCrop__child-wrapper{
 
@@ -232,6 +263,7 @@ height:'100%'
 
 
 @layer utilities{
+
 
    .divider-before {
   content: "";
@@ -257,6 +289,10 @@ height:'100%'
 
 .overlay-gradient{
   background: linear-gradient(15deg,rgba(11,20,26,0),rgba(11,20,26,0) 45%,rgba(11,20,26,.12) 70%,rgba(11,20,26,.33))
+}
+
+.gallery-header-gradient{
+  background: linear-gradient(0deg,rgba(11,20,26,0),rgba(11,20,26,0.2) 20%,rgba(11,20,26,0.5) 70%,rgba(11,20,26,1))
 }
 
 .thumb-gradient{

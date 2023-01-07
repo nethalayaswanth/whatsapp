@@ -5,14 +5,17 @@ import * as React from "react";
 
 const reducer = (state, action) => {
   switch (action.type) {
+    case "set state":
+      return { ...state, ...action.payload };
     case "set current room":
-      return { ...state, currentRoom: action.payload };
-    case  "new room":{
-        return {
-          ...state,
-          draftRooms: { ...state.rooms, [action.payload.id]: action.payload },
-          currentRoom: action.payload,
-        };
+      return { ...state, currentRoom: action.payload,preview:true };
+    
+    case "new room": {
+      return {
+        ...state,
+        currentRoom: action.payload,
+        preview: true,
+      };
     }
     case "add room":
       return {
@@ -25,9 +28,10 @@ const reducer = (state, action) => {
 };
 
 const initialState = {
-  currentRoom: "main",
+  currentRoom: null,
   draftRooms: {},
   users: {},
+  preview:false,
   socket:null
 };
 
