@@ -7,36 +7,36 @@ import Chat from "../components/chat/chat";
 import QueryErrorBoundary from "../components/errorBoundary";
 import Verification from "../components/login/verification";
 import SideBar from "../components/sideBar/SideBar";
-import { AppStateProvider, useAppState } from "../contexts/appStateContext";
-import { SidebarProvider, useSidebar } from "../contexts/sidebarContext";
+import { AppProvider, useAppState } from "../contexts/appStore";
+import { SidebarProvider,useSidebarDispatch,useSidebarState } from "../contexts/sidebarContext";
 import { SocketProvider } from "../contexts/socketContext";
 import { useUser } from "../queries.js/useRequests";
 
 import { init } from "emoji-mart";
-import MutationProvider from '../contexts/mutationContext';
+import MutationProvider from "../contexts/mutationContext";
 
 
 init({ data });
 
 
 export const Main = () => {
+  const { data: user } = useUser();
 
+  const { detailsOpened } = useSidebarState();
+ const dispatch= useSidebarDispatch()
 
-   const { data: user } = useUser();
+  const {preview} = useAppState();
 
-   const [sideBar, dispatch] = useSidebar();
-   const [state]=useAppState()
+  
 
-   const detailsOpened = sideBar.detailsOpened;
-
-   useLayoutEffect(() => {
-     if (!user?.name || !user?.about) {
-       dispatch({
-         type: "set state",
-         payload: { open: true, active: "profile", from: "header" },
-       });
-     }
-   }, [user, dispatch]);
+  useLayoutEffect(() => {
+    if (!user?.name || !user?.about) {
+      dispatch({
+        type: "set state",
+        payload: { open: true, active: "profile", from: "header" },
+      });
+    }
+  }, [user, dispatch]);
 
   return (
     <>
@@ -59,9 +59,7 @@ export const Main = () => {
         }}
         className={`relative w-full  h-full overflow-hidden flex-grow z-2 mobile:absolute mobile:pointer-events-none mobile:basis-auto   `}
       >
-        <QueryErrorBoundary>
-        {state.currentRoom &&  <Chat /> }
-        </QueryErrorBoundary>
+        <QueryErrorBoundary>{preview && <Chat />}</QueryErrorBoundary>
       </div>
 
       <div
@@ -82,25 +80,22 @@ export const Main = () => {
 };
 
 const App = () => {
- 
-const { data: user } = useUser();
+  const { data: user } = useUser();
 
-const [sideBar, dispatch] = useSidebar();
+  const {detailsOpened}= useSidebarState()
 
-const detailsOpened = sideBar.detailsOpened; 
+  const verified = user.verification === "VERIFIED";
+  const success = user.verification === "SUCCESS";
+  const pending = user.verification?.pending;
 
-
-const verified=user.verification === "VERIFIED" 
-const success = user.verification === "SUCCESS";
-const pending = user.verification?.pending;
-
-
- 
   return (
     <>
       <span id="image-overlay"></span>
       <span id="globalmodal"></span>
-      <div className="animate-zoomIn relative top-0 w-full h-full overflow-hidden flex max-w-[1300px] xl:m-auto xl:shadow-lg xl:w-[calc(100%-60x)]  xl:h-[calc(100%-60px)] xl:top-[15px] bg-panel-bg-lighter  ">
+      <div
+        id="app"
+        className="animate-zoomIn relative top-0 w-full h-full overflow-hidden flex max-w-[1300px] xl:m-auto xl:shadow-lg xl:w-[calc(100%-60x)]  xl:h-[calc(100%-60px)] xl:top-[15px] bg-panel-bg-lighter  "
+      >
         <div
           className={`absolute top-0 left-0 z-[200] w-full pointer-events-none h-full flex  overflow-hidden `}
         >
@@ -137,18 +132,17 @@ const pending = user.verification?.pending;
   );
 };
 
-
 const Messenger = () => {
   return (
-    <AppStateProvider>
-      <SocketProvider>
-        <MutationProvider>
+    <SocketProvider>
+      <MutationProvider>
+        <AppProvider>
           <SidebarProvider>
             <App />
           </SidebarProvider>
-        </MutationProvider>
-      </SocketProvider>
-    </AppStateProvider>
+        </AppProvider>
+      </MutationProvider>
+    </SocketProvider>
   );
 };
 

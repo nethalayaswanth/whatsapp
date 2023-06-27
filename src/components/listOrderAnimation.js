@@ -7,7 +7,6 @@ import usePrevious from "../hooks/usePrevious";
 export const calculateBoundingBoxes = (children) => {
   const boundingBoxes = {};
 
-  console.log(children)
   children.forEach(([key,child]) => {
     const domNode = child;
     if(!domNode) return

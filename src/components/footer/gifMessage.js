@@ -1,29 +1,21 @@
 import {
+  forwardRef,
+  useCallback,
+  useLayoutEffect,
   useRef,
   useState,
-  cloneElement,
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  forwardRef,
 } from "react";
 import { createPortal } from "react-dom";
-import Textarea from "react-textarea-autosize";
-import Disclosure from "../Disclosure";
 import { ReactComponent as Close } from "../../assets/close.svg";
-import { ReactComponent as Send } from "../../assets/send.svg";
 import { ReactComponent as Emoji } from "../../assets/emoji.svg";
 import useDisclosure from "../../hooks/useDisclosure";
 
-import { useFooter } from "../../contexts/footerContext";
-import { TextInputView } from "./input";
-import EmojiPicker from "../PropPickers/emojiPicker";
 import useResizeObserver from "use-resize-observer";
+import { useFooter } from "../../contexts/footerContext";
+import EmojiPicker from "../PropPickers/emojiPicker";
+import { TextInputView } from "./input";
 
-const GifMessageWrapper = forwardRef(({...props}, ref) => {
- 
-  
-
+const GifMessageWrapper = forwardRef(({ ...props }, ref) => {
   const [footer, setFooterState, onSubmit] = useFooter();
 
   const gif = footer.gifSelected;
@@ -40,38 +32,42 @@ const GifMessageWrapper = forwardRef(({...props}, ref) => {
 
   const setInputRef = useCallback(
     (node) => {
-      setFooterState({ type: "set propInputRef",propInputRef: node });
+      setFooterState({ type: "set state", payload: { propInputRef: node } });
     },
     [setFooterState]
   );
 
- 
+  const handleGifSubmit = useCallback(() => {
+    if (!url) {
+      return;
+    }
 
-   const handleGifSubmit = useCallback(() => {
-     if (!url) {
-       return;
-     }
+    onSubmit?.({
+      text: footer.propInputRef.value,
+      type: "image/gif",
+      original: gif?.original?.url,
+      preview: gif?.preview?.url,
+      dimensions: { width, height },
+    });
 
-    
-     onSubmit?.({
-       text: footer.propInputRef.value,
-       type: "image/gif",
-       original: gif?.original?.url,
-       preview: gif?.preview?.url,
-       dimensions: { width, height },
-     });
-
-
-     setFooterState({
-       type: "set state",
-       payload: { bottomSheetOpened: false, gifDialogOpened: false,propInputRef:null },
-     });
-     
-   }, [footer.propInputRef?.value, gif?.original?.url, gif?.preview?.url, height, onSubmit, setFooterState, url, width]);
-
- 
-
- 
+    setFooterState({
+      type: "set state",
+      payload: {
+        bottomSheetOpened: false,
+        gifDialogOpened: false,
+        propInputRef: null,
+      },
+    });
+  }, [
+    footer.propInputRef?.value,
+    gif?.original?.url,
+    gif?.preview?.url,
+    height,
+    onSubmit,
+    setFooterState,
+    url,
+    width,
+  ]);
 
   useLayoutEffect(() => {
     (async () => {
@@ -96,8 +92,7 @@ const GifMessageWrapper = forwardRef(({...props}, ref) => {
     };
   }, []);
 
-
-  const [mountEmojiPicker,setEmojiPicker]=useState(false)
+  const [mountEmojiPicker, setEmojiPicker] = useState(false);
   const { mount, getDisclosureProps, getParentProps } = useDisclosure({
     isExpanded: mountEmojiPicker,
     direction: "bottom",
@@ -125,9 +120,11 @@ const GifMessageWrapper = forwardRef(({...props}, ref) => {
     [footer.propInputRef]
   );
 
-    const { ref: resizeRef, width:resizeWidth, height:resizeHeight } = useResizeObserver();
-
-
+  const {
+    ref: resizeRef,
+    width: resizeWidth,
+    height: resizeHeight,
+  } = useResizeObserver();
 
   return (
     <>
@@ -197,7 +194,6 @@ const GifMessageWrapper = forwardRef(({...props}, ref) => {
               <Emoji />
             </button>
           </TextInputView>
-          
         </div>
       </div>
     </>

@@ -79,7 +79,7 @@ return updateProfile;
 
 export const useUserQuery = ({ userId,select, queryOptions } = {}) => {
     
-  return useQuery(["user", userId], async () =>{ await getUserById(userId)}, {
+  return useQuery(["user", userId], async () =>{ return await getUserById(userId)}, {
     select,
     ...(queryOptions && queryOptions),
   });
@@ -91,11 +91,10 @@ export const useUserById = ({ userId, queryOptions } = {}) => {
  
  const select = useCallback(
    (data) => {
-    console.log('userdata',data)
      return data;
    },
    []
- );
+ ); 
 
  return useUserQuery({ userId, select, queryOptions });
 };
@@ -112,7 +111,16 @@ export const useUserDetails = ({ userId, queryOptions } = {}) => {
     };
   }, []);
 
-  return useUserQuery({ userId, select });
+  return useUserQuery({ userId, select, queryOptions });
+};
+
+export const useSenderDetails = ({ userId,roomId, queryOptions } = {}) => {
+ const queryClient=useQueryClient()
+ const { data: user } = useUserDetails({ userId, queryOptions });
+ const rooms=queryClient.getQueryData(['rooms'])
+ const colors=rooms[roomId]?.colors
+const color=colors?colors[userId]:null
+return {...user && user,color}
 };
 
 export const useExistingUsers=()=>{

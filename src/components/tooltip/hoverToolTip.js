@@ -22,9 +22,6 @@ const HoverToolTip=({align='left',children,value,style})=>{
    },
  });
 
-
-
-
     return (
       <span>
         <ToolTip

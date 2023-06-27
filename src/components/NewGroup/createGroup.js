@@ -1,7 +1,7 @@
 import { useCallback, useLayoutEffect, useRef, useState } from "react";
 import { ReactComponent as Done } from "../../assets/done.svg";
 import { ReactComponent as Group } from "../../assets/group.svg";
-import { useSidebar } from "../../contexts/sidebarContext";
+import { useSidebarDispatch,useSidebarState } from "../../contexts/sidebarContext";
 import DrawerHeader from "../header/drawer";
 
 import { nanoid } from "nanoid";
@@ -15,6 +15,7 @@ import Textarea from "react-textarea-autosize";
 import useSocket from "../../contexts/socketContext";
 import { getObjectUrls } from "../../queries.js/api";
 import { Modal } from "../modal";
+import { useMemo } from "react";
 
 const Input = forwardRef(
   ({ className, label, name, error, as, ...props }, ref) => {
@@ -57,15 +58,16 @@ const Input = forwardRef(
 );
 
 const CreateNewGroup = () => {
-  const [sideBar, dispatch] = useSidebar();
 
+  const {selected:members}=useSidebarState()
+  const dispatch=useSidebarDispatch()
   const aboutRef = useRef();
   const nameRef = useRef();
 
   const [socket, socketConnected] = useSocket();
   // const createGroupMutation = useCreateGroup();
 
-  const members = Object.keys(sideBar.selected);
+
 
   const [file, setFile] = useState();
 
@@ -85,49 +87,61 @@ const CreateNewGroup = () => {
     }
   };
 
-  const [blobUrl, setBlob] = useState();
   const [croppedFiles, setCroppedFiles] = useState();
-  const handleDpSubmit = useCallback(async ({ files }) => {
+  const handleDpSubmit = useCallback(async (files) => {
+    
     setCroppedFiles(files);
     setShowModal(false);
-    setFile("");
+    setFile(null);
   }, []);
+
+  console.log(members)
 
   const onSubmit = useCallback(async (data) => {
     let dp = { url: null, previewUrl: null };
     if (croppedFiles) {
-      const urls = await getObjectUrls({
-        files: croppedFiles,
+      const [url,previewUrl] = await getObjectUrls({
+         ...croppedFiles,
         collection: "dp",
       });
-      dp = { url: urls[0], ...(urls[1] && { previewUrl: urls[1] }) };
-    }
+      dp = { url, previewUrl } };
+    
     socket.emit("createGroup", {
       dp,
-      members,
+      members: members.map((member) => member.id),
       name: data.name,
       about: data.about,
       roomId: nanoid(),
-      createdAt: moment(new Date()).unix(),
+      createdAt: Date.now(),
     });
 
     dispatch({
-      type: "toggle",
+      type: "reset",
     });
   }, [croppedFiles, dispatch, members, socket]);
 
+  const [dp,revoke]=useMemo(()=>{
+     let dp;
+     if(!croppedFiles) return [null,null];
+     if (croppedFiles.original) {
+       dp = URL.createObjectURL(croppedFiles.original);
+     }
+
+     const revoke= () => {
+       if (dp) {
+         URL.revokeObjectURL(dp);
+       }
+     };
+     return [dp,revoke]
+  },[croppedFiles])
+
+
   useLayoutEffect(() => {
-    let url;
-    if (croppedFiles) {
-      url = URL.createObjectURL(croppedFiles[0]);
-      setBlob(url);
-    }
+  
     return () => {
-      if (url) {
-        URL.revokeObjectURL(url);
-      }
+     revoke?.()
     };
-  }, [croppedFiles]);
+  }, [revoke]);
 
   return (
     <span className="absolute top-0 left-0 h-full w-full overflow-x-hidden overflow-y-hidden  ">
@@ -144,14 +158,17 @@ const CreateNewGroup = () => {
           }}
           name={"Create Group"}
         />
-        <form className="flex-grow flex flex-col" onSubmit={handleSubmit(onSubmit)}>
+        <form
+          className="flex-grow flex flex-col"
+          onSubmit={handleSubmit(onSubmit)}
+        >
           <div className="flex-grow bg-white flex flex-col z-[1] relative scrollbar">
             <div
               onClick={() => {}}
               className="w-full flex flex-col overflow-x-hidden overflow-y-auto z-[100] relative flex-1  "
             >
               <DpUpload
-                src={blobUrl}
+                src={dp}
                 onFileSelect={onFileSelect}
                 text="add Display Picture"
               >
@@ -203,7 +220,6 @@ const CreateNewGroup = () => {
               />
             </div>
           </div>
-          {
             <span className="pb-[40px] pt-[24px] flex flex-grow-0 basis-auto flex-col justify-center items-center">
               <button
                 type="submit"
@@ -214,7 +230,6 @@ const CreateNewGroup = () => {
                 </span>
               </button>
             </span>
-          }
         </form>
       </div>
     </span>

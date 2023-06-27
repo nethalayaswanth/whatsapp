@@ -1,6 +1,7 @@
-import * as React from "react";
+import { useState, useContext, createContext, useCallback } from "react";
 
-const ChatContext = React.createContext();
+import createStore from "./exStore";
+const ChatContext = createContext();
 
 const initialState = {
   open: false,
@@ -9,7 +10,7 @@ const initialState = {
   imageModal: null,
   detailsOpened: false,
 };
-function ChatReducer(state, action) {
+function reducer(state, action) {
   switch (action.type) {
     case "set state": {
       return { ...state, ...action.payload };
@@ -26,20 +27,41 @@ function ChatReducer(state, action) {
   }
 }
 
-function ChatProvider({ children, props }) {
-  const [state, dispatch] = React.useReducer(ChatReducer, initialState);
+function ChatProvider({ children }) {
 
-  const value = [state, dispatch];
-  return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;
+  const [store] = useState(() => createStore(initialState));
+
+  return (
+    <ChatContext.Provider value={store}>
+     {children}
+    </ChatContext.Provider>
+  );
 }
 
-function useChat() {
-  const context = React.useContext(ChatContext);
+function useChatState() {
+  const context = useContext(ChatContext);
   if (context === undefined) {
     throw new Error("useChat must be used within a ChatProvider");
   }
   return context;
 }
 
-export { ChatProvider, useChat };
+function useChatDispatch() {
+  const chatStore = useContext(ChatContext);
+
+  if (chatStore === undefined) {
+    throw new Error("useChatDispatch must be used within a ChatProvider");
+  }
+  
+  const dispatch = useCallback(
+    (action) => {
+      chatStore((state) => reducer(state, action));
+    },
+    [chatStore]
+  );
+  return dispatch;
+}
+
+
+export { ChatProvider, useChatDispatch, useChatState };
 

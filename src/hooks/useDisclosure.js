@@ -156,7 +156,7 @@ export default function useDisclosure({
     }
   }, [isExpanded]);
 
-  const [prevIsExpanded] = usePrevious(isExpanded);
+  const prevIsExpanded = usePrevious(isExpanded);
 
   useLayoutEffect(() => {
     if (isExpanded) {

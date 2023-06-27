@@ -1,34 +1,34 @@
 
 
-import { useLayoutEffect, useState } from "react";
 import { ReactComponent as Arrow } from "../../assets/arrow.svg";
-import { ReactComponent as DefaultAvatar } from "../../assets/avatar.svg";
 import { ReactComponent as MenuIcon } from "../../assets/menu.svg";
-import { useSidebar } from "../../contexts/sidebarContext";
+import { useChatRoom } from "../../contexts/roomContext";
+import { useSidebarDispatch } from "../../contexts/sidebarContext";
 import useCollapse from "../../hooks/useCollapse";
 import useMedia from "../../hooks/useMedia";
+import { useRoomNotification } from "../../queries.js/rooms";
+import { Avatar } from "../Avatar";
 import { HeaderItem } from "../header/Header";
-import { useChatRoom } from "../../contexts/roomContext";
+import { Typing } from "../listItem/chatRoom";
 
 const ChatHeader = () => {
+  const data = useChatRoom();
 
+  const { newRoom, ...room } = data;
+  const sidebarDispatch = useSidebarDispatch();
 
- const data  = useChatRoom();
+  const { data: notification } = useRoomNotification({ roomId:room.roomId });
 
+  const handleClick = () => {
+    sidebarDispatch({ type: "set state", payload: { detailsOpened: true } });
+  };
 
-const { newRoom, ...room } =data
-    const [sideBar, sidebarDispatch] = useSidebar()
-
-    const handleClick = () => {
-      sidebarDispatch({ type: "set state", payload: { detailsOpened: true } });
-    };
-
-    // const handleClose = () => {
-    //   dispatch({
-    //     type: "set state",
-    //     payload: { preview: false },
-    //   });
-    // };
+  // const handleClose = () => {
+  //   dispatch({
+  //     type: "set state",
+  //     payload: { preview: false },
+  //   });
+  // };
 
   const device = useMedia({
     breakPoints: [740, 540, 420],
@@ -37,14 +37,13 @@ const { newRoom, ...room } =data
   });
   const mobile = device === "xs";
 
- const title=room?.name
- const typing= room?.typing 
- const dp=room?.dp?.previewUrl
-
+  const title = room?.name;
+  const dp = room?.dp?.previewUrl;
 
   const { getCollapseProps } = useCollapse({
-    // isExpanded: content,
+    isExpanded: notification?.typing,
   });
+
 
 
   return (
@@ -74,7 +73,7 @@ const { newRoom, ...room } =data
         </div>
       )}
       <button
-        onClick={handleClick }
+        onClick={handleClick}
         className="flex justify-center items-center flex-1 flex-shrink-0 "
       >
         <div className="cursor-pointer pr-[15px]">
@@ -82,7 +81,7 @@ const { newRoom, ...room } =data
             style={{ ...(mobile && { height: "36px", width: "36px" }) }}
             className={`h-[40px] w-[40px] rounded-full relative overflow-hidden cursor-pointer`}
           >
-            {dp ? <img src={dp} alt="" /> : <DefaultAvatar />}
+            <Avatar src={dp} />
           </div>
         </div>
         <div className="flex flex-col basis-auto  justify-center min-w-0 flex-grow">
@@ -103,9 +102,15 @@ const { newRoom, ...room } =data
                 display: "flex",
               },
             })}
-            className="text-[13px] leading-[20px]  flex justify-start "
           >
             <div className="flex justify-start ">
+              {notification && notification.typing ? (
+                <Typing
+                  className="text-[13px] leading-[20px]  flex justify-start "
+                  userId={notification.typingBy}
+                  roomType={room.type}
+                />
+              ) : null}
               {/* <span className="animate-fade ">{content}</span> */}
             </div>
           </div>

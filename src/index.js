@@ -8,6 +8,9 @@ import { get, set, del } from "idb-keyval";
 
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
+import { ErrorBoundary } from 'react-error-boundary';
+import StartUp from './components/startUp';
+
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -38,12 +41,34 @@ const persister = createIDBPersister();
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
-  <PersistQueryClientProvider
-    client={queryClient}
-    persistOptions={{ persister }}
+  <ErrorBoundary
+    fallbackRender={({ error, resetErrorBoundary }) => {
+
+ console.log(error)
+      return <StartUp>
+        <div className=" flex flex-col text-text-primary">
+          {error}
+          <button
+            className="text-danger"
+            onClick={() => {
+              resetErrorBoundary();
+            }}
+          >
+            Try again
+          </button>
+        </div>
+      </StartUp>
+    }
+     }
   >
-    <App />
-  </PersistQueryClientProvider>
+  
+    <PersistQueryClientProvider
+      client={queryClient}
+      persistOptions={{ persister }}
+    >
+      <App />
+    </PersistQueryClientProvider>
+  </ErrorBoundary>
 );
 
 reportWebVitals();

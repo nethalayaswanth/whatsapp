@@ -1,16 +1,51 @@
+import { useCallback } from "react";
+import useSocket from "../../contexts/socketContext";
 import { Modal } from "../modal";
 
 
 const deleteActions = ["Delete for everyone", "Delete for me", "Cancel"];
 
-export default function DeleteDialog({
-  showModal,
-  isSenderUser,
-  deleted,
-  handleDeleteAction,
-}) {
+ function DeleteDialog({ show,setShow, isSenderUser, deleted, roomId, messageId }) {
+
+ const [socket, socketConnected] = useSocket();
+
+  const handleDeleteAction = useCallback(
+    async (action) => {
+      switch (action) {
+        case "Delete for everyone": {
+          socket.emit(
+            "deleteMessage",
+            {
+              roomId,
+              messageId,
+              everyone: true,
+            },
+            (res) => {}
+          );
+          setShow(false);
+          break;
+        }
+        case "Delete for me": {
+          socket.emit("deleteMessage", {
+            roomId,
+            messageId,
+            everyone: false,
+          });
+          setShow(false);
+          break;
+        }
+        case "Cancel": {
+          setShow(false);
+          break;
+        }
+        default: {
+        }
+      }
+    },
+    [messageId, roomId, setShow, socket]
+  );
   return (
-    <Modal show={showModal}>
+    
       <div className="flex h-full w-full p-[24px] justify-center items-center ">
         <div className="px-[24px] pt-[22px] pb-[20px] bg-white rounded-[3px] shadow-lg flex  flex-col flex-1 basis-[100%] ">
           <div className="leading-[20px] text-[14.2px]">Delete message</div>
@@ -42,6 +77,17 @@ export default function DeleteDialog({
           </div>
         </div>
       </div>
-    </Modal>
+    
   );
 }
+
+
+ export default function Delete(props){
+
+const { show } = props;
+  return (
+    <Modal show={show}>
+      <DeleteDialog {...props} />
+    </Modal>
+  );
+ }

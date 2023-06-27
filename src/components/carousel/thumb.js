@@ -45,7 +45,7 @@ export const ThumbView = forwardRef(
 
     const handleClick = () => {
       onClick?.({
-        preview: preview,
+        preview: original,
         src: src,
         id: messageId,
         potrait,

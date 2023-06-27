@@ -1,36 +1,37 @@
-import { ReactComponent as Timer } from "../../assets/clock.svg";
-import { ReactComponent as Down } from "../../assets/down.svg";
 
-import { ReactComponent as TailIn } from "../../assets/tail.svg";
-import { ReactComponent as TailOut } from "../../assets/tailOut.svg";
-import { ReactComponent as Tick } from "../../assets/tick.svg";
+import {
+  useCallback,
+  useLayoutEffect,
+  forwardRef,
+  memo,
+  useRef,
+  useState,
+} from "react";
 
-
-import { useQueryClient } from "@tanstack/react-query";
-import { useCallback, useLayoutEffect, useMemo, useState, useRef } from "react";
-import { useChat } from "../../contexts/chatContext";
-import useSocket from "../../contexts/socketContext";
-import useCollapse from "../../hooks/useCollapse";
 import useHover from "../../hooks/useHover";
-import useMediaFetch from "../../hooks/useMediaFetch";
-import { useObjectUrl } from "../../hooks/useObjectUrl";
-import usePressAndHold from "../../hooks/usePressAndHold";
 
-import { callAll, formatDate ,formatDat, mergeRefs} from "../../utils";
+import { useChatDispatch } from "../../contexts/chatContext";
+import { useMessage } from "../../queries.js/messages";
+import { useSenderDetails } from "../../queries.js/user";
+
 import { MenuContainer } from "../Menu";
-import { Modal } from "../modal";
-
+import { Avatar } from "../Avatar";
 import HoverToolTip from "../tooltip/hoverToolTip";
+import Deleted from "./deleted";
+import Delete from "./deleteDialog";
 import Doc from "./document";
+import Failed from "./error";
 import Media from "./media";
 import Reply from "./reply";
 import Text from "./text";
-import DeleteDialog from "./deleteDialog";
-import Deleted from "./deleted";
-import { useMessage } from "../../queries.js/messages";
-import { useEffect } from "react";
-import { useUserDetails, useUserName } from "../../queries.js/user";
-import Failed from "./error";
+
+import { callAll, formatDat } from "../../utils";
+
+import { ReactComponent as Timer } from "../../assets/clock.svg";
+import { ReactComponent as TailIn } from "../../assets/tail.svg";
+import { ReactComponent as TailOut } from "../../assets/tailOut.svg";
+import { ReactComponent as Tick } from "../../assets/tick.svg";
+import { compareProps } from "./utils";
 
 const Notification = ({ children }) => {
   return (
@@ -41,11 +42,6 @@ const Notification = ({ children }) => {
     </div>
   );
 };
-
-
-
-
-
 
 const Tail = ({ incoming }) => {
   return (
@@ -61,6 +57,24 @@ const Tail = ({ incoming }) => {
   );
 };
 
+const Name = ({ name, color }) => {
+  return (
+    <div className={`pl-[9px] pb-[5px] pt-[3px]`}>
+      <div
+        className={`inline-flex max-w-full text-[12.8px] font-[500] leading-[22px] `}
+      >
+        <span
+          style={{
+            ...(color && { color: color }),
+          }}
+          className={`pl-[2px] ml-[-2px] flex-grow-0 flex-shrink-1 basis-auto overflow-hidden text-ellipses cursor-pointer whitespace-nowrap `}
+        >
+          {name}
+        </span>
+      </div>
+    </div>
+  );
+};
 const messageActions = [
   "Message info",
   "Reply",
@@ -69,7 +83,9 @@ const messageActions = [
   "Delete message",
 ];
 
-const Options=({isHovering,reply,handleMessgeAction})=>{
+const Options = ({ reply, getNode, handleMessgeAction }) => {
+  const [_, isHovering] = useHover(getNode);
+
   return (
     <span>
       <div
@@ -83,7 +99,6 @@ const Options=({isHovering,reply,handleMessgeAction})=>{
             style={{
               width: "100%",
               height: "100%",
-
               overflow: "hidden",
               position: "relative",
               right: 0,
@@ -100,21 +115,19 @@ const Options=({isHovering,reply,handleMessgeAction})=>{
       </div>
     </span>
   );
-}
+};
 
-const Footer = ({ time, text, incoming, seen, sending, conatainMedia }) => {
+const Footer = ({ time, text, incoming, seen, sending, containMedia }) => {
   return (
     <div className="absolute bottom-[3px] right-[5px] mt-[-12px] mr-0 ml-[4px]  z-[10] ">
       <div
         className={`cursor-pointer whitespace-nowrap text-[0.6875rem] h-[15px] leading-[15px]  ${
-          conatainMedia && !text
+          containMedia && !text
             ? "text-white text-opacity-[0.9]"
             : "text-message-timestamp-read"
         }`}
       >
-        <span className="inline-block text-center align-top">
-{time}
-        </span>
+        <span className="inline-block text-center align-top">{time}</span>
         {!incoming && (
           <div className="ml-[3px] inline-block text-message-icon">
             <span
@@ -130,56 +143,68 @@ const Footer = ({ time, text, incoming, seen, sending, conatainMedia }) => {
     </div>
   );
 };
-const MessageWrapper=({ children, className, user, roomId,metaData })=>{
+const MessageWrapper = ({ roomId, metaData }) => {
+  const container = useRef();
+  const { sender: senderId, id } = metaData;
 
-   const container = useRef();
+  const { data } = useMessage({
+    roomId,
+    messageId: id,
+  });
+  const sender = useSenderDetails({ userId: senderId, roomId });
 
-   const [showModal, setShowModal] = useState();
-
-  
-   const { sender:senderId, id, receiver, isSenderUser, tail, isReceiverUser } =
-     metaData;
-
-   const { data } = useMessage({
-     roomId,
-     messageId: id,
-   });
-     const { data:sender} = useUserDetails({ userId: senderId });
-
-   
   const status = data?.status;
   const sending = status?.sending;
+  const color = useRef("red");
 
-  
-  useLayoutEffect(() => {
-    if (sending) {
-      container.current.scrollIntoView({
-        block: "center",
-        inline: "nearest",
-      });
-    }
-  }, [sending]);
+  console.log(`%crendering`, `color:${color.current}`, data);
 
+  // useLayoutEffect(() => {
+  // if (last){
+  //   console.timeEnd("time",index)
+  // }else {console.timeLog("time", index)}
+  //   color.current = "yellow";
 
+  //   if (sending) {
+  //     const scroller = container.current.offsetParent;
+  //     console.log(scroller, scroller.scrollHeight);
+  //     scroller.scroll({
+  //       behaviour: "smooth",
+  //       left: 0,
+  //       top: scroller.scrollHeight,
+  //     });
+  //   }
+  // }, [index, last, sending, status]);
 
   return (
-   <div
-      ref={container}
-      id={id}
-      className={`message  px-[6.5%] mb-[12px]  flex relative flex-col select-text`}
-    >{data && <Message roomId={roomId} data={{...metaData,sender,senderId,...data}}/>}
-  
-    </div>
-    
+    <>
+      {data && (
+        <Message
+          roomId={roomId}
+          data={{ ...metaData, sender, senderId, ...data }}
+          ref={container}
+        />
+      )}
+    </>
   );
-}
-const Message = ({ children, className, user, roomId,data }) => {
-  const [ref, isHovering] = useHover();
+};
 
-  const [showModal, setShowModal] = useState();
-
-  // const bind=usePressAndHold((enable)=>{if(enable){console.log(enable)}},1000)
-
+const AddedToGroup = ({
+  receiverId,
+  isSenderUser,
+  roomId,
+  isReceiverUser,
+  sender,
+}) => {
+  const receiver = useSenderDetails({ userId: receiverId, roomId });
+  const senderName = sender?.name || sender.id;
+  const receiverName = receiver?.name || receiver.id;
+  const senderDp = sender?.dp?.previewUrl;
+  return `${isSenderUser ? "you" : senderName} added ${
+    isReceiverUser ? "you" : receiverName
+  }`;
+};
+const Message = forwardRef(({ roomId, data }, container) => {
   const {
     sender,
     id: messageId,
@@ -187,149 +212,98 @@ const Message = ({ children, className, user, roomId,data }) => {
     senderId,
     isSenderUser,
     tail,
+    sameSender,
     isReceiverUser,
   } = data;
-
-  console.log({
-    sender,
-    id: messageId,
-    receiver,
-    senderId,
-    isSenderUser,
-    tail,
-    isReceiverUser,
-  });
-
-  console.log(`%cmessages rendering`,'color:red')
 
   const status = data?.status;
   const sending = status?.sending;
   const error = status?.error;
-  
-  const senderName = sender?.name || senderId; ;
+
+  const senderName = sender?.name || senderId;
+  const senderDp = sender?.dp?.previewUrl;
+  const senderColor = sender?.color;
   const receiverName = receiver?.name;
- 
+
   const incoming = !isSenderUser;
 
+
   const timeStamp = incoming ? data?.deliveredTime : data?.sendTime;
-  const time = formatDat(timeStamp).time;
-  
+  const time = formatDat(timeStamp)?.time;
+
   const message = data?.message;
 
   const type = message?.type;
   const deleted = type?.includes("deleted");
   const image = type?.includes("image");
-  const gif = type?.includes("gif"); 
+  const gif = type?.includes("gif");
   const video = type?.includes("video");
   const doc = type?.includes("doc");
   const createdGroup = type?.includes("createdGroup");
   const addedToGroup = type?.includes("addedToGroup");
 
-
-  const reply = !deleted && data?.reply ;
-  const replyMessageId = reply?.messageId;
-
   const text = message?.text;
-  const replyText = reply?.text;
 
   const seen = !!(data?.unSeen === 0);
 
   const containMedia = image || video || gif;
- 
-  const original=message?.original
-  const preview=message?.preview
-  const dimensions=message?.dimensions
 
-  const fileName = message?.fileName; 
+  const original = message?.original;
+  const preview = message?.preview;
+  const dimensions = message?.dimensions;
+  const fileName = message?.fileName;
   const fileSize = message?.fileSize;
   const fileType = message?.fileType;
-  const fileDuration=message?.fileDuration
-  
-  const replyMediaUrl = reply?.previewurl;
+  const fileDuration = message?.fileDuration;
 
+  const reply = !deleted && data?.reply;
 
-  const props={ 
+  const props = {
     messageId,
     sending,
     error,
     original,
     preview,
-    fileDuration, 
+    fileDuration,
     fileSize,
     fileName,
     text,
     type,
     roomId,
-    dimensions}
+    dimensions,
+  };
 
-  const [socket, socketConnected] = useSocket();
+  const ref = useRef();
+  const getNode = useCallback(() => {
+    return ref.current;
+  }, []);
 
-  // const [chatState, chatDispatch] = useChat();
-
-
-
-  const handleDeleteAction = useCallback(
-    async (action) => {
-      switch (action) {
-        case "Delete for everyone": {
-          socket.emit(
-            "deleteMessage",
-            {
-              roomId,
-              messageId,
-              everyone: true,
-            },
-            (res) => {}
-          );
-
-          setShowModal(false);
-          break;
-        }
-        case "Delete for me": {
-          socket.emit("deleteMessage", {
-            roomId,
-            messageId,
-            everyone: false,
-          });
-
-          setShowModal(false);
-
-          break;
-        }
-        case "Cancel": {
-          setShowModal(false);
-
-          break;
-        }
-
-        default: {
-        }
-      }
-    },
-    [messageId, roomId, socket]
-  );
+  const [showDeleteModal, setDeleteModal] = useState();
+  const dispatch = useChatDispatch();
 
   const handleMessgeAction = useCallback(
     (action) => {
       switch (action) {
         case "Reply": {
-          // chatDispatch({
-          //   type: "reply",
-          //   payload: {
-          //     reply: {
-          //       text,
-          //       name: senderName,
-          //       from: sender,
-          //       messageId,
-          //       type,
-          //       preview,
-          //     },
-          //   },
-          // });
+          dispatch({
+            type: "reply",
+            payload: {
+              reply: {
+                from: sender,
+                message: {
+                  text,
+                  type,
+                  preview,
+                },
+                id: messageId,
+                isSenderUser,
+              },
+            },
+          });
           break;
         }
         case "Delete message": {
-          setShowModal(true);
+          setDeleteModal(true);
           break;
         }
 
@@ -337,7 +311,7 @@ const Message = ({ children, className, user, roomId,data }) => {
         }
       }
     },
-    [messageId, preview, sender, senderName, text, type]
+    [dispatch, isSenderUser, messageId, preview, sender, text, type]
   );
 
   if (createdGroup) {
@@ -351,24 +325,45 @@ const Message = ({ children, className, user, roomId,data }) => {
   if (addedToGroup) {
     return (
       <Notification>
-        {`${isSenderUser ? "you" : senderName} added ${receiverName}`}
+        <AddedToGroup
+          isSenderUser={isSenderUser}
+          receiverId={receiver}
+          roomId={roomId}
+          sender={sender}
+          isReceiverUser={isReceiverUser}
+        />
       </Notification>
     );
   }
 
   return (
-    <>
+    <div
+      ref={container}
+      id={messageId}
+      className={`message  pl-[71px] pr-[57px]  ${
+        sameSender || tail ? `mb-[2px] ` : "mb-[12px]"
+      } ${tail ? `mt-[10px] ` : ""}   flex relative flex-col select-text`}
+    >
       <div
-        // {...bind()}
         id="msg-container"
         ref={ref}
-        className={`${incoming ? "incoming" : ""} ${
-          containMedia ? "image" : ""
-        } mb-0  max-w-[85%] ${reply ? "min-w-[180px]" : ""}   ${
+        className={`${incoming ? "incoming" : ""}  mb-0  max-w-[85%] ${
+          reply ? "min-w-[180px]" : ""
+        }   ${
           doc ? "w-[336px]" : ""
-        }  relative flex-none text-[14.2px] leading-[19px] text-message-primary `}
+        }  relative flex-none text-[14.2px] leading-[19px] text-message-primary message ${
+          containMedia ? "image" : ""
+        } ${text ? "text" : ""}`}
       >
         {tail && <Tail incoming={incoming} />}
+
+        {incoming && (
+          <div>
+            <div className="absolute w-[28px] h-[28px] rounded-full cursor-pointer left-[-38px]">
+              <Avatar src={senderDp} />
+            </div>
+          </div>
+        )}
 
         <div
           className={`rounded-[7.5px] ${
@@ -376,33 +371,8 @@ const Message = ({ children, className, user, roomId,data }) => {
           } relative z-[200] bg-[color:var(--bg)] shadow-md`}
         >
           <div className={`p-[3px] flex-col justify-center relative `}>
-            {!isSenderUser && (
-              <div className={`pl-[9px] pb-[5px] pt-[3px]`}>
-                <div
-                  className={`inline-flex max-w-full text-[12.8px] font-[500] leading-[22px] `}
-                >
-                  <span
-                    style={
-                      {
-                        // ...(color && { color: color }),
-                      }
-                    }
-                    className={`pl-[2px] ml-[-2px] flex-grow-0 flex-shrink-1 basis-auto overflow-hidden text-ellipses cursor-pointer whitespace-nowrap `}
-                  >
-                    {senderName}
-                  </span>
-                </div>
-              </div>
-            )}
-            {reply && (
-              <Reply
-                text={replyText}
-                replyMessageId={replyMessageId}
-                name={reply?.name}
-                color={reply?.color}
-                url={replyMediaUrl}
-              />
-            )}
+            {!isSenderUser && <Name name={senderName} color={senderColor} />}
+            {reply && <Reply reply={reply} roomId={roomId} />}
             {doc && <Doc {...props} />}
             {containMedia && <Media {...props}></Media>}
             {text && <Text text={text} />}
@@ -410,16 +380,25 @@ const Message = ({ children, className, user, roomId,data }) => {
           </div>
           <Footer {...{ time, text, incoming, seen, sending, containMedia }} />
         </div>
+
+        <Options {...{ getNode, reply, handleMessgeAction }} />
+        <Delete
+          show={showDeleteModal}
+          setShow={setDeleteModal}
+          isSenderUser={isSenderUser}
+          deleted={deleted}
+          roomId={roomId}
+          messageId={messageId}
+        />
         {error && <Failed />}
-        <Options {...{ isHovering, reply, handleMessgeAction }} />
         <div className="absolute flex min-h-0 min-w-0 items-center  w-[101]px t-[calc(50%-10px)] mt-[-13px] justify-end">
           <div className="px-[3px] h-[25px] pb-0 min-h-0 min-w-0 flex-shrink flex-grow-0 pt-0 ">
             <div></div>
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
-};
+});
 
-export default MessageWrapper;
+export default memo(MessageWrapper,compareProps);

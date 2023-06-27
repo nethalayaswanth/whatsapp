@@ -2,8 +2,9 @@ import React, { useCallback } from "react";
 import { ReactComponent as DefaultAvatar } from "../../assets/avatar.svg";
 import { ReactComponent as ChatIcon } from "../../assets/chat.svg";
 import { ReactComponent as MenuIcon } from "../../assets/menu.svg";
-import { useSidebar } from "../../contexts/sidebarContext";
+import { useSidebarDispatch } from "../../contexts/sidebarContext";
 import { callAll } from "../../utils";
+import { Avatar } from "../Avatar";
 import { MenuContainer } from "../Menu";
 import ToolTip from "../tooltip";
 
@@ -30,7 +31,7 @@ export const HeaderItem = ({ children, name, style, className, onClick }) => {
 };
 
 const Header = ({user}) => {
-  const [state, dispatch] = useSidebar();
+  const dispatch=useSidebarDispatch()
 
   const handleClick = useCallback(
     (name) => {
@@ -75,11 +76,8 @@ const Header = ({user}) => {
             handleClick("profile");
           }}
         >
-          {user && user.dp ? (
-            <img src={user.dp.previewUrl} alt="" />
-          ) : (
-            <DefaultAvatar />
-          )}
+    
+          <Avatar src={user?.dp?.previewUrl} />
         </div>
       </div>
       <div className="text-panel-header-icon flex-none flex items-center"></div>

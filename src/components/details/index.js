@@ -1,34 +1,32 @@
-import { useQueryClient } from "@tanstack/react-query";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useState } from "react";
 import { createPortal } from "react-dom";
 import { ReactComponent as Arrow } from "../../assets/arrow.svg";
-import { ReactComponent as DefaultAvatar } from "../../assets/avatar.svg";
 import { ReactComponent as Close } from "../../assets/close.svg";
 import { ReactComponent as Delete } from "../../assets/delete.svg";
 import { ReactComponent as Next } from "../../assets/next.svg";
-import { useSidebar } from "../../contexts/sidebarContext";
+import { useChatRoom } from "../../contexts/roomContext";
+import {  useSidebarDispatch, useSidebarState } from "../../contexts/sidebarContext";
 import useMedia from "../../hooks/useMedia";
 import useTransition from "../../hooks/useTransition";
-import { useMediaOfRoom, useDocumentsOfRoom } from "../../queries.js/messages";
+import { useDocumentsOfRoom, useMediaOfRoom } from "../../queries.js/messages";
+import { useUser } from "../../queries.js/useRequests";
 import Disclosure from "../Disclosure";
 import DrawerHeader from "../header/drawer";
 import TabNavigation from "../tabNavigation";
 import Documents from "./documents";
+import Dp from "./dp";
 import Gallery from "./gallery";
 import UserCard from "./userCard";
-import { useChatRoom } from "../../contexts/roomContext";
-import Dp from "./dp";
 
 export function Details() {
-
-
   const { newRoom, ...room } = useChatRoom();
+  const { data: user } = useUser();
   const roomId = room?.roomId;
-  const isGroup=room?.type==='group'
-  const participants=room?.members?.length
-   
+  const isGroup = room?.type === "group";
+  const participants = room?.members?.length;
+
   const [openDrawer, setDrawer] = useState(false);
-  const [sideBar, dispatch] = useSidebar();
+  const dispatch = useSidebarDispatch();
 
   const handleClose = useCallback(() => {
     dispatch({ type: "set state", payload: { detailsOpened: false } });
@@ -39,8 +37,6 @@ export function Details() {
 
   const { data: media } = useMediaOfRoom({ roomId });
 
-
-
   const { mount, getDisclosureProps, getParentProps } = useTransition({
     isExpanded: openDrawer,
     direction: "right",
@@ -50,15 +46,12 @@ export function Details() {
     enabled: !!mount,
   });
 
-   const queryClient = useQueryClient();
-
-
-     const device = useMedia({
-       breakPoints: [740, 540, 420],
-       breakPointValues: ["xl", "l", "sm"],
-       defaultValue: "xs",
-     });
-     const mobile = device === "xs";
+  const device = useMedia({
+    breakPoints: [740, 540, 420],
+    breakPointValues: ["xl", "l", "sm"],
+    defaultValue: "xs",
+  });
+  const mobile = device === "xs";
 
   return (
     <>
@@ -134,7 +127,7 @@ export function Details() {
               </div>
             </div>
             <div className="flex flex-grow flex-wrap justify-center  pt-[6px]  overflow-y-scroll">
-              <Gallery roomId={roomId} media={media} />
+              <Gallery roomId={roomId} media={media} length={6} />
             </div>
           </div>
           {isGroup ? (
@@ -149,27 +142,20 @@ export function Details() {
                 </div>
               </div>
               <div className="">
-                {/* {room.members.map((userId, index) => {
+                {room.members.map((userId, index) => {
                   const last = room.members.length - 1 === index;
-                  const user = queryClient.getQueryData(["user", userId]);
-                  const title = user?.name;
-                  const details = user?.username;
-                  const dp = user?.dp?.preview;
-                  const isOnline = user.isOnline;
+
                   return (
                     <UserCard
-                      online={isOnline}
                       // onClick={() => {
                       //   handleClick(user);
                       // }}
                       key={userId}
+                      userId={userId}
                       last={last}
-                      title={title}
-                      details={details}
-                      dp={dp}
                     />
                   );
-                })} */}
+                })}
               </div>
             </div>
           ) : null}
@@ -225,13 +211,22 @@ export function Details() {
                       activeBar="#25d366"
                       activetext="white"
                     >
-                      <div className="w-full  flex flex-col">
-                        <div className="flex flex-grow flex-wrap justify-center  p-[30px] pr-[20px] overflow-y-scroll">
-                          <Gallery roomId={roomId} media={media} />
+                      <div className="w-full h-full   flex flex-col">
+                        <div className="flex justify-center overflow-y-scroll">
+                          <div className="flex flex-grow flex-wrap justify-center  p-[30px] pr-[20px] ">
+                            <Gallery
+                              roomId={roomId}
+                              media={media}
+                              user={user}
+                            />
+                          </div>
                         </div>
                       </div>
-
-                      <Documents documents={documents}></Documents>
+                      <Documents
+                        roomId={roomId}
+                        documents={documents}
+                        user={user}
+                      ></Documents>
                     </TabNavigation>
                   </div>
                 </div>
@@ -245,21 +240,20 @@ export function Details() {
 }
 
 export const DetailsPortal = ({ children }) => {
-  const [sideBar, sidebarDispatch] = useSidebar();
-
-  const detailsOpened = sideBar.detailsOpened;
+  const { detailsOpened } = useSidebarState();
 
 
   const drawerRoot = document.getElementById("drawer-right");
 
   return (
     <>
-      {drawerRoot && createPortal(
-        <div className={`absolute z-[1002]  left-0 top-0 w-full h-full`}>
-          <Disclosure isExpanded={detailsOpened}>{children}</Disclosure>
-        </div>,
-        drawerRoot
-      )}
+      {drawerRoot &&
+        createPortal(
+          <div className={`absolute z-[1002]  left-0 top-0 w-full h-full`}>
+            <Disclosure isExpanded={detailsOpened}>{children}</Disclosure>
+          </div>,
+          drawerRoot
+        )}
     </>
   );
 };

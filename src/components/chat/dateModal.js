@@ -1,15 +1,8 @@
-
-import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useDateModalState } from "../../contexts/dateModalContext";
 import useDisclosure from "../../hooks/useDisclosure";
-import { useScrollPosition } from "../../hooks/useScrollPosition";
-
 
 const DateModal = () => {
- 
-const { isScrolling,date} = useDateModalState();
-
- console.log(isScrolling)
+  const { isScrolling, date } = useDateModalState();
 
   const { mount, getDisclosureProps, getParentProps } = useDisclosure({
     isExpanded: !!isScrolling,
@@ -18,12 +11,10 @@ const { isScrolling,date} = useDateModalState();
     duration: 50,
   });
 
-
-
   return (
     <>
       {date && mount && (
-        <span className="fixed z-[100] w-full">
+        <div className="fixed z-[100] w-full">
           <div
             {...getParentProps({
               style: {
@@ -44,11 +35,10 @@ const { isScrolling,date} = useDateModalState();
               </div>
             </div>
           </div>
-        </span>
+        </div>
       )}
     </>
   );
 };
 
-
-export default DateModal; 
+export default DateModal;

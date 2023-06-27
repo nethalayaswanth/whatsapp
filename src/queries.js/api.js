@@ -12,7 +12,7 @@ export const login = async ({ input }) => {
     const x = await client.post("/login", { input });
     return x.data;
   } catch (e) {
-    throw new error(e);
+    errorHandler(e)
   }
 };
 
@@ -21,7 +21,7 @@ export const anotherAccount = async () => {
     const x = await client.post("/anotherAccount");
     return x.data;
   } catch (e) {
-    throw new error(e);
+  errorHandler(e);
   }
 };
 
@@ -30,7 +30,7 @@ export const signUp = async ({ username, email }) => {
     const x = await client.post("/signUp", { username, email });
     return x.data;
   } catch (e) {
-    throw new error(e);
+   errorHandler(e);
   }
 };
 
@@ -42,7 +42,7 @@ export const aboutUpdate = async (data) => {
 
     return x.data?.payload;
   } catch (e) {
-    throw new error(e);
+    errorHandler(e);
   }
 };
 
@@ -52,7 +52,7 @@ export const nameUpdate = async ({ name }) => {
 
     return x.data?.payload;
   } catch (e) {
-    throw new error(e);
+   errorHandler(e);
   }
 };
 
@@ -63,7 +63,7 @@ export const pinRoom = async ({ roomId, pin }) => {
 
     return x.data;
   } catch (e) {
-    throw new error(e);
+  errorHandler(e);
   }
 };
 
@@ -83,7 +83,7 @@ export const dpUpdate = async ({ original,preview }) => {
 
     return { dp: { original, preview } };
   } catch (e) {
-    throw new error(e);
+  errorHandler(e);
   }
 };
 
@@ -117,7 +117,7 @@ export const createGroup = async ({
       dp: { original: urls[0], ...(urls[1] && { preview: urls[1] }) },
     };
   } catch (e) {
-    throw new error(e);
+    errorHandler(e);
   }
 };
 
@@ -126,7 +126,7 @@ export const checkUsername = async ({ username }) => {
     const x = await client.post("/checkUsername", { username });
     return x.data;
   } catch (e) {
-    throw new error(e);
+    errorHandler();
   }
 };
 export const checkUserEmail = async ({ email }) => {
@@ -134,7 +134,7 @@ export const checkUserEmail = async ({ email }) => {
     const x = await client.post("/checkUsername", { email });
     return x.data;
   } catch (e) {
-    throw new error(e);
+    errorHandler(e);
   }
 };
 
@@ -149,17 +149,17 @@ export const getUser = async () => {
     const { data } = await client.get("/me");
     return data;
   } catch (e) {
-    throw new error(e);
+    console.log(e)
+    errorHandler(e);
   }
 };
 
 export const getRooms = async () => {
   const data = await client.get(`/rooms`).then((x) => x.data);
-
   return data;
 };
 
-export const getRoomById = async ({ id }) => {
+export const getRoomById = async (id ) => {
   const data = await client.get(`/room/${id}`).then((x) => x.data);
   return data;
 };
@@ -175,14 +175,39 @@ export const search = async (query) => {
   return data;
 };
 
-class error {
-  constructor(e) {
-    const { message, ...rest } = e.response?.data;
-    if (e instanceof Error) {
-      this.response = rest;
-      this.message = message;
+class APIError extends Error {
+
+ 
+ constructor(name,status,description) {
+   super(description);
+   Object.setPrototypeOf(this, new.target.prototype);
+ 
+   this.name = name;
+   this.status = status;
+   this.description = description;
+ 
+   Error.captureStackTrace(this);
+ }
+}
+
+export const errorHandler=(error)=>{
+   if (error.response) {
+    
+    if(error.response.data){
+      const response=error.response
+      const data=response.data
+      throw new APIError(data.name,response.status,data.message);
     }
-  }
+     console.log(error.response.data);
+     console.log(error.response.status);
+     console.log(error.response.headers);
+   } else if (error.request) {
+    
+       throw new APIError('BadRequest',null,'something went wrong');
+   } else {
+   
+     console.log("Error", error.message);
+   }
 }
 
 export const getMessages = async ({
@@ -299,6 +324,7 @@ export const postTos3 = async ({ file, url, signal, progressCb }) => {
         signal,
         headers: { "Content-Type": `${file.type}` },
         onUploadProgress: (progressEvent) => {
+
           var percentCompleted = Math.round(
             (progressEvent.loaded * 100) / progressEvent.total
           );
@@ -318,12 +344,11 @@ export const uploadMessage = async ({ collection, progressCb,signal, ...data }) 
       return { ...data }; 
     }
 
-  
-
-  const [original,preview] = await getObjectUrls({
+  const [original, preview] = await getObjectUrls({
     original: data.message.original?.raw,
     preview: data.message.preview?.raw,
     collection,
+    progressCb,
   });
 
      
@@ -338,7 +363,7 @@ export const uploadMessage = async ({ collection, progressCb,signal, ...data }) 
     return response;
   } catch (e) {
 
-   console.log(e)
+      console.log(e)
 
     throw e;
   }

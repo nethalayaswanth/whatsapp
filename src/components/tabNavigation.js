@@ -92,7 +92,7 @@ const TabNavigation = ({
 
   const [active, setActive] = useState(0);
 
-  const [prevActive] = usePrevious(active);
+  const prevActive = usePrevious(active);
 
   const [mount, setMount] = useState(false);
 

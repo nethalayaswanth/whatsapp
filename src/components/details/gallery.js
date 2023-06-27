@@ -3,7 +3,7 @@ import { ThumbView } from "../carousel/thumb";
 import { useChat } from "../../contexts/chatContext";
 import { useModalDispatch } from "../../contexts/modalContext";
 
-export default function Gallery({ media, roomId }) {
+export default function Gallery({ media, roomId,length }) {
   const modalDispatch=useModalDispatch()
 
   const handleClick = useCallback(
@@ -25,11 +25,12 @@ export default function Gallery({ media, roomId }) {
     [modalDispatch]
   );
 
+  const items = length?media.slice(0, length):media
   
   return (
     <>
-      {media &&
-        media.map((messageId, i) => {
+      {items && items.length!==0 &&
+        items.map((messageId, i) => {
           return (
             <ThumbView
               roomId={roomId}

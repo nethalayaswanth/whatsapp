@@ -109,11 +109,16 @@ export const SocketProvider = ({ children, ...props }) => {
 
         if (everyone) {
           queryClient.setQueryData([roomId, "messages"], (old) => {
+             if (!old.messages) return old;
+             const { [messageId]: deleted, ...rest } = old.messages;
             return {
               ...old,
-              [messageId]: {
-                ...old[messageId],
-                message: { text: "", type: "deleted" },
+              messages: {
+                ...rest,
+                [messageId]: {
+                  ...deleted,
+                  message: { text: "", type: "deleted" },
+                },
               },
             };
           });
@@ -121,18 +126,21 @@ export const SocketProvider = ({ children, ...props }) => {
         }
 
         queryClient.setQueryData([roomId, "messages"], (old) => {
-          const { [messageId]: removed, ...rest } = old;
+          if(!old.messages) return old
+          const { [messageId]: removed, ...rest } = old.messages;
 
-          //  console.log(rest)
+         
           return {
-            ...rest,
+            ...old,
+            messages: {
+              ...rest,  
+            },
           };
         });
       });
 
       socket.on("message", (data) => {
-        // console.log("%cmessage", "color:red;font-size:54px");
-
+    
         const { room, message } = data;
 
         console.log(room, message);
@@ -144,7 +152,7 @@ export const SocketProvider = ({ children, ...props }) => {
             ...(old && old),
             [message.roomId]: {
               ...(old && old[message.roomId]),
-              ...(room && { room }),
+              ...(room &&  room ),
               unread: old[message.roomId].unread
                 ? old[message.roomId].unread + 1
                 : 1,
@@ -165,14 +173,12 @@ export const SocketProvider = ({ children, ...props }) => {
 
       socket.on("typing", (payload) => {
         console.log(payload);
-        queryClient.setQueryData(["rooms"], (old) => {
+        queryClient.setQueryData(["room", payload.roomId], (old) => {
           return {
             ...(old && old),
-            [payload.roomId]: {
-              ...(old && old[payload.roomId]),
-
+          
               notification: { ...payload, action: "TYPING" },
-            },
+          
           };
         });
       });

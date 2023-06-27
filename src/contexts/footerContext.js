@@ -1,14 +1,7 @@
-import * as React from "react";
+import { createContext, useCallback, useContext, useState } from "react";
+import createStore from "./exStore";
 
-const FooterContext = React.createContext();
-
-const reset = {
-  gifDialogOpened: false,
-  previewModalOpened: false,
-  gifSelected: null,
-  fileSelected: null,
-  fileType: null,
-};
+const FooterContext = createContext();
 
 const initialState = {
   bottomSheetOpened: false,
@@ -20,99 +13,67 @@ const initialState = {
   file: null,
   fileType: null,
   text: "",
-  inputRef: null,
-  propInputRef: null,
 };
-function FooterReducer(state, action) {
 
-
-  // console.log(action,state)
-
+function footerReducer(state, action) {
   switch (action.type) {
     case "set state": {
       return { ...state, ...action.payload };
     }
-    case "set activeTab": {
-     
-
-        if(action.active==='attachment'){
-       return { ...state, bottomSheetOpened: false, attachmentDialogOpened:true };
-        }
-
-
-      return { ...state, activeTab: action.active , bottomSheetOpened: true };
-    }
     case "close bottomSheet": {
-      return {
-        ...state,
-        bottomSheetOpened: false,
-        attachmentDialogOpened:false,
-      };
+      return { ...state, bottomSheetOpened: false };
     }
-    case "open bottomSheet": {
+    case "set activeTab": {
       return {
         ...state,
         bottomSheetOpened: true,
+        bottomSheetMounted: true,
+        ...action.payload,
+      };
+    }
+    case "toggle attachment": {
+      return {
+        ...state,
+        bottomSheetOpened: false,
+        attachmentDialogOpened: !state.attachmentDialogOpened,  
       };
     }
 
+    case "reset attachment": {
+      return {
+        ...state,
+        bottomSheetOpened: false,
+        attachmentDialogOpened: false,
+        file: null,
+        fileType: null,
+      };
+    }
     case "toggle bottomSheetMount": {
-      return { ...state, bottomSheetMounted: !state.bottomSheetMounted };
-    }
-    case "toggle bottomSheet": {
-      if (!state.bottomSheetOpened && state.activeTab === "attachment") {
-        return {
-          ...state,
-          bottomSheetOpened: !state.bottomSheetOpened,
-          activeTab: "emoji",
-        };
-      }
-      return { ...state, bottomSheetOpened: !state.bottomSheetOpened };
-    }
-    case "toggle gifDialog": {
-      return { ...state, previewDialogOpened: !state.previewDialogOpened };
+      return {
+        ...state,
+        bottomSheetMounted: !state.bottomSheetMounted,
+        ...action.payload,
+      };
     }
     case "toggle previewDialog": {
       return {
         ...state,
         previewDialogOpened: !state.previewDialogOpened,
+        ...action.payload,
       };
     }
-    case "set gif": {
-      return { ...state, gifSelected: action.gif };
-    }
-    case "set file": {
+    case "reset previewDialog": {
       return {
         ...state,
-        file: action.file,
-        fileType: action.fileType,
-        previewDialogOpened: !state.previewDialogOpened,
-      };
-    }
-    case "set inputRef": {
-      return {
-        ...state,
-        inputRef: action.inputRef,
-      };
-    }
-    case "set propInputRef": {
-      if (state.inputRef && action.propInputRef) {
-        action.propInputRef.value = state.inputRef?.value;
-      }
-
-    
-
-      return {
-        ...state,
-        propInputRef: action.propInputRef,
+        file: null,
+        fileType: null,
+        previewDialogOpened: false,
+        ...action.payload,
       };
     }
 
-    case "set text": {
-      return { ...state, text: action.text };
-    }
     case "reset": {
-      return { ...state,...reset,...action.payload };
+      return { ...initialState };
     }
     default: {
       throw new Error(`Unhandled action type: ${action.type}`);
@@ -120,25 +81,37 @@ function FooterReducer(state, action) {
   }
 }
 
-function FooterProvider({ children, onSubmit = () => {}, onKeyPress=()=>{} }) {
-  const [state, dispatch] = React.useReducer(FooterReducer, initialState);
-
-  const value = [state, dispatch, onSubmit, onKeyPress];
-  value.state = state;
-  value.dispatch = dispatch;
-  value.onSubmit = onSubmit;
-  value.onKeyPress = onKeyPress;
+function FooterProvider({ children }) {
+  const [store] = useState(() => createStore(initialState));
   return (
-    <FooterContext.Provider value={value}>{children}</FooterContext.Provider>
+    <FooterContext.Provider value={store}>{children}</FooterContext.Provider>
   );
 }
 
-function useFooter() {
-  const context = React.useContext(FooterContext);
-  if (context === undefined) {
-    throw new Error("useFooter must be used within a FooterProvider");
+function useFooterState(selector) {
+  const footerStore = useContext(FooterContext);
+  if (footerStore === undefined) {
+    throw new Error("useFooterState must be used within a FooterProvider");
   }
-  return context;
+
+  return footerStore;
 }
 
-export { FooterProvider, useFooter };
+function useFooterDispatch() {
+  const footerStore = useContext(FooterContext);
+  if (footerStore === undefined) {
+    throw new Error("useFooterDispatch must be used within a FooterProvider");
+  }
+
+  const dispatch = useCallback(
+    (action) => {
+      console.log(action.type);
+      footerStore((state) => footerReducer(state, action));
+    },
+    [footerStore]
+  );
+
+  return dispatch;
+}
+
+export { FooterProvider, useFooterDispatch, useFooterState };

@@ -351,8 +351,8 @@ export const generatecroppedImage = async ({
       src,
       crop,
       minResolution: 0,
-      maxResolution: dp ? 96 : 100,
-      quality,
+      maxResolution: dp ? 96 : 36,
+      quality:dp ?1/3:1/6,
       blur,
       rotation,
     }),
@@ -402,14 +402,14 @@ export const createVideo = (url) => {
     video.playsInline = true;
     video.play();
     video.onloadedmetadata = async (event) => {
-      const ascpectRatio = video.videoWidth / video.videoHeight;
+      const aspectRatio = video.videoWidth / video.videoHeight;
 
       const thumbnail = await generateThumbNail(video);
 
       video.pause();
 
       res({
-        ascpectRatio,
+        aspectRatio,
         height: video.videoHeight,
         width: video.videoWidth,
         url,

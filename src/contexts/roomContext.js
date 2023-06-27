@@ -1,25 +1,14 @@
-
 import * as React from "react";
+
 import { useRoom } from "../queries.js/rooms";
-import { useAppState } from "./appStateContext";
+import { useAppState } from "./appStore";
 
 const RoomContext = React.createContext();
 
+function RoomProvider({ children }) {
+  const { roomId, roomType: type,privateMember: member } = useAppState();
 
-
-function RoomProvider({ children, ...props }) {
-
-   const [state, dispatch] = useAppState();
-
-
-
-   const roomMeta = state.currentRoom;
-
- 
-       const room =   useRoom({ roomMeta });
-
-
-       console.log(room)
+  const room = useRoom({ roomId, type, member });
 
   return <RoomContext.Provider value={room}>{children}</RoomContext.Provider>;
 }

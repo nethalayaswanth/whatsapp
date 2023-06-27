@@ -214,6 +214,7 @@ const GifPicker = ({ onSelect, sticker = false }) => {
             noLink={true}
             onGifClick={(gif) => {
               const images = gif?.images;
+              console.log(images)
               const {height,width,url,size}=images.original
               const preview=images.preview_gif.url
               const aspectRatio=width/height

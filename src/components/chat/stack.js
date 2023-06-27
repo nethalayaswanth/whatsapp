@@ -1,14 +1,9 @@
-import {
-  useCallback,
-  useLayoutEffect,
-  createContext,
-  useContext,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useLayoutEffect, useRef } from "react";
 
-import { FooterProvider, useFooter } from "../../contexts/footerContext";
+import {
+  useFooterDispatch,
+  useFooterState,
+} from "../../contexts/footerContext";
 
 import useAnimationFrame from "../../hooks/useAnimationFrame";
 import usePrevious from "../../hooks/usePrevious";
@@ -17,28 +12,31 @@ import { Children } from "react";
 
 const lerp = (a, b, t) => a + (b - a) * t;
 const easeIn = (t) => t * t;
-
 const easeOut = (t) => t * (2 - t);
 
-
-const Stack = ({ children, scroller, footer }) => {
+const Stack = ({ children }) => {
   const spacerRef = useRef();
+  const scroller = useRef();
+  const footer = useRef();
 
   const conversationContainerRef = useRef();
   const currentScrollRef = useRef();
 
-  const [footerState, dispatch] = useFooter();
+  const { bottomSheetOpened } = useFooterState();
+  const setFooterState = useFooterDispatch();
 
-  const bottomSheetOpened = footerState.bottomSheetOpened;
  
-  const [prevBottomSheetOpened] = usePrevious(bottomSheetOpened);
+
+  const prevBottomSheetOpened = usePrevious(bottomSheetOpened);
 
   useLayoutEffect(() => {
+    scroller.current = document.getElementById("chat-scroller");
+    footer.current = document.getElementById("footer-bottomSheet");
     if (!scroller.current) return;
-    if (bottomSheetOpened) dispatch({ type: "toggle bottomSheetMount" });
+    // if (bottomSheetOpened) setFooterState({ type: "toggle bottomSheetMount" });
 
     currentScrollRef.current = scroller.current.scrollTop;
-  }, [bottomSheetOpened, dispatch, scroller]);
+  }, [bottomSheetOpened, setFooterState, scroller]);
 
   useAnimationFrame(
     (progress) => {
@@ -89,7 +87,7 @@ const Stack = ({ children, scroller, footer }) => {
     },
     {
       onComplete: () => {
-        dispatch({ type: "toggle bottomSheetMount" });
+        setFooterState({ type: "toggle bottomSheetMount" });
       },
       shouldAnimate: !bottomSheetOpened && prevBottomSheetOpened,
       duration: 300,
@@ -109,10 +107,10 @@ const Stack = ({ children, scroller, footer }) => {
       ></div>
       <div
         ref={conversationContainerRef}
-        className="relative z-[1] flex-auto basis-auto order-2"
+        className="relative z-[1] flex-auto  order-2"
       >
         <div>
-          <div className="absolute top-0 z-50 flex  flex-col w-full h-full">
+          <div className="absolute top-0 z-50 flex basis-auto flex-col w-full h-full">
             {Conversation}
           </div>
         </div>
@@ -121,7 +119,5 @@ const Stack = ({ children, scroller, footer }) => {
     </>
   );
 };
-
-
 
 export default Stack;

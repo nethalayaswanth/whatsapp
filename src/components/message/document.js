@@ -6,48 +6,23 @@ import { useMessageMutation } from "../../contexts/mutationContext";
 import { Progress } from "./loading";
 
 import { ReactComponent as Close } from "../../assets/closeThin.svg";
+import useMediaFetch from "../../hooks/useMediaFetch";
 
-export default function DocMessage({ fileSize, fileType,messageId, fileName,className,sending,error,original,preview }) {
+export default function DocMessage({
+  fileSize,
+  type,
+  messageId,
+  fileName,
+  className,
+  sending,
+  error,
+  original,
+  preview,
+}) {
+  const [originalUrl, previewUrl, loading] = useMediaFetch({original,preview,type})
 
 
-  const originalUrl = useRef(
-    original === "object" ? URL.createObjectURL(original) : original
-  );
-  const blobUrl = useRef(originalUrl);
-     
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
- 
-    const original = originalUrl.current;
-     const fetchMedia = async () => {
-     
-      try {
-        const blob = await fetch(original).then(function (response) {
-          return response.blob();
-        }); 
-
-        blobUrl.current = URL.createObjectURL(blob);
-        setLoading(false);
-      } catch (e) {
-        console.log(e);
-      }}
-
-  if (!originalUrl.current || originalUrl.current.includes('blob')) return
-
-  fetchMedia();
-
-        return ()=>{
-           if (blobUrl.current) {
-             URL.revokeObjectURL(blobUrl.current);
-           }
-            if (original) {
-              URL.revokeObjectURL(original);
-            }  
-        }
-      },[])
-
-    const { cancelMessage, sendMessage } = useMessageMutation();
+  const { cancelMessage, sendMessage } = useMessageMutation();
 
   return (
     <div
@@ -91,7 +66,7 @@ export default function DocMessage({ fileSize, fileType,messageId, fileName,clas
                     />
                   ) : (
                     <a
-                      href={blobUrl.current}
+                      href={originalUrl}
                       download
                       target="_blank"
                       rel="noopener noreferrer"
@@ -110,7 +85,7 @@ export default function DocMessage({ fileSize, fileType,messageId, fileName,clas
             <span className=" mx-[4px] text-opacity-[0.5] text-message-timestamp-read">
               •
             </span>
-            <span> {fileType && fileType.toUpperCase()}</span>
+            <span> {type && type.toUpperCase()}</span>
           </div>
         </div>
       </div>

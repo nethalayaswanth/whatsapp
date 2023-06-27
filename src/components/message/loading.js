@@ -42,7 +42,7 @@ export const Progress = ({
       className={`absolute [--width:${width}px] [--stroke-width:${strokeWidth}px] top-0 left-0 w-full h-full flex justify-center pointer-events-none items-center z-[100]`}
     >
       <div
-        className={`h-[${width}px] w-[${width}px] inline-block relative pointer-events-auto`}
+        className={`w-[${width}px] h-[${width}px] aspect-square relative pointer-events-auto`}
       >
         <div
           id={`${id}-progress`}

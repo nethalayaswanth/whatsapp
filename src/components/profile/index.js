@@ -1,32 +1,34 @@
-import { useCallback, useRef, useState, useEffect } from "react";
+import { useCallback, useRef, useState } from "react";
 import Textarea from "react-textarea-autosize";
 import { ReactComponent as Done } from "../../assets/done.svg";
 import { ReactComponent as Edit } from "../../assets/edit.svg";
-import { useSidebar } from "../../contexts/sidebarContext";
+import { useSidebarDispatch } from "../../contexts/sidebarContext";
 import DrawerHeader from "../header/drawer";
 
-import {
-  useAboutUpdate,
-  useNameUpdate,
-  useUser,
-} from "../../queries.js/useRequests";
+import { useUser } from "../../queries.js/useRequests";
 import { DpUpload, ImageCropper } from "../dpUpload";
-
-import { useDpUpdate } from "../../queries.js/useRequests";
 
 import { Modal } from "../modal";
 
-import { forwardRef, useMemo } from "react";
+import { forwardRef, useLayoutEffect } from "react";
 import { useUpdateProfile } from "../../queries.js/user";
-import { useLayoutEffect } from "react";
 
 export const Input = forwardRef(
   (
-    { error, name, edit, children, label, value, onToggle, as,refCb, ...props },
+    {
+      error,
+      name,
+      edit,
+      children,
+      label,
+      value,
+      onToggle,
+      as,
+      refCb,
+      ...props
+    },
     ref
   ) => {
-    console.log(name, edit, children, label, value, ref);
-
     const handleClick = () => {
       onToggle?.(name);
     };
@@ -85,7 +87,7 @@ export const Input = forwardRef(
 );
 
 const Profile = () => {
-  const [sideBar, dispatch] = useSidebar();
+  const dispatch = useSidebarDispatch();
   const { data: user } = useUser();
 
   const updateProfile = useUpdateProfile();
@@ -102,7 +104,6 @@ const Profile = () => {
   });
 
   const [errors, setErrors] = useState({});
-
   const inputRefs = useRef({});
 
   const register = useCallback(
@@ -118,14 +119,14 @@ const Profile = () => {
           }));
 
           inputRefs.current[name].focus();
-        } else if (e.target.value.trim().length <=1){
+        } else if (e.target.value.trim().length <= 1) {
           setErrors((old) => ({
             ...old,
             [name]: null,
-          }));}
+          }));
+        }
       };
 
-       
       const onToggle = async (id) => {
         if (!editMode[name]) {
           setEditMode((old) => ({ ...old, [id]: true }));
@@ -146,7 +147,6 @@ const Profile = () => {
 
         await updateProfile({ [id]: value });
 
-
         setEditMode((old) => ({ ...old, [id]: false }));
 
         return;
@@ -158,7 +158,6 @@ const Profile = () => {
           inputRefs.current[name] = node;
         },
         onChange,
-       
         name,
         onToggle,
         error: errors[name],
@@ -170,24 +169,19 @@ const Profile = () => {
     [editMode, errors, updateProfile]
   );
 
-  useLayoutEffect(()=>{
-
-      if (nameEmpty && aboutEmpty) {
-
-        console.log({ input: inputRefs.current["name"] }) 
-
-        setTimeout(()=>{ inputRefs.current["name"].focus()},0)
-       
-      }
-  },[aboutEmpty, nameEmpty])
-
+  useLayoutEffect(() => {
+    if (nameEmpty && aboutEmpty) {
+      setTimeout(() => {
+        inputRefs.current["name"].focus();
+      }, 0);
+    }
+  }, [aboutEmpty, nameEmpty]);
 
   const [file, setFile] = useState();
 
   const [showModal, setShowModal] = useState();
 
   const onFileSelect = async (event) => {
-    console.log(event.target.files.length, event.target.files);
     if (event.target.files && event.target.files.length > 0) {
       const file = event.target.files[0];
       setFile(file);

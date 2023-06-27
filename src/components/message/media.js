@@ -1,23 +1,21 @@
-import { useLayoutEffect, useState, useEffect, useRef } from "react";
+import { useRef } from "react";
 
-import { ReactComponent as Close } from "../../assets/close.svg";
-import { ReactComponent as Upload } from "../../assets/upload.svg";
-import { Loading, Progress } from "./loading";
-import { useChat } from "../../contexts/chatContext";
-import { useCallback } from "react";
-import useMediaFetch from "../../hooks/useMediaFetch";
-import { useMessageMutation } from "../../contexts/mutationContext";
-import { useModalDispatch } from "../../contexts/modalContext";
-import useHover from "../../hooks/useHover";
-import { createPortal } from "react-dom";
 import { useQueryClient } from "@tanstack/react-query";
+import { useCallback } from "react";
+import { ReactComponent as Close } from "../../assets/close.svg";
+import { ReactComponent as Play } from "../../assets/play.svg";
+import { ReactComponent as Upload } from "../../assets/upload.svg";
+import { ReactComponent as Video } from "../../assets/video.svg";
+import { useModalDispatch } from "../../contexts/modalContext";
+import { useMessageMutation } from "../../contexts/mutationContext";
+import useMediaFetch from "../../hooks/useMediaFetch";
+import { ErrorBoundary } from "../errorBoundary";
+import { Progress } from "./loading";
 
-const MAX_HEIGHT = 338.028;
-const MIN_HEIGHT = 248;
-const DEFAULT_DIMENSIONS = { width: 240, height: (240 * 4) / 3 };
+import { timeFormat } from "../../utils";
+import  { MEDIA_DEFAULT_DIMENSIONS,MEDIA_MAX_HEIGHT,MEDIA_MIN_HEIGHT} from './defaults'
 
 const MediaMessage = (props) => {
-
   const {
     messageId,
     sending,
@@ -30,34 +28,31 @@ const MediaMessage = (props) => {
     text,
     type,
     roomId,
-    dimensions = DEFAULT_DIMENSIONS,
+    dimensions = MEDIA_DEFAULT_DIMENSIONS,
     children,
   } = props;
- 
- const ModalDispatch= useModalDispatch()
+
+  const image = type.includes("image");
+  const gif = type.includes("gif");
+  const video = type.includes("video");
+
+  const ModalDispatch = useModalDispatch();
 
   const mediaRectRef = useRef();
   const imageRectRef = useRef();
 
+  const queryclient = useQueryClient();
 
-  const queryclient = useQueryClient()
   const cacheMedia = useCallback(
-    ({ original, preview }) => {
-
-      console.log(roomId)
+    ({ type, data }) => {
       queryclient.setQueryData([roomId, "messages"], (old) => {
-        if (original) {
-          old.messages[messageId].message.original.raw = original;
-        }
-        if (preview) {
-          old.messages[messageId].message.preview.raw = preview;
-        }
-
+        old.messages[messageId].message[type].raw = data;
         return { ...old };
       });
     },
     [messageId, queryclient, roomId]
   );
+  
 
   const [original, preview, loading] = useMediaFetch({
     original: _original,
@@ -66,9 +61,6 @@ const MediaMessage = (props) => {
     cacheMedia,
   });
 
-  const gif = type?.includes("gif"); 
-
-   
   const width = dimensions.width;
   const height = dimensions.height;
   const aspectRatio = width / height;
@@ -79,16 +71,13 @@ const MediaMessage = (props) => {
   const intrinsicHeight = newWidth / aspectRatio;
   const newHeight =
     aspectRatio < 1
-      ? Math.max(MIN_HEIGHT, Math.min(MAX_HEIGHT, intrinsicHeight))
+      ? Math.max(MEDIA_MIN_HEIGHT, Math.min(MEDIA_MAX_HEIGHT, intrinsicHeight))
       : intrinsicHeight;
   const newAspectRatio = newWidth / newHeight;
 
-  const newInverseAspectRatio = 1/newAspectRatio;
+  const newInverseAspectRatio = 1 / newAspectRatio;
 
-  
-
-
-  const handleClick =() => {
+  const handleClick = () => {
     ModalDispatch({
       type: "set state",
       payload: {
@@ -103,7 +92,7 @@ const MediaMessage = (props) => {
         mediaRect: mediaRectRef.current,
       },
     });
-  }
+  };
 
   const { cancelMessage, sendMessage } = useMessageMutation();
 
@@ -138,6 +127,19 @@ const MediaMessage = (props) => {
                 alt=""
                 src={preview}
               />
+              {video && (
+                <div
+                  className={`absolute   top-0 left-0 w-full h-full flex justify-center pointer-events-none items-center z-[100]`}
+                >
+                  <div
+                    className={`w-[${50}px] h-[${50}px] aspect-square  pointer-events-auto flex justify-center items-center  rounded-[50%]   text-[white]   absolute bg-[rgba(11,20,26,0.7)]`}
+                  >
+                    <span className="ml-[2px]">
+                      <Play />
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
             {error && (
               <Retry
@@ -165,6 +167,16 @@ const MediaMessage = (props) => {
             className="absolute bottom-0 w-full z-[100] h-[28px] image-b-gradient text-white"
           ></div>
         )}
+        {video && fileDuration && (
+          <span className="text-white left-[6px] bottom-[3px] h-[15px] leading-[15px] absolute z-[100] text-[0.6875rem]">
+            <div className="inline-block mr-[3px] mb-[2px] align-top">
+              <span>
+                <Video viewBox="0 0 16 14" height={14} width={16} />
+              </span>
+            </div>
+            {timeFormat(fileDuration)}
+          </span>
+        )}
       </div>
     </div>
   );
@@ -183,5 +195,12 @@ const Retry = ({ onClick, fileSize }) => {
     </div>
   );
 };
-export default MediaMessage;
 
+const Media = (props) => {
+  return (
+    <ErrorBoundary>
+      <MediaMessage {...props} />
+    </ErrorBoundary>
+  );
+};
+export default Media;

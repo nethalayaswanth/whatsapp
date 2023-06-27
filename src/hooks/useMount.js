@@ -6,12 +6,16 @@ export default function useMount(open) {
   const unMount = useCallback(() => {
     setMount(false);
   }, []);
+
+   if (open && !mount) {
+     setMount(true);
+   }
   
-  useLayoutEffect(() => {
-    if (open) {
-      setMount(true);
-    }
-  }, [open]);
+  // useLayoutEffect(() => {
+  //   if (open) {
+  //     setMount(true);
+  //   }
+  // }, [open]);
 
   return [mount, unMount];
 }

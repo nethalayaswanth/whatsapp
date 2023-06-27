@@ -1,17 +1,22 @@
-import { FormatEmoji } from "../../shared";
-import { useChat } from "../../contexts/chatContext";
 import { ReactComponent as Close } from "../../assets/close.svg";
+import { useChatDispatch, useChatState } from "../../contexts/chatContext";
+import useCollapse from "../../hooks/useCollapse";
+import { FormatEmoji } from "../../shared";
+import { ErrorBoundary } from "../errorBoundary";
 
 const ReplyDialog = ({}) => {
-  const [chatState, chatDispatch] = useChat();
-  const blobUrl = chatState?.reply?.blobUrl;
+  const state = useChatState();
+  const dispatch = useChatDispatch();
+  console.log(state);
+  const reply = state?.reply;
 
-  const text = chatState?.reply?.text;
-  const name = chatState?.reply?.name;
-  const isSenderUser = chatState?.reply?.isSenderUser;
+  const text = reply?.message?.text;
+  const previewUrl = reply?.message?.preview?.url;
+  const name = reply?.from?.name;
+  const isSenderUser = reply?.isSenderUser;
 
   const closeReplyModal = () => {
-    chatDispatch({ type: "reply", payload: { reply: null } });
+    dispatch({ type: "reply", payload: { reply: null } });
   };
   return (
     <div className="bg-panel-header  pt-[5px] flex items-center w-full">
@@ -26,17 +31,17 @@ const ReplyDialog = ({}) => {
                     <span> {isSenderUser ? "You" : name}</span>
                   </div>
                 </div>
-                <div className="max-h-[40px] leading-[20px] text-[13.2px] text-ellipsis break-words whitespace-pre-wrap line-clamp-3 text-message-quoted  ">
+                <div className="max-h-[40px] leading-[20px] text-[13.2px] text-ellipsis break-words whitespace-pre-wrap line-clamp-1 text-message-quoted  ">
                   <span> {text && <FormatEmoji text={text} />}</span>
                 </div>
               </div>
             </div>
           </div>
-          {blobUrl && (
+          {previewUrl && (
             <div className="flex-grow-0 flex-shrink-0 overflow-hidden">
               <div
                 style={{
-                  backgroundImage: `url(${blobUrl})`,
+                  backgroundImage: `url(${previewUrl})`,
                 }}
                 className="w-[83px] aspect-[1] bg-cover bg-center relative   "
               ></div>
@@ -56,4 +61,28 @@ const ReplyDialog = ({}) => {
   );
 };
 
-export default ReplyDialog;
+const ReplyDialogWrapper = () => {
+  const state = useChatState();
+
+  const open= state.reply
+  const { Toggle, getCollapseProps } = useCollapse({
+    isExpanded: !!open,
+  });
+  return (
+    <div
+      {...getCollapseProps({
+        style: {
+          width: "100%",
+          height: "100%",
+          overflow: "hidden",
+        },
+      })}
+    >
+      <ErrorBoundary>
+        <ReplyDialog />
+      </ErrorBoundary>
+    </div>
+  );
+};
+
+export default ReplyDialogWrapper;

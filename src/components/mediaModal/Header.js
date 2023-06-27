@@ -1,17 +1,13 @@
-import { ChatTitle } from "../ChatItem";
 import { ReactComponent as Close } from "../../assets/close.svg";
 import { ReactComponent as Reply } from "../../assets/reply.svg";
 
-import { ReactComponent as DefaultAvatar } from "../../assets/avatar.svg";
-
-import { useMediaOfRoom, useMessage } from "../../queries.js/messages";
-import { useUserDetails, useUserName } from "../../queries.js/user";
-import { useUser } from "../../queries.js/useRequests";
-import { formatDat, mergeRefs } from "../../utils";
 import { useModalDispatch } from "../../contexts/modalContext";
+import { useMessage } from "../../queries.js/messages";
+import { useUser } from "../../queries.js/useRequests";
+import { useUserDetails } from "../../queries.js/user";
+import { formatDat } from "../../utils";
 import { Avatar } from "../Avatar";
-
-
+import Card from "../card";
 
 const HeaderItem = ({ handleClick, children, style, className }) => {
   return (
@@ -27,12 +23,7 @@ const HeaderItem = ({ handleClick, children, style, className }) => {
   );
 };
 
-
-
-  
-export const HeaderView=({title,details,children,dp})=>{
-
-
+export const HeaderView = ({ title, details, children, dp }) => {
   return (
     <div className="h-full w-full flex justify-between items-center text-primary-default ">
       <div className="flex-1 flex z-[1] mr-[15px] ml-[5px] ">
@@ -44,11 +35,9 @@ export const HeaderView=({title,details,children,dp})=>{
           </div>
         </div>
         <div className="flex flex-col basis-auto  justify-center min-w-0 flex-grow">
-          <ChatTitle
-            style={{ color: "inherit" }}
-            name={title}
-            className="leading-[20px]  "
-          />
+          <Card.Title style={{ color: "inherit" }} className="leading-[20px]  ">
+            {title}
+          </Card.Title>
           <div className="text-[12px] mt-[2px]">{details}</div>
         </div>
       </div>
@@ -58,10 +47,9 @@ export const HeaderView=({title,details,children,dp})=>{
       </div>
     </div>
   );
+};
 
-}
-
-export const MessageModalHeader=({roomId,messageId})=>{
+export const MessageModalHeader = ({ roomId, messageId }) => {
   const messageQuery = useMessage({
     roomId,
     messageId,
@@ -94,29 +82,8 @@ export const MessageModalHeader=({roomId,messageId})=>{
       },
     },
   ];
-  return <HeaderView title={title} details={time} dp={dp}>
-{actions.map(({Icon,handler})=>{
-
-  return <HeaderItem handleClick={handler}>
-    {Icon}
-  </HeaderItem>
-})}
-  </HeaderView>;
-}
-
-
-export const DpModalHeader = ({dp,close,name}) => {
-
-
-  const actions = [
-   
-    {
-      Icon: <Close />,
-      handler:close,
-    },
-  ];
   return (
-    <HeaderView title={name}  dp={dp}>
+    <HeaderView title={title} details={time} dp={dp}>
       {actions.map(({ Icon, handler }) => {
         return <HeaderItem handleClick={handler}>{Icon}</HeaderItem>;
       })}
@@ -124,3 +91,18 @@ export const DpModalHeader = ({dp,close,name}) => {
   );
 };
 
+export const DpModalHeader = ({ dp, close, name }) => {
+  const actions = [
+    {
+      Icon: <Close />,
+      handler: close,
+    },
+  ];
+  return (
+    <HeaderView title={name} dp={dp}>
+      {actions.map(({ Icon, handler }) => {
+        return <HeaderItem handleClick={handler}>{Icon}</HeaderItem>;
+      })}
+    </HeaderView>
+  );
+};

@@ -4,24 +4,30 @@ import useHover from "../../hooks/useHover";
 import { MessageActions } from "../Menu";
 import { ReactComponent as DefaultAvatar } from "../../assets/avatar.svg";
 import HoverToolTip from "../tooltip/hoverToolTip";
+import { useUserById } from "../../queries.js/useRequests";
+import { useUserQuery } from "../../queries.js/user";
+import { Avatar } from "../Avatar";
+import { mergeRefs } from "../../utils";
 
 const UserCard = forwardRef(
   ({
     onClick,
-    dp,
-    online,
-    defaultIcon,
     unread,
-    title,
-    details,
     time,
     className,
-  },_) => {
-    const [ref, value] = useHover();
+    userId,selected
 
+  },forwardRef) => {
+
+   const {data:user}= useUserQuery({userId})
+
+   const title = user?.name;
+   const details = user?.username;
+   const dp = user?.dp?.previewUrl;
+   const isOnline = user?.isOnline;
     return (
       <div
-        ref={ref}
+        ref={mergeRefs(forwardRef)}
         onClick={onClick}
         className={`w-full group   h-[68px]  bg-white hover:bg-panel-bg-hover ${
           className ? className : ""
@@ -31,13 +37,7 @@ const UserCard = forwardRef(
           <div className="flex">
             <div className="flex items-center pl-[15px] pr-[13px]">
               <div className="h-[40px] w-[40px] overflow-hidden rounded-full">
-                {dp ? (
-                  <img src={dp} alt="" />
-                ) : defaultIcon ? (
-                  defaultIcon
-                ) : (
-                  <DefaultAvatar />
-                )}
+                <Avatar src={dp} alt="" />
               </div>
             </div>
           </div>
@@ -57,7 +57,7 @@ const UserCard = forwardRef(
                 </span>
               </div>
 
-              {!online && (
+              {!isOnline && (
                 <div
                   className={`ml-[6px] mt-[3px] text-[12px] text-ellipsis whitespace-nowrap overflow-hidden leading-[14px] flex-none ${
                     !unread ? `` : `text-unread-timestamp`
@@ -66,7 +66,7 @@ const UserCard = forwardRef(
                   {time && time}
                 </div>
               )}
-              {online && (
+              {isOnline && (
                 <div className="ml-[2px] flex justify-center items-center align-top ">
                   <span
                     className={` h-[8px] w-[8px]  rounded-[4px] font-semibold text-center text-white bg-unread-timestamp   `}

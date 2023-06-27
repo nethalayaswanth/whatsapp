@@ -1,10 +1,9 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useCallback, useRef, useState } from "react";
-import { flushSync } from "react-dom";
+import { useCallback, useRef } from "react";
 
-import { formatDate, formatDat } from "../utils";
+import { formatDat } from "../utils";
 
-import { getMessages, getDocuments, getMedia } from "./api";
+import { getDocuments, getMedia, getMessages } from "./api";
 
 const appLoadedTime = Date.now();
 
@@ -29,8 +28,7 @@ const useMessages = ({ roomId, queryOptions, select }) => {
 
       console.log("%crefetching", "color:red");
 
-      queryClient.prefetchQuery([roomId, "media"], () => getMedia({ roomId}));
-     
+      queryClient.prefetchQuery([roomId, "media"], () => getMedia({ roomId }));
 
       return {
         ...(cacheData && cacheData),
@@ -45,65 +43,81 @@ const useMessages = ({ roomId, queryOptions, select }) => {
       // staleTime: Infinity,
       refetchOnWindowFocus: false,
       ...(queryOptions && queryOptions),
+      suspense: false,
     }
   );
 };
 
-export const useRoomMessages = ({ roomId,unread,lastSeenAt, userId, queryOptions }) => {
+export const useRoomMessages = ({ roomId, queryOptions }) => {
   const queryClient = useQueryClient();
 
-  const [size, setSize] = useState(15);
+  const prevRoomId = useRef(roomId);
+
+  if (roomId !== prevRoomId.current) {
+    console.log("resetting");
+
+    prevRoomId.current = roomId;
+  }
 
   const fetchNextPage = useCallback(
     async (currentCursor) => {
       console.log("fetchNextPage");
- setSize((prev) => {
-   return prev + 15;
- });
-     
+      // setSize((prev) => {
+      //   return prev + 11;
+      // });
+
       const prevData = queryClient.getQueryData([roomId, "messages"]);
 
-      if (currentCursor < prevData.cursor) return;
+      console.log(currentCursor, prevData.cursor);
 
-      const response = await getMessages({ roomId, after: prevData.cursor });
+      // if (currentCursor < prevData.cursor) return;
 
-      const temp = { ...prevData.messages, ...response?.messages };
-      const sorted = Object.keys(temp).sort();
-      const messages = {};
+      // const response = await getMessages({ roomId, after: prevData.cursor });
 
-      sorted.forEach((id, index) => {
-        messages[id] = temp[id];
-      });
+      // console.log("fetching from server",response);
+      // const temp = { ...prevData.messages, ...response?.messages };
+      // const sorted = Object.keys(temp).sort();
+      // const messages = {};
 
-      queryClient.setQueryData([roomId, "messages"], (cacheData) => {
-        return {
-          messages: messages,
-          hasMore: response.hasMore,
-          cursor: response.cursor,
-        };
-      });
+      // sorted.forEach((id, index) => {
+      //   messages[id] = temp[id];
+      // });
+
+      // queryClient.setQueryData([roomId, "messages"], (cacheData) => {
+      //   return {
+      //     messages: messages,
+      //     hasMore: response.hasMore,
+      //     cursor: response.cursor,
+      //   };
+      // });
     },
     [queryClient, roomId]
   );
 
   const select = useCallback(
     (data) => {
-      if (!data.messages) return { messages: [], hasMore: data.hasMore };
+      const user = queryClient.getQueryData(["user"]);
 
-      let currentDate;
+      if (!user || !data.messages)
+        return { messages: [], hasMore: data.hasMore };
+
+      console.log("%cstarted", "font-size:32px");
+
+      let prevDate;
       let prevSender;
       let currentCursor;
-      let media=[]
-      let documents=[]
+      let media = [];
+      let documents = [];
 
+      const slice = Object.keys(data.messages);
+      const userId = user.id;
 
-      const slice = Object.keys(data.messages).slice(-size);
-
-      const messages = slice.map((messageId, index) => {
+      let messages = slice.map((messageId, index) => {
         const message = data.messages[messageId];
 
         const sender = message?.from;
         const receiver = message?.to;
+
         const isSenderUser = sender === userId;
         const isReceiverUser = receiver === userId;
 
@@ -115,79 +129,78 @@ export const useRoomMessages = ({ roomId,unread,lastSeenAt, userId, queryOptions
 
         const time = isSenderUser ? message?.sendTime : message?.deliveredTime;
 
-     
         const date = formatDat(time, true)?.date;
 
-        const prevDate = currentDate;
-        const prevFrom = prevSender;
-        const tail = prevFrom !== sender?.id || index === 0;
-        prevSender = sender?.id;
-
         const dateChanged = date && prevDate !== date;
+        const senderChanged = prevSender !== sender;
+
+        const tail = senderChanged || index === 0 || dateChanged;
+
+        prevSender = sender;
         if (dateChanged) {
-          currentDate = date;
+          prevDate = date;
         }
+
         const type = message?.message.type;
-        const image = type?.includes("image");
-        const gif = type?.includes("gif");
-        const video = type?.includes("video");
-        const doc = type?.includes("doc");
+        const image = type?.includes("image") ? "image" : null;
+        const gif = type?.includes("gif") ? "gif" : null;
+        const video = type?.includes("video") ? "video" : null;
+        const doc = type?.includes("doc") ? "doc" : null;
+        const reply = message?.reply ? "reply" : null;
+        const text = message?.message?.text ? "text" : null;
 
-        console.log(message,type)
+        const types = [image, gif, video, doc, reply, text].filter((x) => !!x);
 
-        if(image|| video){
-
-          console.log('image found')
-          
-           media.push(messageId);
+        if (!!image || !!video) {
+          media.push(messageId);
         }
-         
-        
-        if (doc) {
-          document.push(messageId);
-        }  
-        
 
-     
-      
+        if (!!doc) {
+          documents.push(messageId);
+        }
+
         return {
           id: messageId,
           isSenderUser,
           isReceiverUser,
-          tail, 
-       
+          tail,
           dateChanged,
           prevDate,
           date,
           time,
           sender,
           receiver,
+          types,
+          sameSender: !senderChanged,
         };
       });
 
-   
-       queryClient.setQueryData([roomId, "media"], (cacheData) => {
-        if(!cacheData || (cacheData.length===0)){
-           return  [...media]
+      queryClient.setQueryData([roomId, "media"], (cacheData) => {
+        if (!cacheData || cacheData.length === 0) {
+          return [...media];
         }
-    
-         return [...new Set([...cacheData, ...media])];
 
-       });
+        return [...new Set([...cacheData, ...media])];
+      });
+
+      queryClient.setQueryData([roomId, "documents"], (cacheData) => {
+        if (!cacheData || cacheData.length === 0) {
+          return [...documents];
+        }
+
+        return [...new Set([...cacheData, ...documents])];
+      });
 
       return { messages, hasMore: data.hasMore, currentCursor };
     },
-    [queryClient, roomId, size, userId]
+    [queryClient, roomId]
   );
 
-  const { data, isFetching, isLoading, isRefetching, isFetchedAfterMount } =
-    useMessages({
-      roomId,
-      select,
-      queryOptions,
-    });
-
-  console.log("final", data?.messages?.length, isFetchedAfterMount);
+  const { data } = useMessages({
+    roomId,
+    select,
+    queryOptions,
+  });
 
   return { data, fetchNextPage };
 };
@@ -195,7 +208,6 @@ export const useRoomMessages = ({ roomId,unread,lastSeenAt, userId, queryOptions
 export const useMessage = ({ roomId, messageId, queryOptions }) => {
   const select = useCallback(
     (data) => {
-      // console.log(data.messages[messageId]);
       return data.messages[messageId];
     },
     [messageId]
@@ -203,14 +215,14 @@ export const useMessage = ({ roomId, messageId, queryOptions }) => {
   return useMessages({ roomId, select, queryOptions });
 };
 
-export const useLastMessage = ({ roomId,  queryOptions }) => {
-  const select = useCallback((data) => {
-    if (!data) return null;
-    const ids = Object.keys(data.messages);
-    const lastMessageId = ids[ids.length - 1];
-    return data.messages[lastMessageId];
-  }, []);
-  return useMessages({ roomId, select, queryOptions });
+export const selectLastMessage = (data) => {
+  if (!data) return null;
+  const ids = Object.keys(data.messages);
+  const lastMessageId = ids[ids.length - 1];
+  return data.messages[lastMessageId];
+};
+export const useLastMessage = ({ roomId, queryOptions }) => {
+  return useMessages({ roomId, select: selectLastMessage, queryOptions });
 };
 
 export const useMediaOfRoom = ({ roomId, messageId, queryOptions }) => {
@@ -220,7 +232,7 @@ export const useMediaOfRoom = ({ roomId, messageId, queryOptions }) => {
     [roomId, "media"],
     async () => {
       const prevData = queryClient.getQueryData([roomId, "media"]);
-      const response = await getMedia(roomId); 
+      const response = await getMedia(roomId);
 
       return [...response, ...prevData.media];
     },

@@ -1,31 +1,22 @@
-import React, { useContext, useState } from "react";
-import Header from "../header/Header";
-import ChatList from "../ChatList/ChatList";
+import React from "react";
 
-import { OpenContext } from "../../pages/messenger";
-import Disclosure, { useDisclosure } from "../Disclosure";
-import { useSidebar } from "../../contexts/sidebarContext";
-import DrawerHeader from "../header/drawer";
-import Profile from "../profile";
+import { useSidebarState } from "../../contexts/sidebarContext";
+import Disclosure from "../Disclosure";
 import NewChat from "../NewChat";
 import NewGroup from "../NewGroup";
 import CreateNewGroup from "../NewGroup/createGroup";
-import useTransition from "../../hooks/useTransition";
-
-import Login from "../login";
+import Profile from "../profile";
 
 const MenuSideBar = () => {
-  const [sideBar, dispatch] = useSidebar();
+  const {open,active,from} = useSidebarState();
 
-  const newChatActive = sideBar.open && sideBar.active === "new chat";
-  const newGroupActive = sideBar.open && sideBar.active === "new group";
-  const profileActive = sideBar.open && sideBar.active === "profile";
-    const createGroupActive = sideBar.open && sideBar.active === "create group";
-  const fromGroupChat = sideBar.from === "new group";
-    const fromNewChat = sideBar.from === "new chat";
+  const newChatActive = open && active === "new chat";
+  const newGroupActive = open && active === "new group";
+  const profileActive = open && active === "profile";
+  const createGroupActive = open && active === "create group";
+  const fromGroupChat = from === "new group";
+  const fromNewChat = from === "new chat";
 
- 
-console.log({ fromGroupChat, fromNewChat });
   return (
     <>
       <Disclosure
@@ -46,7 +37,7 @@ console.log({ fromGroupChat, fromNewChat });
       <Disclosure
         key="New group"
         isExpanded={newGroupActive}
-        direction={fromNewChat ? "right":"left" }
+        direction={fromNewChat ? "right" : "left"}
         duration={300}
         style={{ height: "100%", width: "100%", position: "absolute" }}
         {...(newChatActive && fromGroupChat && { duration: 500 })}

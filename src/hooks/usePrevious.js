@@ -1,4 +1,4 @@
-import { useCallback, useRef } from "react";
+import { useRef } from "react";
 
 export default function usePrevious(value) {
   const ref = useRef({
@@ -8,13 +8,6 @@ export default function usePrevious(value) {
 
   const current = ref.current.value;
 
-  const reset = useCallback(() => {
-    ref.current = {
-      value: null,
-      prev: null,
-    };
-  }, []);
-
   if (value !== current) {
     ref.current = {
       value: value,
@@ -22,5 +15,5 @@ export default function usePrevious(value) {
     };
   }
 
-  return [ref.current.prev, reset];
+  return ref.current.prev;
 }

@@ -10,6 +10,45 @@ import ReactCrop from "react-image-crop";
 import useHover from "../../hooks/useHover";
 import { createImage, generatecroppedImage } from "../../utils";
 import Spinner from "../spinner";
+import useResizeObserver from "use-resize-observer";
+
+ const getContainerStyles = ({ container, dimensions }) => {
+   if (!container.width || !container.height) return { width: 0, height: 0 };
+   const padding = container.width > 630 ? 58 : 0;
+   const maxHeight = container.height - padding;
+   const maxWidth = container.width - padding;
+   const containerAspectRatio = container.width / container.height;
+
+   const aspectRatio = dimensions.aspectRatio;
+   const intrinsicHeight = dimensions.height;
+   const intrinsicWidth = dimensions.width;
+
+   const landscape = aspectRatio > 1;
+   const containerInPotrait = containerAspectRatio <= 1;
+
+   const clampedWidth = Math.min(intrinsicWidth, maxWidth);
+   const clampedHeight = Math.min(intrinsicHeight, maxHeight);
+   const reducedHeight = clampedWidth / aspectRatio;
+   const reducedWidth = clampedHeight * aspectRatio;
+
+   if (containerInPotrait) {
+     if (landscape) {
+       return { width: clampedWidth, height: reducedHeight };
+     } else {
+       if (reducedWidth > maxWidth)
+         return { width: clampedWidth, height: reducedHeight };
+       return { width: reducedWidth, height: clampedHeight };
+     }
+   } else {
+     if (landscape) {
+       if (reducedHeight > maxHeight)
+         return { width: reducedWidth, height: clampedHeight };
+       return { width: clampedWidth, height: reducedHeight };
+     } else {
+       return { width: reducedWidth, height: clampedHeight };
+     }
+   }
+ };
 
 
 
@@ -71,6 +110,7 @@ export const ImageCropper = memo(({ file, onSubmit, close }) => {
         quality: 0.66,
       });
 
+
      
      await onSubmit({ original, preview });
 
@@ -90,6 +130,18 @@ export const ImageCropper = memo(({ file, onSubmit, close }) => {
     };
   }, []);
 
+  const {
+    ref: containerRef,
+    width: containerWidth,
+    height: containerHeight,
+  } = useResizeObserver();
+
+ 
+  const containerStyles = getContainerStyles({
+    container: { width: containerWidth, height: containerHeight },
+    dimensions
+  });
+
   return (
     <div className=" top-0 left-0 right-0 bottom-0 h-full w-full flex flex-col justify-center bg-panel-bg-deeper ">
       <header className="py-0 pr-[20px] pl-[25px] flex flex-none items-center h-[49px] text-white bg-primary-green">
@@ -101,16 +153,12 @@ export const ImageCropper = memo(({ file, onSubmit, close }) => {
           <Close />
         </button>
       </header>
-      <div className="edit relative flex-1 flex ">
-        <div
-          style={{ flexDirection: dimensions.aspectRatio > 1 ? "column" : "row" }}
-          className="  flex justify-center flex-1  min-h-[520px] max-h-[620px] max-w-full "
-        >
+      <div ref={containerRef} className="edit relative flex-1 flex ">
+        <div className="  flex justify-center items-center flex-1  min-h-[520px] max-h-[620px] max-w-full ">
           <div
             style={{
-               aspectRatio: dimensions.aspectRatio,
-              // ...(dimensions.aspectRatio > 1 ? {width:"100%"} : {height:'100%'}),
-              opacity: !loading ? 1 : 0,
+              width: containerStyles.width,
+              height: containerStyles.height,
             }}
             className="flex justify-center items-center relative max-h-full"
           >
@@ -124,23 +172,21 @@ export const ImageCropper = memo(({ file, onSubmit, close }) => {
               style={{
                 position: "relative",
                 display: "flex",
-                
-                height:  "100%" ,
-                width:'100%',
+
+                height: "100%",
+                width: "100%",
                 justifyContent: "center",
                 alignItems: "center",
               }}
               minHeight={120}
               minWidth={120}
             >
-             
-                <img
-                  className="max-h-full max-w-full w-full"
-                  onLoad={onImageLoad}
-                  src={blobUrl.current}
-                  alt=""
-                />
-             
+              <img
+                className="max-h-full max-w-full w-full"
+                onLoad={onImageLoad}
+                src={blobUrl.current}
+                alt=""
+              />
             </ReactCrop>
           </div>
           <div

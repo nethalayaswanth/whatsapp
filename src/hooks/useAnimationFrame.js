@@ -17,8 +17,6 @@ const useAnimationFrame = (
 
       timeFraction = timeFraction > 1 ? 1 : timeFraction < 0 ? 0 : timeFraction;
 
-      
-
       if (timeFraction <1) {
         cbRef.current(timeFraction);
 
@@ -49,7 +47,6 @@ const useAnimationFrame = (
     }
  
     return () => {
-      
       setAnimating(false)
       cancelAnimationFrame(frame.current);
     };

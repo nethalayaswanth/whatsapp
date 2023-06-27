@@ -11,13 +11,13 @@ import { createPortal, flushSync } from "react-dom";
 import usePrevious from "../../hooks/usePrevious";
 import { getMiniStyles } from "./utils";
 
-const  transition = {
-    visible: {
-      transformOrigin: "top left",
-      transition: "all 300ms cubic-bezier(0.1, 0.82, 0.25, 1) 0s",
-    },
-    hidden: { transition: "" },
-  }
+const transition = {
+  visible: {
+    transformOrigin: "top left",
+    transition: "all 300ms cubic-bezier(0.1, 0.82, 0.25, 1) 0s",
+  },
+  hidden: { transition: "" },
+};
 const sectionsStyle = {
   initial: {
     footer: {
@@ -65,11 +65,11 @@ const sectionsStyle = {
 
 export const useTransition = ({
   modalState,
-  enableMinimize=true,
+  enableMinimize = true,
   swiper,
   unMount,
   onOpened,
-  onClosed:_onClosed
+  onClosed: _onClosed,
 }) => {
   const { opened: show, mediaRect } = modalState;
 
@@ -80,8 +80,8 @@ export const useTransition = ({
   const getStyles = useCallback(() => {
     const container = containerRef.current?.getBoundingClientRect();
     const collapsed = mediaRect?.getBoundingClientRect();
-     const mediaRectStyles = window.getComputedStyle(mediaRect);
-     const borderRadius = mediaRectStyles.getPropertyValue("border-radius");
+    const mediaRectStyles = window.getComputedStyle(mediaRect);
+    const borderRadius = mediaRectStyles.getPropertyValue("border-radius");
     const img = mediaRect?.children[0]?.getBoundingClientRect();
     const styles = getMiniStyles({
       container,
@@ -93,14 +93,22 @@ export const useTransition = ({
       paddingLeft: 92,
     });
 
-    return { ...styles,borderRadius};
+    return { ...styles, borderRadius };
   }, [mediaRect, modalState]);
 
-  const [prevShow] = usePrevious(show);
+  const prevShow = usePrevious(show);
 
   const [{ header, footer, main }, setSectionStyles] = useState(
     sectionsStyle.initial
   );
+
+  const refs=useRef({})
+
+  const register=useCallback((node,name)=>{
+if(node){
+  refs.current[name]=node
+}
+  },[])
 
   const [overlayOpacity, setOverlayOpacity] = useState(0);
   const [miniStyles, setMiniStyles] = useState(() => {
@@ -109,13 +117,12 @@ export const useTransition = ({
     const mediaRectStyles = window.getComputedStyle(mediaRect);
     const borderRadius = mediaRectStyles.getPropertyValue("border-radius");
 
-   
     return {
       width,
       height,
       overflow: "hidden",
       transform: `translate(${left}px,${top}px) `,
-      borderRadius
+      borderRadius,
     };
   });
   const [imageStyles, setImageStyles] = useState({});
@@ -123,7 +130,7 @@ export const useTransition = ({
   const containerRef = useRef();
 
   useLayoutEffect(() => {
-    if (show ) {
+    if (show) {
       raf(() => {
         setOverlayOpacity(0);
         const styles = getStyles();
@@ -141,90 +148,71 @@ export const useTransition = ({
         });
 
         raf(() => {
-          // flushSync(() => {
-          //   setMiniStyles((old) => ({
-          //     ...old,
-          //     transform: `translate(${styles.fx}px,${styles.fy}px) scale(1) `,
-          //     width: `${styles.width}px`,
-          //     height: `${styles.height}px`,
+          setMiniStyles((old) => ({
+            ...old,
+            transform: `translate(${styles.fx}px,${styles.fy}px) scale(1) `,
+            width: `${styles.width}px`,
+            height: `${styles.height}px`,
 
-          //     visibility: "visible",
-          //     borderRadius: 0,
-          //     transition: "all  400ms  cubic-bezier(0.1, 0.82, 0.25, 1)  0s",
-          //   }));
-          //   setImageStyles({
-          //     transform: ` scale(1) `,
-          //     transition: "all  400ms cubic-bezier(0.1, 0.82, 0.25, 1) 0s",
-          //   });
-          //   setOverlayOpacity(1);
-          //   setSectionStyles(sectionsStyle.visible);
-          // });
-
-           setMiniStyles((old) => ({
-             ...old,
-             transform: `translate(${styles.fx}px,${styles.fy}px) scale(1) `,
-             width: `${styles.width}px`,
-             height: `${styles.height}px`,
-
-             visibility: "visible",
-             borderRadius: 0,
-             transition: "all  400ms  cubic-bezier(0.1, 0.82, 0.25, 1)  0s",
-           }));
-           setImageStyles({
-             transform: ` scale(1) `,
-             transition: "all  400ms cubic-bezier(0.1, 0.82, 0.25, 1) 0s",
-           });
-           setOverlayOpacity(1);
-           setSectionStyles(sectionsStyle.visible);
-         raf(()=>{
- if (swiper) {
-   setMainMount(true);
- }
-         })
+            visibility: "visible",
+            borderRadius: 0,
+            transition: "all  400ms  cubic-bezier(0.1, 0.82, 0.25, 1)  0s",
+          }));
+          setImageStyles({
+            transform: ` scale(1) `,
+            transition: "all  400ms cubic-bezier(0.1, 0.82, 0.25, 1) 0s",
+          });
+          setOverlayOpacity(1);
+          setSectionStyles(sectionsStyle.visible);
+          raf(() => {
+            if (swiper) {
+              setMainMount(true);
+            }
+          });
         });
       });
     }
   }, [getStyles, show, swiper]);
 
   useLayoutEffect(() => {
-    if (!show && prevShow ) {
-      if (enableMinimize ) {
-        // if (!miniMounted) return
+    if (!show && prevShow) {
+      if (enableMinimize) {
+        
+        raf(() => {
+          setOpened(false);
+          const styles = getStyles();
+          setMiniStyles({
+            transform: `translate(${styles.fx}px,${styles.fy}px) scale(1) `,
+            width: `${styles.width}px`,
+            height: `${styles.height}px`,
+
+            overflow: "hidden",
+            borderRadius: 0,
+          });
+          mediaRect.style.opacity = 0;
+
           raf(() => {
-            setOpened(false);
             const styles = getStyles();
-            setMiniStyles({
-              transform: `translate(${styles.fx}px,${styles.fy}px) scale(1) `,
+
+            setMiniStyles((x) => ({
+              ...x,
+              transform: `translate(${styles.sx}px,${styles.sy}px) scale(${styles.scaleX},${styles.scaleY}) `,
               width: `${styles.width}px`,
               height: `${styles.height}px`,
+              borderRadius: styles.borderRadius,
+              transition: "all 400ms cubic-bezier(0.1, 0.82, 0.25, 1) 0s",
+            }));
 
-              overflow: "hidden",
-              borderRadius: 0,
+            setImageStyles({
+              transform: ` scale(${1 / styles.invScaleX},${
+                1 / styles.invScaleY
+              }) `,
             });
-            mediaRect.style.opacity = 0;
 
-            raf(() => {
-              const styles = getStyles();
-
-              setMiniStyles((x) => ({
-                ...x,
-                transform: `translate(${styles.sx}px,${styles.sy}px) scale(${styles.scaleX},${styles.scaleY}) `,
-                width: `${styles.width}px`,
-                height: `${styles.height}px`,
-                borderRadius: styles.borderRadius,
-                transition: "all 400ms cubic-bezier(0.1, 0.82, 0.25, 1) 0s",
-              }));
-
-              setImageStyles({
-                transform: ` scale(${1 / styles.invScaleX},${
-                  1 / styles.invScaleY
-                }) `,
-              });
-
-              setSectionStyles(sectionsStyle.hidden);
-              setOverlayOpacity(0);
-            });
+            setSectionStyles(sectionsStyle.hidden);
+            setOverlayOpacity(0);
           });
+        });
 
         return;
       }
@@ -240,9 +228,9 @@ export const useTransition = ({
     }
     if (show) {
       setOpened(true);
-      
+
       // mountMini(false)
-      onOpened?.()
+      onOpened?.();
       return;
     }
   };

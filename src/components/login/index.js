@@ -13,11 +13,7 @@ import SpriteRenderer from "../spriteRender";
 import Form from "./form";
 
 const Login = () => {
-  const [sideBar, dispatch] = useSidebar();
-  const {
-    data: { verification },
-  } = useUser();
-
+ 
   const [loginRoute, setLoginRoute] = useState(true);
   const {
     register,

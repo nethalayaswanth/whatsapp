@@ -1,5 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { forwardRef, useCallback, useMemo } from "react";
+import { forwardRef, useCallback, useRef,useMemo } from "react";
 import { useModalDispatch } from "../../contexts/modalContext";
 import useMediaFetch from "../../hooks/useMediaFetch";
 import { useMessage } from "../../queries.js/messages";
@@ -11,6 +11,7 @@ export const MainView = forwardRef(
   (
     {
       video,
+      videoRef,
       preview,
       original,
       aspectRatio,
@@ -31,9 +32,17 @@ export const MainView = forwardRef(
 
     const { containerHeight, containerWidth, opened } = useModal();
 
-    const { width, height } = useMemo(() => {
+    const { width, height } = (() => {
       if (!containerWidth || !containerHeight) return { width: 0, height: 0 };
 
+      console.log({
+        containerWidth,
+        containerHeight,
+        aspectRatio,
+        height: mediaHeight,
+        width: mediaWidth,
+        paddingLeft: 92,
+      });
       return getDimensions({
         containerWidth,
         containerHeight,
@@ -42,7 +51,8 @@ export const MainView = forwardRef(
         width: mediaWidth,
         paddingLeft: 92,
       });
-    }, [aspectRatio, containerHeight, containerWidth, mediaHeight, mediaWidth]);
+    })()
+
 
     return (
       <div
@@ -66,13 +76,13 @@ export const MainView = forwardRef(
                 alt=""
                 src={preview}
               />
-              {/* {!loading && (
-                <video
-                  className="absolute z-[1] top-0 left-0 h-full w-full "
-                  controls={true}
-                  src={original}
-                />
-              )} */}
+
+              <video
+                className="absolute z-[1] top-0 left-0 h-full w-full "
+                controls={true} 
+                ref={videoRef}
+                src={original}
+              />
             </div>
           ) : (
             <>
@@ -101,6 +111,11 @@ export const MainView = forwardRef(
 );
 
 const MainItem = forwardRef(({ messageId, roomId }, ref) => {
+
+  const videoRef=useRef()
+  const getVideo=useCallback(()=>{
+    return videoRef.current
+  },[])
   const { data } = useMessage({ messageId, roomId });
 
   const message = data?.message;
@@ -122,27 +137,21 @@ const MainItem = forwardRef(({ messageId, roomId }, ref) => {
   };
 
   const queryclient = useQueryClient();
-  const cacheMedia = useCallback(
-    ({ original, preview }) => {
-      queryclient.setQueryData([roomId, "messages"], (old) => {
-        if (original) {
-          old[messageId].message.original.file = original;
-        }
-        if (preview) {
-          old[messageId].message.preview.file = preview;
-        }
-
-        return { ...old };
-      });
-    },
-    [messageId, queryclient, roomId]
-  );
-
+ const cacheMedia = useCallback(
+   ({type,data}) => {
+     queryclient.setQueryData([roomId, "messages"], (old) => {
+       old.messages[messageId].message[type].raw = data;
+       return { ...old };
+     });
+   },
+   [messageId, queryclient, roomId]
+ );
   const [original, preview, loading] = useMediaFetch({
     original: _original,
     preview: _preview,
     type: type,
     cacheMedia,
+    getVideo,
   });
 
   const video = message?.type.includes("video");
@@ -151,6 +160,7 @@ const MainItem = forwardRef(({ messageId, roomId }, ref) => {
     <MainView
       {...{
         video,
+        videoRef,
         original,
         preview,
         mediaWidth,

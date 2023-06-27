@@ -1,23 +1,22 @@
-import { cloneElement, useCallback, useMemo } from "react";
+import { cloneElement, useCallback, useRef } from "react";
 
-import { useFooter } from "../../contexts/footerContext";
+import {
+  useFooterDispatch,
+  useFooterState,
+} from "../../contexts/footerContext";
 import EmojiPicker from "../PropPickers/emojiPicker";
-import GifPicker from "../PropPickers/gifPicker";
-
-import { useChat } from "../../contexts/chatContext";
-import useCollapse from "../../hooks/useCollapse";
-import { useUser } from "../../queries.js/useRequests";
 
 import { forwardRef } from "react";
 import useResizeObserver from "use-resize-observer";
 import useDisclosure from "../../hooks/useDisclosure";
 import useMedia from "../../hooks/useMedia";
-import AccordionMenu from "./accordionMenu";
+import GifPicker from "../PropPickers/gifPicker";
+import { useMessageHandler } from "../chat/messageHandlerProvider";
 import Attachment from "./attachment";
-import TextInput from "./input";
-import PreviewModal from "./previewModal";
+import { TextInput } from "./input";
+import Preview from "./preview";
 import ReplyDialog from "./replyDialog";
-import { createPortal } from "react-dom";
+import ToolBar from "./toolbar";
 
 export const Button = ({ children, ...props }) => {
   return (
@@ -31,12 +30,13 @@ export const Button = ({ children, ...props }) => {
 };
 
 export const AttachmentDialog = ({ isExpanded }) => {
+  const setFooterState = useFooterDispatch();
   const { mount, getDisclosureProps, getParentProps } = useDisclosure({
     isExpanded: isExpanded,
     direction: "bottom",
 
     onCollapseEnd: () => {
-      // setFooterState({ type: "reset" });
+      setFooterState({ type: "reset attachment" });
     },
   });
   return (
@@ -54,20 +54,43 @@ export const AttachmentDialog = ({ isExpanded }) => {
   );
 };
 
-const Footer = forwardRef(({footer, onSubmit, onKeyDown }, ref) => {
-  const [footerState, setFooterState] = useFooter();
+const Footer = forwardRef(({ footer }, ref) => {
+  const footerState = useFooterState();
+  const setFooterState = useFooterDispatch();
 
-  const [chatState, chatDispatch] = useChat();
+  const inputRef = useRef();
 
+  const {
+    activeTab,
+    bottomSheetOpened,
+    bottomSheetMounted,
+    attachmentDialogOpened,
+  } = footerState;
 
-    console.log("%cfooter", "color:blue");
+  const { onSubmit, handleTyping } = useMessageHandler();
+  console.log("%cfooter", "color:blue");
 
+  const handleSubmit = useCallback(
+    ({ text }) => {
+      onSubmit({ text, type: "text" });
 
-  const { Toggle, getCollapseProps } = useCollapse({
-    isExpanded: !!chatState.reply,
-  });
+      setFooterState({
+        type: "set state",
+        payload: { text: "" },
+      });
+    },
+    [onSubmit, setFooterState]
+  );
 
-  const { data: user } = useUser();
+  const handleInputChange = useCallback(
+    (value) => {
+      setFooterState({
+        type: "set state",
+        payload: { text: value},
+      });
+    },
+    [setFooterState]
+  );
 
   const handleGifSelect = useCallback(
     (gif) => {
@@ -79,29 +102,20 @@ const Footer = forwardRef(({footer, onSubmit, onKeyDown }, ref) => {
     [setFooterState]
   );
 
-  const handleEmojiSelect = useCallback(
-    (value, emojiObject) => {
-      const emoji = value.native;
-      const input = footerState.inputRef;
-      const start = input?.selectionStart;
-      const end = input?.selectionEnd;
-      input.setSelectionRange(start, start);
+  const handleEmojiSelect = useCallback((value) => {
+    const emoji = value.native;
+    const input = inputRef.current;
+    if (!input) return;
+    const start = input?.selectionStart;
+    const end = input?.selectionEnd;
+    input.setSelectionRange(start, start);
+    const splitted = input.value.split("");
+    splitted.splice(start, end - start, emoji);
 
-      const splitted = input.value.split("");
-
-      splitted.splice(start, end - start, emoji);
-
-      input.value = splitted.join("");
-      input.focus();
-      input.setSelectionRange(start + emoji.length, start + emoji.length);
-    },
-    [footerState.inputRef]
-  );
-
-
-  const bottomSheetOpened = footerState.bottomSheetOpened;
-  const attachmentDialogOpened = footerState.attachmentDialogOpened;
-
+    input.value = splitted.join("");
+    input.focus();
+    input.setSelectionRange(start + emoji.length, start + emoji.length);
+  }, []);
 
   const { ref: resizeRef, width, height } = useResizeObserver();
 
@@ -112,28 +126,28 @@ const Footer = forwardRef(({footer, onSubmit, onKeyDown }, ref) => {
     width,
   });
 
-   
-  const tabs = useMemo(() => {
-    return {
-      emoji: <EmojiPicker onSelect={handleEmojiSelect} width={width} />,
+  const tabs = {
+    emoji: {
+      component: EmojiPicker,
+      props: { onSelect: handleEmojiSelect, width },
+    },
+    gif: {
+      component: GifPicker,
+      props: { onSelect: handleGifSelect, width },
+    },
+    sticker: {
+      component: GifPicker,
+      props: {
+        onSelect: handleGifSelect,
+        width,
+        key: "sticker",
+        sticker: true,
+      },
+    },
+  };
 
-      gif:  <GifPicker onSelect={handleGifSelect} width={width} />,
-    
-      sticker: 
-          <GifPicker
-            key={"sticker"}
-            sticker={true}
-            onSelect={handleGifSelect}
-            width={width}
-          />
-      }
-  }, [handleEmojiSelect, handleGifSelect, width]);
-
-  
-  const activeTab = tabs[footerState.activeTab];
+  const currentTab = tabs[activeTab];
   const mobile = device === "xs";
-
-
 
   return (
     <>
@@ -144,13 +158,23 @@ const Footer = forwardRef(({footer, onSubmit, onKeyDown }, ref) => {
         <div className="pr-[17px] pl-[10px] pt-[3px] border-l border-solid border-border-header">
           <span>
             <div className="flex  min-h-0 flex-1 text-input-placeHolder">
-              {<AccordionMenu mobile={mobile} />}
+              {<ToolBar mobile={mobile} />}
               {mobile ? (
                 !bottomSheetOpened ? (
-                  <TextInput />
+                  <TextInput
+                    ref={inputRef}
+                    onSubmit={handleSubmit}
+                    onChange={handleInputChange}
+                    onKeyDown={handleTyping}
+                  />
                 ) : null
               ) : (
-                <TextInput />
+                <TextInput
+                  ref={inputRef}
+                  onSubmit={handleSubmit}
+                  onChange={handleInputChange}
+                  onKeyDown={handleTyping}
+                />
               )}
             </div>
           </span>
@@ -165,30 +189,33 @@ const Footer = forwardRef(({footer, onSubmit, onKeyDown }, ref) => {
               overflow: "hidden",
             }}
           >
-            <div ref={footer} id="bottomSheet" className={` bg-panel-header`}>
-              {footerState.bottomSheetMounted && (
+            <div
+              ref={footer}
+              id="footer-bottomSheet"
+              className={` bg-panel-header`}
+            >
+              {bottomSheetMounted && (
                 <>
-                  {mobile && bottomSheetOpened && <TextInput />}
-                  {activeTab}
+                  {mobile && bottomSheetOpened && (
+                    <TextInput
+                      ref={inputRef}
+                      onSubmit={handleSubmit}
+                      onChange={handleInputChange}
+                      onKeyDown={handleTyping}
+                    />
+                  )}
+                  {cloneElement(<currentTab.component />, {
+                    ...currentTab.props,
+                  })}
                 </>
               )}
             </div>
           </div>
-          <div
-            {...getCollapseProps({
-              style: {
-                width: "100%",
-                height: "100%",
-                overflow: "hidden",
-              },
-            })}
-          >
-            <ReplyDialog />
-          </div>
+          <ReplyDialog />
         </div>
         <AttachmentDialog isExpanded={attachmentDialogOpened} />
       </div>
-      <PreviewModal />
+      <Preview />
     </>
   );
 });

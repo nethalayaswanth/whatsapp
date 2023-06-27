@@ -1,30 +1,23 @@
-import { useQueryClient } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { Suspense, useDeferredValue } from "react";
 import {
   forwardRef,
   Fragment,
-  useLayoutEffect,
-  useMemo,
   useCallback,
+  useLayoutEffect,
   useRef,
   useState,
 } from "react";
-import useDisclosure from "../../hooks/useDisclosure";
-import { useScrollPosition } from "../../hooks/useScrollPosition";
+import { DateModalProvider } from "../../contexts/dateModalContext";
+import { useChatRoom } from "../../contexts/roomContext";
+import useInfiniteScroll from "../../hooks/useInfiniteScroll";
+import { useRoomMessages } from "../../queries.js/messages";
 import { useUser } from "../../queries.js/useRequests";
-import { formatDate, mergeRefs } from "../../utils";
-import InfiniteScroll from "../infiniteScroll";
+import { mergeRefs } from "../../utils";
+import { ErrorBoundary } from "../errorBoundary";
 import Message from "../message";
 import { StrokeSpinner } from "../spinner";
-import { VariableSizeList as List } from "react-window";
-import AutoSizer from "react-virtualized-auto-sizer";
-import { useRoomMessages } from "../../queries.js/messages";
-import { RoomProvider, useChatRoom, useUserAndRoom } from "../../contexts/roomContext";
-import { createPortal } from "react-dom";
-import { useScroller } from "./stack";
-import DateModal from "./dateModal";
 import DateHeader from "./dateHeader";
-import { DateModalProvider } from "../../contexts/dateModalContext";
+import DateModal from "./dateModal";
 
 const Notification = ({ children }) => {
   return (
@@ -37,10 +30,13 @@ const Notification = ({ children }) => {
 };
 
 export const Loading = forwardRef(({ inView }, ref) => {
+  useLayoutEffect(()=>{
+    console.log('loading')
+  },[])
   return (
     <div
       ref={ref}
-      className="mb-[12px]  first:mt-[8px] flex justify-center pointer-events-none items-center z-[100]"
+      className="mb-[2px]  first:mt-[8px] flex justify-center pointer-events-none items-center z-[100]"
     >
       {
         <div className="h-[32px] w-[32px] relative  flex justify-center pointer-events-none items-center rounded-full bg-white">
@@ -55,8 +51,6 @@ const lerp = (a, b, t) => a + (b - a) * t;
 const easeIn = (t) => t * t;
 
 const easeOut = (t) => t * (2 - t);
-
-
 
 const UnreadMessages = ({ unread }) => {
   const [mount, setMount] = useState(true);
@@ -88,87 +82,106 @@ const UnreadMessages = ({ unread }) => {
   );
 };
 
-const Conversation = forwardRef(({ scroller }, ref) => {
+const Conversation = forwardRef((props, ref) => {
+  const room = useChatRoom();
+
+  return (
+    <ErrorBoundary>
+      <Suspense fallback={<Loading />}>
+        <MessageList key={room.roomId} room={room} />
+      </Suspense>
+    </ErrorBoundary>
+  );
+});
+const MessageList = forwardRef(({ room }, ref) => {
   const { data: user } = useUser();
 
-  const { newRoom, ...room } = useChatRoom();
- 
+  const newRoom = room?.newRoom;
   const roomId = room?.roomId;
-  const lastSeenAt=room?.lastSeenAt
-  const unread=room?.unread
-  
+  const lastSeenAt = room?.lastSeenAt;
+  const unread = room?.unread;
 
   const { data, fetchNextPage } = useRoomMessages({
     roomId,
-    lastSeenAt,
-    unread,
-    userId: user.id,
     queryOptions: { enabled: !!roomId && !newRoom },
   });
 
-
-
+ 
+  console.log(data);
 
   const containerRef = useRef();
-  const ScrollerRef=useRef()
+  const scrollerRef = useRef(null);
+
+  const scrollerCb = (node) => {
+    if (node) scrollerRef.current = node;
+  };
+
+  const containerCb = (node) => {
+    if (node) containerRef.current = node;
+  };
+  const getScroller = useCallback(() => {
+   
+    return scrollerRef.current;
+  }, []);
 
   useLayoutEffect(() => {
-    if (!scroller.current) return;
-
-    scroller.current.scrollTo({
-      top: scroller.current.scrollHeight,
+    if (!scrollerRef.current) return;
+    scrollerRef.current.scrollTo({
+      top: scrollerRef.current.scrollHeight,
     });
-  }, [room.roomId, scroller]);
+  }, [scrollerRef]);
 
-  const loadMore = useCallback(
-   () => fetchNextPage(data?.currentCursor),
-    [data?.currentCursor, fetchNextPage]
-  );
+  const loadMore = useCallback(() => {
+    console.log(data?.currentCursor, "nxt page");
+    fetchNextPage(data?.currentCursor);
+  }, [data?.currentCursor, fetchNextPage]);
 
+  const { ref: loaderRef } = useInfiniteScroll({
+    loadMore,
+    getScroller,
+  });
 
   if (!user) {
     return null;
   }
 
-  let unreadShown
+  let unreadShown;
+
   return (
-    <DateModalProvider boundingElement={ScrollerRef.current}>
-      <DateModal  />
+    <DateModalProvider getBoundingElement={getScroller}>
+      <DateModal />
       <div
-        ref={mergeRefs(scroller, ScrollerRef)}
-        className="flex z-1  flex-col relative overflow-x-auto overflow-y-auto"
+        id="chat-scroller"
+        ref={mergeRefs(scrollerCb)}
+        className="flex z-[1] h-full flex-col relative overflow-x-auto overflow-y-auto"
       >
+        <div className="flex-1"></div>
         <div
-          ref={containerRef}
+          ref={containerCb}
           className="pb-[8px]  flex-grow-0 flex-shrink-0 basis-auto  "
         >
           {data && (
             <>
-              <InfiniteScroll
-                loadMore={loadMore}
-                itemsLength={data.messages?.length ?? 0}
-                scrollElement={ScrollerRef}
-              >
-                <div>
-                  {data.hasMore ? (
-                    <Loading />
-                  ) : (
-                    <Notification>
-                      There are no more messages to show
-                    </Notification>
-                  )}
-                </div>
-              </InfiniteScroll>
+              <div>
+               
+                {data.hasMore ? ( 
+                  <Loading ref={loaderRef} />
+                ) : (
+                  <Notification>
+                    There are no more messages to show
+                  </Notification>
+                )}
+              </div>
+        
               {data.messages &&
                 data.messages.length !== 0 &&
                 data.messages.map((message, i) => {
-                  const { prevDate, date, dateChanged, ...metaData } = message;
-
+                  const {  date, dateChanged,types, ...metaData } = message;
                   const { id, time } = metaData;
 
                   let showUnread;
                   if (time > lastSeenAt && !unreadShown) {
-                    unreadShown = true;
+                    unreadShown = true;  
                     showUnread = true;
                   }
 
@@ -177,13 +190,16 @@ const Conversation = forwardRef(({ scroller }, ref) => {
                       {dateChanged && (
                         <DateHeader
                           key={`${date}-${date}`}
-                         
+                          type={["date"]}
                           date={date}
-                        
                         />
                       )}
                       {showUnread && (
-                        <UnreadMessages key={"unreadmessage"} unread={unread} />
+                        <UnreadMessages
+                          key={"unreadmessage"}
+                          type={["unread"]}
+                          unread={unread}
+                        />
                       )}
                       {
                         <Message

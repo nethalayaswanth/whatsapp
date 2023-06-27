@@ -11,7 +11,7 @@ import {
 } from "react";
 import { createPortal, flushSync } from "react-dom";
 import { createContext } from "react";
-import { useTransition } from "./useTransition";
+import { useTransition } from "./trail";
 import useResizeObserver from "use-resize-observer";
 import { formatDate, mergeRefs } from "../../utils";
 
@@ -21,12 +21,11 @@ const ModalWrapperContext = createContext();
 
 
   const {
-    styles,
-    opened,
+    showMini,
     containerRef,
-    overlayOpacity,
+opened,
     mainMounted,
-    
+    register,
     onClosed,
     onTransitionEnd,
   } = useTransition({ modalState, unMount, enableMinimize, swiper });
@@ -52,14 +51,14 @@ const ModalWrapperContext = createContext();
             `}
           >
             <div className=" left-0 z-[500]  relative top-0 w-full h-full">
-              {!opened && (
+              {showMini && (
                 <div
-                  style={{ ...styles.mini }}
-                  className="absolute  z-[500] "
+                  {...register({ name: "mini" })}
                   onTransitionEnd={onTransitionEnd}
+                  className="absolute  z-[500] "
                 >
                   <div
-                    style={{ ...styles.image }}
+                    {...register({ name: "image" })}
                     className="h-full w-full relative items-start justify-center flex"
                   >
                     <div className="w-full h-full  absolute  items-center justify-center flex ">
@@ -74,24 +73,24 @@ const ModalWrapperContext = createContext();
                 </div>
               )}
               <div
-                style={{
-                  opacity: overlayOpacity,
-                  transition:
-                    "opacity 300ms cubic-bezier(0.1, 0.82, 0.25, 1) 0s",
-                }}
+                {...register({
+                  name: "overlay",
+                })}
                 className={` left-0 z-[400]  fixed  top-0 w-full h-full bg-white `}
               ></div>
               <div className="pb-[100px]   left-0 z-[502] flex flex-col fixed items-center top-0 w-full h-full">
                 <div
-                  style={{ ...(styles.header && styles.header) }}
+                  {...register({ name: "header" })}
                   className="flex z-[502] h-[60px] w-full items-center justify-end flex-none relative "
                 >
                   {header}
                 </div>
                 <div
-                  ref={mergeRefs(resizeRef, containerRef)}
-                  style={{ ...(styles.main && styles.main) }}
                   onTransitionEnd={onClosed}
+                  {...register({
+                    name: "main",
+                    ref: mergeRefs(resizeRef, containerRef),
+                  })}
                   className="relative px-0 z-[500]  flex flex-auto flex-shrink-0 items-center justify-between h-[calc(100%-60px)]  w-full"
                 >
                   {mainMounted && main}
@@ -99,7 +98,9 @@ const ModalWrapperContext = createContext();
               </div>
               {footer && (
                 <div
-                  style={{ ...(styles.footer && styles.footer) }}
+                  {...register({
+                    name: "footer",
+                  })}
                   className={`thumb border-t
                    border-border-panel  bottom-0 absolute flex z-[502] flex-col overflow-hidden h-[100px] xs:h-[80px] w-full`}
                 >

@@ -31,6 +31,7 @@ export const useUser = (queryOptions) => {
   return useQuery(["user"], getUser, {
     ...(queryOptions && queryOptions),
     suspense: true,
+    refetchOnMount:false
   });
 };
 

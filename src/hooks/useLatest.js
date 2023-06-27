@@ -1,10 +1,11 @@
 import * as React from "react";
-import useLayoutEffect from "use-isomorphic-layout-effect";
+import useIsomorphicLayoutEffect from "./useIsomorphicLayoutEffect";
 
 export function useLatest(value) {
   const ref = React.useRef(value);
-  useLayoutEffect(() => {
+
+  useIsomorphicLayoutEffect(() => {
     ref.current = value;
-  });
+  },[value]);
   return ref;
 }

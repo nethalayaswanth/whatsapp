@@ -1,15 +1,14 @@
-import { useLayoutEffect,useRef } from "react";
+import { useLayoutEffect, useRef } from "react";
+import { useLatest } from "./useLatest";
 
-export default function useEffectAfterMount(
-  cb=()=>{},
-  dependencies=[]
-) {
+export default function useEffectAfterMount(cb = () => {}, dependencies = []) {
   const justMounted = useRef(true);
-  
+  const latest = useLatest(cb);
+
   useLayoutEffect(() => {
     if (!justMounted.current) {
-      return cb();
+      return latest.current();
     }
     justMounted.current = false;
-  }, [dependencies]);
+  }, [dependencies, latest]);
 }

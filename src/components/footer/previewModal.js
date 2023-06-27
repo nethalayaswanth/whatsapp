@@ -3,7 +3,7 @@ import {
   useCallback,
   useLayoutEffect,
   useRef,
-  useState
+  useState,
 } from "react";
 import { createPortal } from "react-dom";
 import { ReactComponent as Close } from "../../assets/close.svg";
@@ -13,20 +13,17 @@ import { ReactComponent as Document } from "../../assets/page.svg";
 import useDisclosure from "../../hooks/useDisclosure";
 import { PropTextInput } from "./input";
 
-import { useFooter } from "../../contexts/footerContext";
+import {
+  useFooterDispatch,
+  useFooterState,
+} from "../../contexts/footerContext";
 
+import { useMemo } from "react";
 import ReactCrop from "react-image-crop";
 import "react-image-crop/dist/ReactCrop.css";
 import useResizeObserver from "use-resize-observer";
-import {
-  createImage,
-  createVideo,
-  formatFileSize,
-  generatecroppedImage
-} from "../../utils";
+import { createImage, createVideo, generatecroppedImage } from "../../utils";
 import Spinner from "../spinner";
-
-const clamp = (min, max, value) => Math.max(min, Math.min(value, max));
 
 const Cropper = ({ onCropComplete, children, editMode, src }) => {
   const [crop, setCrop] = useState({
@@ -70,11 +67,8 @@ const Cropper = ({ onCropComplete, children, editMode, src }) => {
 };
 
 const PreviewModalWrapper = forwardRef(({}, ref) => {
-  const blobUrl = useRef();
-
-  const [videoDetails, setvideoDetails] = useState();
-
-  const [footer, setFooterState, onSubmit, onKeyDown] = useFooter();
+  const footer = useFooterState();
+  const setFooterState = useFooterDispatch();
 
   const file = footer.file;
 
@@ -83,9 +77,13 @@ const PreviewModalWrapper = forwardRef(({}, ref) => {
   const gif = file.type.includes("gif");
   const doc = footer.fileType === "doc";
 
+  const blobUrl = useRef();
+
   const [loading, setLoading] = useState(true);
 
   const [editMode, setEditMode] = useState();
+
+  const [videoDetails, setvideoDetails] = useState();
 
   const [preview, setPreview] = useState(() => {
     if (gif) {
@@ -103,7 +101,9 @@ const PreviewModalWrapper = forwardRef(({}, ref) => {
     aspectRatio: file.dimensions?.aspectRatio ?? 1,
   });
 
-  const [croppedDimensions, setCroppedDimensions] = useState(dimensions);
+  const [croppedDimensions, setCroppedDimensions] = useState(
+    video ? undefined : dimensions
+  );
 
   const [croppedAreaPixels, setCroppedAreaPixels] = useState({
     unit: "%",
@@ -125,7 +125,7 @@ const PreviewModalWrapper = forwardRef(({}, ref) => {
 
   const setInputRef = useCallback(
     (node) => {
-      setFooterState({ type: "set propInputRef", propInputRef: node });
+      setFooterState({ type: "set state", payload: { propInputRef: node } });
     },
     [setFooterState]
   );
@@ -157,7 +157,7 @@ const PreviewModalWrapper = forwardRef(({}, ref) => {
         URL.revokeObjectURL(croppedImage);
       }
       const croppedUrl = URL.createObjectURL(croppedFile);
-    
+
       const { width, height, aspectRatio } = await createImage(croppedUrl);
 
       setCroppedImage(croppedUrl);
@@ -174,38 +174,36 @@ const PreviewModalWrapper = forwardRef(({}, ref) => {
 
   const handleSubmit = async () => {
     try {
-        let files = payload.current;
-        let dimensions = croppedDimensions;
+      let files = payload.current;
+      let _dimensions = croppedDimensions || dimensions;
       if (gif) {
-        onSubmit?.({
-          text: footer.propInputRef.value,
-          type: "gif",
-          original: {url:file?.original},
-          preview: {url:file?.preview},
-          fileSize: formatFileSize(file.size),
-          dimensions,
-        });
-
         closeBottomSheet();
+        // onSubmit?.({
+        //   text: footer.propInputRef.value,
+        //   type: "gif",
+        //   original: { url: file?.original },
+        //   preview: { url: file?.preview },
+        //   fileSize: formatFileSize(file.size),
+        //   dimensions: _dimensions,
+        // });
 
         return;
       }
 
       if (doc) {
-        onSubmit?.({
-          text: footer.text,
-          type: footer.fileType,
-          original: { raw:file },
-          fileName: file.name,
-          fileSize: formatFileSize(file.size),
-          fileType: file.name.split(".").pop(),
-        });
-
         closeBottomSheet();
+        // onSubmit?.({
+        //   text: footer.text,
+        //   type: footer.fileType,
+        //   original: { raw: file },
+        //   fileName: file.name,
+        //   fileSize: formatFileSize(file.size),
+        //   fileType: file.name.split(".").pop(),
+        // });
+
         return;
       }
 
-    
       if (!files && image) {
         const [croppedFile, previewFile] = await generatecroppedImage({
           src: preview,
@@ -216,32 +214,32 @@ const PreviewModalWrapper = forwardRef(({}, ref) => {
           preview: { raw: previewFile },
         };
 
-         const croppedUrl = URL.createObjectURL(croppedFile);
+        const croppedUrl = URL.createObjectURL(croppedFile);
 
-         const { width, height, aspectRatio } = await createImage(croppedUrl);
-       dimensions={
-           width,
-           height,
-           aspectRatio,
-         }
+        const { width, height, aspectRatio } = await createImage(croppedUrl);
+        _dimensions = {
+          width,
+          height,
+          aspectRatio,
+        };
       }
-
 
       if (video) {
-        files ={ original:{ raw:file}, preview:{ raw:videoDetails.thumbnail} };
+        files = {
+          original: { raw: file },
+          preview: { raw: videoDetails.thumbnail },
+        };
       }
-
-      onSubmit?.({
-        text: footer.propInputRef.value,
-        type: file.type,
-        ...files,
-        fileSize: formatFileSize(files.original.raw.size),
-        fileType: file.name.split(".").pop(),
-        ...(video && { fileDuration: videoDetails.duration }),
-        dimensions,
-      });
-
       closeBottomSheet();
+      // onSubmit?.({
+      //   text: footer.propInputRef.value,
+      //   type: file.type,
+      //   ...files,
+      //   fileSize: formatFileSize(files.original.raw.size),
+      //   fileType: file.name.split(".").pop(),
+      //   ...(video && { fileDuration: videoDetails.duration }),
+      //   dimensions: _dimensions,
+      // });
     } catch (e) {
       console.log(e);
     }
@@ -253,6 +251,7 @@ const PreviewModalWrapper = forwardRef(({}, ref) => {
         if (video) {
           const { thumbnail, width, height, aspectRatio, duration } =
             await createVideo(blobUrl.current);
+
           setDimensions({
             width,
             height,
@@ -268,8 +267,6 @@ const PreviewModalWrapper = forwardRef(({}, ref) => {
           const image = await createImage(blobUrl.current);
 
           const { width, height, aspectRatio } = image;
-
-          console.log(width,height,aspectRatio)
           setDimensions({
             width,
             height,
@@ -317,8 +314,7 @@ const PreviewModalWrapper = forwardRef(({}, ref) => {
   } = useResizeObserver();
 
   const getContainerStyles = () => {
-
-    if(!containerWidth || !containerHeight) return {width:0,height:0}
+    if (!containerWidth || !containerHeight) return { width: 0, height: 0 };
     const padding = containerWidth > 630 ? 58 : 0;
     const maxHeight = containerHeight - padding;
     const maxWidth = containerWidth - padding;
@@ -336,19 +332,8 @@ const PreviewModalWrapper = forwardRef(({}, ref) => {
     const reducedHeight = clampedWidth / aspectRatio;
     const reducedWidth = clampedHeight * aspectRatio;
 
-    console.log({
-      maxHeight,
-      maxWidth,
-      aspectRatio,
-      intrinsicHeight,
-      intrinsicWidth,
-      screenInPotrait,
-      landscape,
-    });
-
     if (screenInPotrait) {
       if (landscape) {
-
         return { width: clampedWidth, height: reducedHeight };
       } else {
         if (reducedWidth > maxWidth)
@@ -360,16 +345,13 @@ const PreviewModalWrapper = forwardRef(({}, ref) => {
         if (reducedHeight > maxHeight)
           return { width: reducedWidth, height: clampedHeight };
         return { width: clampedWidth, height: reducedHeight };
-      }else{
-      return { width: reducedWidth, height: clampedHeight };
-     
+      } else {
+        return { width: reducedWidth, height: clampedHeight };
       }
     }
   };
 
   const containerStyles = getContainerStyles();
-
- 
 
   return (
     <>
@@ -453,24 +435,12 @@ const PreviewModalWrapper = forwardRef(({}, ref) => {
                 </Cropper>
               )}
             </div>
-            {/* <div
-              style={{
-                aspectRatio: currentDimensions.ascpectRatio,
-              }}
-            >
-              <div
-                style={{
-                  height: "100%",
-                  aspectRatio: currentDimensions.ascpectRatio,
-                }}
-              ></div>
-            </div> */}
           </div>
         </div>
       )}
       <div className="flex z-[100]   px-[16px] py-[8px] min-h-[56px] items-center justify-center text-input-placeHolder">
         <div className="w-[full] flex items-center flex-1 justify-center max-w-[650px] relative ">
-          <PropTextInput handleSubmit={handleSubmit} inputRefCb={setInputRef} />
+          <PropTextInput handleSubmit={handleSubmit} ref={setInputRef} />
         </div>
       </div>
     </>
@@ -496,17 +466,17 @@ const Doc = ({ size, extension }) => {
 };
 
 const PreviewModal = ({ ...props }, ref) => {
-  const gifOverlay = document.getElementById("main-overlay");
-  const [footer, setFooterState] = useFooter();
+  const gifOverlay = useMemo(() => document.getElementById("main-overlay"), []);
+  const footer = useFooterState();
+  const setFooterState = useFooterDispatch();
 
   const open = footer.previewDialogOpened;
 
   const { mount, getDisclosureProps, getParentProps } = useDisclosure({
     isExpanded: open,
     direction: "bottom",
-
     onCollapseEnd: () => {
-      setFooterState({ type: "reset" });
+      setFooterState({ type: "reset previewDialog" });
     },
   });
 

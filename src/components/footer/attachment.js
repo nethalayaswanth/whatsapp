@@ -3,8 +3,8 @@ import { useRef } from "react";
 import { ReactComponent as Camera } from "../../assets/camera.svg";
 import { ReactComponent as Document } from "../../assets/document.svg";
 import { ReactComponent as Photos } from "../../assets/photos.svg";
-import { useFooter } from "../../contexts/footerContext";
 
+import { useFooterDispatch } from "../../contexts/footerContext";
 
 const Attachment = () => {
   const photosInputRef = useRef();
@@ -15,7 +15,7 @@ const Attachment = () => {
     fileRef.current = type;
   };
 
-  const [footer, setFooterState] = useFooter();
+  const setFooterState = useFooterDispatch();
 
   const onSelectFile = async (event) => {
     if (event.target.files && event.target.files.length > 0) {
@@ -24,12 +24,13 @@ const Attachment = () => {
         console.log("file size is larger than 15MB");
         return;
       }
-
       setFooterState({
-        type: "set file",
-        file: file,
-        fileType: fileRef.current,
-        
+        type: "set state",
+        payload: {
+          file: file,
+          fileType: fileRef.current,
+          previewDialogOpened: true,
+        },
       });
     }
   };

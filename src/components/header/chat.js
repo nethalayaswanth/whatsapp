@@ -1,9 +1,9 @@
 import { useLayoutEffect, useState } from "react";
 import { ReactComponent as Arrow } from "../../assets/arrow.svg";
-import { ReactComponent as DefaultAvatar } from "../../assets/avatar.svg";
 import { ReactComponent as MenuIcon } from "../../assets/menu.svg";
 import useCollapse from "../../hooks/useCollapse";
 import useMedia from "../../hooks/useMedia";
+import { Avatar } from "../Avatar";
 import { HeaderItem } from "./Header";
 
 const ChatHeader = ({
@@ -24,6 +24,8 @@ const ChatHeader = ({
     defaultValue: "xs",
   });
   const mobile = device === "xs";
+
+  
 
   const content = typing || details;
 
@@ -76,7 +78,7 @@ const ChatHeader = ({
             style={{ ...(mobile && { height: "36px", width: "36px" }) }}
             className={`h-[40px] w-[40px] rounded-full relative overflow-hidden cursor-pointer`}
           >
-            {img ? <img src={img} alt="" /> : <DefaultAvatar />}
+            <Avatar src={img} />
           </div>
         </div>
         <div className="flex flex-col basis-auto  justify-center min-w-0 flex-grow">

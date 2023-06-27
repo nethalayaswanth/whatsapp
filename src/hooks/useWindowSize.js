@@ -1,25 +1,32 @@
-import { useLayoutEffect, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
+import useEventListener from "./useEventListener";
 
-export default function useWindowSize() {
-  const [windowSize, setWindowSize] = useState({
-    width: document.body.clientWidth,
-    height: document.body.clientHeight,
+export default function useWindowSize({ el } = {}) {
+  const ref = useRef();
+
+  const targetEl = useMemo(
+    () => el || ref.current || document.documentElement,
+    [el, ref]
+  );
+
+  const [size, setSize] = useState({
+    width: targetEl ? targetEl.clientWidth : 0,
+    height: targetEl ? targetEl.clientHeight : 0,
   });
-  useLayoutEffect(() => {
-    function handleResize() {
-      setWindowSize({
-        width: document.body.clientWidth,
-        height: document.body.clientHeight,
+
+  const handleSize = useCallback(
+    (e) => {
+      setSize({
+        width: targetEl?.clientWidth || 0,
+        height: targetEl?.clientHeight || 0,
       });
-    }
+    },
+    [targetEl]
+  );
 
-    window.addEventListener("resize", handleResize);
-
-    handleResize();
-
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
+  useEventListener({ name:"resize", handler: handleSize });
 
  
-  return windowSize;
+
+  return [ref, size];
 }

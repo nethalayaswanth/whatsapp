@@ -16,6 +16,7 @@
     "@testing-library/react": "^13.3.0",
     "@testing-library/user-event": "^13.5.0",
     "axios": "^0.27.2",
+    "babel-plugin-module-resolver": "^5.0.0",
     "date-fns": "^2.29.3",
     "debounce": "^1.2.1",
     "emoji-mart": "^5.2.2",
@@ -42,6 +43,7 @@
     "swiper": "^8.4.5",
     "ulid": "^2.3.0",
     "use-resize-observer": "^9.0.2",
+    "valtio": "^1.10.3",
     "wavesurfer.js": "^6.2.0",
     "web-vitals": "^2.1.4"
   },

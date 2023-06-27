@@ -1,4 +1,4 @@
-import { useSidebar } from "../../contexts/sidebarContext";
+import { useSidebar, useSidebarDispatch } from "../../contexts/sidebarContext";
 
 export const MenuItem = ({ index, name, onClick }) => {
   const handleClick = () => {
@@ -38,7 +38,7 @@ export const MenuContainer = ({ items, onClick }) => {
 export default function Menu({ handleClose }) {
   const items = ["New Group", "New Chat", "Log out"];
 
-  const [sideBar, setSideBar] = useSidebar();
+  const setSideBar= useSidebarDispatch()
 
   const handleClick = ({ name }) => {
     switch (name) {

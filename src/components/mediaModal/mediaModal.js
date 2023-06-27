@@ -137,11 +137,14 @@ const MediaModal = () => {
   const modalRoot = document.getElementById("image-overlay");
   const show = modalState.opened;
   const gif = modalState.gif;
-  const [mount, unMount] = useMount(show);
-
   const { roomId } = useChatRoom();
 
   const { data: media } = useMediaOfRoom({ roomId });
+
+  
+  const [mount, unMount] = useMount(show);
+
+  
 
   return (
     <>

@@ -1,8 +1,23 @@
+import { useSenderDetails } from "../../queries.js/user";
 import { FormatEmoji } from "../../shared";
 
-const Reply = ({ name, text, url, color, replyMessageId }) => {
+const Reply = ({ reply, roomId }) => {
+  const replyId = reply?.id;
+  const replyMessage = reply?.message;
+  const replyPreviewUrl = replyMessage?.preview?.url;
+
+  const replyUserId = reply?.from;
+
+ 
+
+  const  replyuser = useSenderDetails({ userId: replyUserId, roomId });
+
+  const color = replyuser?.color;
+  const name = replyuser?.name ?? replyUserId;
+  const replyText = replyMessage?.text;
+
   const handleClick = () => {
-    const replyDom = document.getElementById(replyMessageId);
+    const replyDom = document.getElementById(replyId);
 
     if (replyDom) {
       replyDom.scrollIntoView({
@@ -36,16 +51,16 @@ const Reply = ({ name, text, url, color, replyMessageId }) => {
             </div>
             <div className="leading-[20px] overflow-hidden max-h-[60px] text-[13.2px] text-ellipsis break-words whitespace-pre-wrap line-clamp-3 text-message-quoted ">
               <span>
-                <FormatEmoji text={text} />
-              </span>s
+                <FormatEmoji text={replyText} />
+              </span>
             </div>
           </div>
         </div>
-        {url && (
+        {replyPreviewUrl && (
           <div className="flex-grow-0 flex-shrink-0 basis-auto overflow-hidden">
             <div
               style={{
-                backgroundImage: `url(${url})`,
+                backgroundImage: `url(${replyPreviewUrl})`,
               }}
               className="h-[full] aspect-[1] bg-cover bg-center relative w-[58px]  "
             ></div>

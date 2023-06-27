@@ -60,8 +60,10 @@ export function useLayer({
   const clickAwayProps = useClickAway({ onOutsideClick });
 
   useEffect(() => {
+    const token = repositioningToken.current;
     return () => {
-      repositioningToken.current.cancelled = true;
+    
+      token.cancelled = true;
     };
   }, []);
 

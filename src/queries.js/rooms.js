@@ -1,54 +1,34 @@
 import {
-  useMutation,
-  useQueries,
+  QueriesObserver,
+  useIsFetching,
   useQuery,
   useQueryClient,
-  useInfiniteQuery,
 } from "@tanstack/react-query";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { formatDate } from "../utils";
-
-import {
-  aboutUpdate,
-  anotherAccount,
-  clearUnread,
-  createGroup,
-  dpUpdate,
-  getDocuments,
-  getMedia,
-  getMessages,
-  getOnlineUsers,
-  getRoomById,
-  getRooms,
-  getUser,
-  getUserById,
-  login,
-  nameUpdate,
-  pinRoom,
-  search,
-  signUp,
-} from "./api";
+import isEqual from "lodash/isEqual";
+import { getRoomById, getRooms } from "./api";
+// import { selectLastMessage } from "./messages";
 import { useUserById } from "./user";
-import { useUser } from "./useRequests";
-
-
 
 export const useRoomsQuery = ({ select, queryOptions }) => {
+  const queryClient = useQueryClient();
 
-    const queryClient =useQueryClient()
-    
   return useQuery(
     ["rooms"],
     async () => {
+      console.log(`%cfetching rooms`, "color:blue");
       const data = await getRooms();
-      const rooms = {};
 
+      console.log(`%cfetched rooms`, "color:green");
+      console.log(data);
+
+      const rooms = {};
       data
         .filter((x) => !!x)
         .forEach((room) => {
-            let users=[]
-             if (
+          let users = [];
+          if (
             room.members.length !== 0 &&
             typeof room.members[0] === "object"
           ) {
@@ -56,101 +36,259 @@ export const useRoomsQuery = ({ select, queryOptions }) => {
               users.push(user.id);
               queryClient.prefetchQuery(["user", user.id], () => ({
                 ...user,
+                nope: "abey",
               }));
-            })}else{
-                users= room.members
-            }
-            rooms[room.roomId]={
-                ...room,members:users
-            }       
-         })
-        return rooms
+            });
+          } else {
+            users = room.members;
+          }
+
+          queryClient.prefetchQuery(["room", room.roomId], () => ({
+            ...room,
+            members: users,
+          }));
+          rooms[room.roomId] = {
+            roomId: room.roomId,
+            type: room.type,
+            pinned: room.pinned,
+          };
+        });
+      return rooms;
     },
     {
-        select,
-      ...(queryOptions && queryOptions),
+      select,
       suspense: true,
       refetchOnWindowFocus: false,
+      ...(queryOptions && queryOptions),
     }
   );
 };
 
-export const useReorderedRooms = ({queryOptions } = {}) => {
-  
-
+export const useRoomIds = ({ queryOptions } = {}) => {
   const select = useCallback((data) => {
-
-    
-    const nonPinnedRooms = {};
-    const pinnedRooms = {};
-    Object.entries(data)
-      .filter((x) => !!x)
-      .forEach(([roomId, room]) => {
-        const pinned = room.pinned;
-        const lastMessagetime =
-          room.lastMessage?.deliveredTime ||
-          room.lastMessage?.sendTime ||
-          room.roomId;
-
-        if (pinned) {
-          pinnedRooms[pinned] = roomId;
-        } else {
-          nonPinnedRooms[lastMessagetime] = roomId;
-        }
-      });
-
-    const pinnedRoomIds = [...Object.keys(pinnedRooms)]
-      .sort((a, b) => b - a)
-      .map((key) => pinnedRooms[key]);
-    const nonPinnedRoomIds = [...Object.keys(nonPinnedRooms)]
-      .sort((a, b) => b - a)
-      .map((key) => nonPinnedRooms[key]);
-
-    return [...pinnedRoomIds, ...nonPinnedRoomIds];
+    return Object.keys(data);
   }, []);
 
   return useRoomsQuery({ select, queryOptions });
 };
 
+export const selectLastMessage = (data) => {
+  if (!data) return null;
+  const ids = data.messages ? Object.keys(data.messages) : [];
+  const lastMessageId = ids.length !== 0 ? ids[ids.length - 1] : null;
+  const lastMessage = lastMessageId ? data.messages[lastMessageId] : null;
 
-export const useRoomIds = ({ queryOptions }={}) => {
-  const select = useCallback((data) => {
+  if (lastMessage) {
+    const { roomId, deliveredTime, sendTime, from } = lastMessage;
+    return { roomId, deliveredTime, sendTime, from };
+  }
 
-return Object.keys(data)
-  }, []);
-
-  return useRoomsQuery({ select, queryOptions });
+  return null;
 };
 
+const getTime = (message, userId) => {
+  return message.from === userId ? message.sendTime : message.deliveredTime;
+};
 
-export const useRoom = ({ roomMeta, queryOptions }) => {
+const sort = (messages, userId) => {
+  return messages
+    ? messages
+        .map((x) => x.data)
+        .filter((x) => !!x)
+        .sort((a, b) => getTime(b, userId) - getTime(a, userId))
+        .map((message) => message.roomId)
+        .filter((x) => !!x)
+    : [];
+};
 
-const {roomId,id:userId,type}=roomMeta
-  const select = useCallback(
-    (data) => {
-      return data[roomId];
-    },
-    [roomId]
+export const useRoomsByLastMessage = ({ rooms, user }) => {
+  const queryClient = useQueryClient();
+
+  const queries = useMemo(
+    () =>
+      rooms.map((room, index) => {
+        return {
+          queryKey: [room, "messages"],
+          select: selectLastMessage,
+          enabled: false,
+        };
+      }),
+    [rooms]
   );
-  
- 
+  const [orderedByLastMessage, setRoomsByLastMessage] = useState(() => {
+    const observer = new QueriesObserver(queryClient, [...queries]);
+    const result = observer.getCurrentResult();
 
-  const { data: room } = useRoomsQuery({ select, queryOptions });
-
-  const roomType = type || room.type;
-  const isPrivate = roomType === "private"; 
-  const members= room?.members  
-
-  const targetUserId =  isPrivate? userId ?userId:members[0]:null
-
-  const { data: otherUser } = useUserById({
-    userId: targetUserId,
-    queryOptions: { enabled: !!targetUserId },
+    return sort(result, user.id);
   });
 
-  return { ...roomMeta,...(room && room), newRoom: !room, ...(otherUser && otherUser) }
-    
+  const prevState = useRef(orderedByLastMessage);
+
+  const setResult = useCallback(
+    (result) => {
+      const temp = sort(result, user.id);
+
+      if (!isEqual(prevState.current, temp)) {
+        setRoomsByLastMessage(temp);
+        prevState.current = temp;
+      }
+    },
+    [user.id]
+  );
+
+  useEffect(() => {
+    const observer = new QueriesObserver(queryClient, [...queries]);
+    const result = observer.getCurrentResult();
+
+    setResult(result);
+
+    const unsubscribe = observer.subscribe((result) => {
+      setResult(result);
+    });
+
+    return unsubscribe;
+  }, [queries, queryClient, setResult]);
+
+  return orderedByLastMessage;
 };
 
+export const useReorderedRooms = ({ rooms, user, queryOptions } = {}) => {
+  const roomsOrderedByLastMessage = useRoomsByLastMessage({ rooms, user });
 
+  const select = useCallback((data) => {
+    const pinnedRoomIds = Object.values(data)
+      .filter((x) => !!x && x.pinned)
+      .sort((a, b) => b.pinned - a.pinned)
+      .map((room) => room.roomId);
 
+    return pinnedRoomIds;
+  }, []);
+
+  const { data: pinnedRooms } = useRoomsQuery({ select, queryOptions });
+
+  const reOrderedRooms = useMemo(() => {
+    const temp = new Set([
+      ...pinnedRooms,
+      ...roomsOrderedByLastMessage,
+      ...rooms,
+    ]);
+    return [...temp];
+  }, [roomsOrderedByLastMessage, pinnedRooms, rooms]);
+
+  return reOrderedRooms;
+};
+
+export const useRoomQuery = ({ roomId, select, queryOptions }) => {
+  const queryClient = useQueryClient();
+  return useQuery(
+    ["room", roomId],
+    async () => {
+      const room = await getRoomById(roomId);
+      if(!room) return null
+      let members = [];
+      if (room.members.length !== 0 && typeof room.members[0] === "object") {
+        room.members.forEach((user) => {
+          members.push(user.id);
+          queryClient.prefetchQuery(["user", user.id], () => ({
+            ...user,
+          }));
+        }); 
+      } else {
+        members = room.members;
+      }
+
+      return { ...room, members };
+    },
+    {
+      select,
+      suspense: true,
+      refetchOnWindowFocus: false,
+      refetchOnMount: false,
+      ...(queryOptions && queryOptions),
+    }
+  );
+};
+const selectRoomData = (data) => {
+  if (data) {
+    const { notification, pinned, ...room } = data;
+    return room;
+  }
+};
+
+export const useRoom = ({ roomId, type, member, queryOptions }) => {
+  const queryClient = useQueryClient();
+
+  const isFetchingRooms = useIsFetching({ queryKey: ["rooms"] });
+
+  const { data: room } = useRoomQuery({
+    roomId,
+    select: selectRoomData,
+    queryOptions: {
+      staleTime: 100000,
+      onerror: (e) => {
+        console.log(e);
+      },
+      ...queryOptions,
+    },
+  });
+
+  const rooms = queryClient.getQueryData(["rooms"]);
+  const roomMeta = rooms ? rooms[roomId] : null;
+  const roomType = roomMeta?.type ?? type;
+
+  const isPrivate = roomType === "private";
+
+  const [otherUserId] = isPrivate ? room?.members : [member];
+
+  const { data: otherUser } = useUserById({
+    userId: otherUserId,
+    queryOptions: { enabled: !!otherUserId, staleTime: 10000 },
+  });
+
+  return {
+    ...(room && room),
+    newRoom: !room,
+    isPrivate,
+    ...(otherUser && otherUser),
+  };
+};
+
+export const useRoomNotification = ({ roomId, queryOptions }) => {
+  const select = useCallback((data) => {
+    return data?.notification;
+  }, []);
+  const isFetchingRooms = useIsFetching({ queryKey: ["rooms"] });
+  
+  return useRoomQuery({
+    roomId,
+    select,
+    queryOptions: {
+      ...queryOptions,
+      staleTime: 10000,
+      enabled: !isFetchingRooms,
+      onerror: (e) => {
+        console.log(e);
+      },
+    },
+  });
+};
+
+export const useTypingNotification = ({ roomId, queryOptions }) => {
+  const select = useCallback((data) => {
+    return data?.notification;
+  }, []);
+  const isFetchingRooms = useIsFetching({ queryKey: ["rooms"] });
+
+  return useRoomQuery({
+    roomId,
+    select,
+    queryOptions: {
+      ...queryOptions,
+      staleTime: 10000,
+      enabled: !isFetchingRooms,
+      onerror: (e) => {
+        console.log(e);
+      },
+    },
+  });
+};

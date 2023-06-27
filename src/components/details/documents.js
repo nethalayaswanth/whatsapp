@@ -1,18 +1,25 @@
 import { useCallback } from "react";
-import { useChat } from "../../contexts/chatContext";
-import { useUser } from "../../queries.js/useRequests";
+import { useMessage } from "../../queries.js/messages";
 import DocContainer from "../message/document";
 
-const DocWrapper = ({ data, user }) => {
+const DocWrapper = ({ messageId, user, roomId }) => {
+  const { data } = useMessage({ messageId, roomId });
+
+
+  const status = data?.status;
+  const sending = status?.sending;
+  const error = status?.error;
   const message = data?.message;
+  const original = message?.original;
+  const preview = message?.preview;
+
+  const type = message?.type;
+
   const fileName = message?.fileName;
   const fileSize = message?.fileSize;
-  const fileType = message?.fileType;
-  const url = message?.url;
 
-  const incoming = data?.from !== user?.id;
-
-
+  const sender = message?.from;
+  const incoming = sender !== user?.id;
   return (
     <div
       id={data?.id}
@@ -31,10 +38,16 @@ const DocWrapper = ({ data, user }) => {
         >
           <div className={`p-[3px] flex-col justify-center relative `}>
             <DocContainer
-              url={url}
-              name={fileName}
-              size={fileSize}
-              type={fileType}
+              {...{
+                fileSize,
+                type,
+                messageId,
+                fileName,
+                sending,
+                error,
+                original,
+                preview,
+              }}
             />
           </div>
         </div>
@@ -42,24 +55,26 @@ const DocWrapper = ({ data, user }) => {
     </div>
   );
 };
-export default function Documents({ documents }) {
-  const [chatState, chatDispatch] = useChat();
-
-  const { data: user } = useUser();
-
+export default function Documents({ documents, user, roomId }) {
   const handleClick = useCallback(() => {}, []);
 
+  console.log(documents, roomId);
   return (
     <div className="w-full  flex flex-col">
       <div className="flex flex-grow flex-wrap justify-center  py-[30px]  overflow-y-scroll">
         {documents &&
-          Object.keys(documents).length !== 0 &&
-          Object.keys(documents)
-            .reverse()
-            .map((messageId, i) => {
-               
-              return <DocWrapper user={user} data={documents[messageId]} />;
-            })}
+          documents.length !== 0 &&
+          documents.reverse().map((messageId, i) => {
+            return (
+              <DocWrapper
+                user={user}
+                roomId={roomId}
+                key={messageId}
+                onClick={handleClick}
+                messageId={messageId}
+              />
+            );
+          })}
       </div>
     </div>
   );
