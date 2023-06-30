@@ -1,11 +1,16 @@
 import axios from "axios";
 
+
+
 const endpoint =
   process.env.NODE_ENV !== "production"
-    ? `${process.env.ENDPOINT_URL}`
-    : `${process.env.ENDPOINT_LOCAL_URL}`;
+    ? `${process.env.REACT_APP_ENDPOINT_LOCAL_URL}`
+    : `${process.env.REACT_APP_ENDPOINT_URL}`;
+
+    
+    
 export const client = axios.create({
-  baseURL: process.env.ENDPOINT_URL,
+  baseURL: process.env.REACT_APP_ENDPOINT_URL,
   withCredentials: true,
 });
 
@@ -35,7 +40,7 @@ export const errorHandler = (error) => {
   } else {
     console.log("Error", error.message);
   }
-};
+}; 
 
 export const MESSAGES_TO_LOAD = 9;
 

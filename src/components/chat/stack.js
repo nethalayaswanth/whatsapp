@@ -25,8 +25,6 @@ const Stack = ({ children }) => {
   const { bottomSheetOpened } = useFooterState();
   const setFooterState = useFooterDispatch();
 
- 
-
   const prevBottomSheetOpened = usePrevious(bottomSheetOpened);
 
   useLayoutEffect(() => {
