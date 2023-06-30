@@ -1,9 +1,41 @@
 import axios from "axios";
 
+const endpoint =
+  process.env.NODE_ENV !== "production"
+    ? `${process.env.ENDPOINT_URL}`
+    : `${process.env.ENDPOINT_LOCAL_URL}`;
 export const client = axios.create({
-  baseURL: "http://localhost:4000",
+  baseURL: process.env.ENDPOINT_URL,
   withCredentials: true,
 });
+
+class APIError extends Error {
+  constructor(name, statusCode, message) {
+    super(message);
+    Object.setPrototypeOf(this, new.target.prototype);
+    this.name = name;
+    this.statusCode = statusCode;
+  }
+}
+
+export const errorHandler = (error) => {
+  console.log(error);
+
+  if (error.response) {
+    if (error.response.data) {
+      console.log(error.response.data);
+      console.log(error.response.statusCode);
+      console.log(error.response.headers);
+      const response = error.response;
+      const data = response.data;
+      throw new APIError(data.name ?? "", response.statusCode, data.message);
+    }
+  } else if (error.request) {
+    throw new APIError("BadRequest", null, "something went wrong");
+  } else {
+    console.log("Error", error.message);
+  }
+};
 
 export const MESSAGES_TO_LOAD = 9;
 
@@ -12,7 +44,7 @@ export const login = async ({ input }) => {
     const x = await client.post("/login", { input });
     return x.data;
   } catch (e) {
-    errorHandler(e)
+    errorHandler(e);
   }
 };
 
@@ -21,7 +53,7 @@ export const anotherAccount = async () => {
     const x = await client.post("/anotherAccount");
     return x.data;
   } catch (e) {
-  errorHandler(e);
+    errorHandler(e);
   }
 };
 
@@ -30,7 +62,7 @@ export const signUp = async ({ username, email }) => {
     const x = await client.post("/signUp", { username, email });
     return x.data;
   } catch (e) {
-   errorHandler(e);
+    errorHandler(e);
   }
 };
 
@@ -52,22 +84,21 @@ export const nameUpdate = async ({ name }) => {
 
     return x.data?.payload;
   } catch (e) {
-   errorHandler(e);
+    errorHandler(e);
   }
 };
 
 export const pinRoom = async ({ roomId, pin }) => {
   try {
     const x = await client.post("/pin", { roomId, pin });
-   
-    console.log(x);
+
     return x.data;
   } catch (e) {
-  errorHandler(e);
+    errorHandler(e);
   }
 };
 
-export const dpUpdate = async ({ original,preview }) => {
+export const dpUpdate = async ({ original, preview }) => {
   try {
     const [url, previewUrl] = await getObjectUrls({
       original,
@@ -75,15 +106,13 @@ export const dpUpdate = async ({ original,preview }) => {
       collection: "dp",
     });
 
- 
-
     const res = await client.post("/profileUpdate", {
       dp: { original, preview },
     });
 
     return { dp: { original, preview } };
   } catch (e) {
-  errorHandler(e);
+    errorHandler(e);
   }
 };
 
@@ -126,7 +155,7 @@ export const checkUsername = async ({ username }) => {
     const x = await client.post("/checkUsername", { username });
     return x.data;
   } catch (e) {
-    errorHandler();
+    errorHandler(e);
   }
 };
 export const checkUserEmail = async ({ email }) => {
@@ -139,9 +168,13 @@ export const checkUserEmail = async ({ email }) => {
 };
 
 export const getOnlineUsers = async () => {
-  return await client.get(`/users/online`).then((x) => {
-    return x.data;
-  });
+  try {
+    return await client.get(`/users/online`).then((x) => {
+      return x.data;
+    });
+  } catch (e) {
+    errorHandler(e);
+  }
 };
 
 export const getUser = async () => {
@@ -149,138 +182,120 @@ export const getUser = async () => {
     const { data } = await client.get("/me");
     return data;
   } catch (e) {
-    console.log(e)
     errorHandler(e);
   }
 };
 
-export const getMessage = async ({roomId,messageId}) => {
+export const getMessage = async ({ roomId, messageId }) => {
   try {
     const { data } = await client.get(`/room/${roomId}/messages /${messageId}`);
     return data;
   } catch (e) {
-    console.log(e);
     errorHandler(e);
   }
 };
 
 export const getRooms = async () => {
-  const data = await client.get(`/rooms`).then((x) => x.data);
-  return data;
+  try {
+    const data = await client.get(`/rooms`).then((x) => x.data);
+    return data;
+  } catch (e) {
+    errorHandler(e);
+  }
 };
 
-export const getRoomById = async (id ) => {
-  const data = await client.get(`/room/${id}`).then((x) => x.data);
-  return data;
+export const getRoomById = async (id) => {
+  try {
+    const data = await client.get(`/room/${id}`).then((x) => x.data);
+    return data;
+  } catch (e) {
+    errorHandler(e);
+  }
 };
 
 export const search = async (query) => {
-  const data = await client
-    .get(`/search`, {
-      params: {
-        partial: query,
-      },
-    })
-    .then((x) => x.data);
-  return data;
+  try {
+    const data = await client
+      .get(`/search`, {
+        params: {
+          partial: query,
+        },
+      })
+      .then((x) => x.data);
+    return data;
+  } catch (e) {
+    errorHandler(e);
+  }
 };
 
-class APIError extends Error {
-
- 
- constructor(name,status,description) {
-   super(description);
-   Object.setPrototypeOf(this, new.target.prototype);
- 
-   this.name = name;
-   this.status = status;
-   this.description = description;
- 
-   Error.captureStackTrace(this);
- }
-}
-
-export const errorHandler=(error)=>{
-   if (error.response) {
-    
-    if(error.response.data){
-      const response=error.response
-      const data=response.data
-      throw new APIError(data.name,response.status,data.message);
-    }
-     console.log(error.response.data);
-     console.log(error.response.status);
-     console.log(error.response.headers);
-   } else if (error.request) {
-    
-       throw new APIError('BadRequest',null,'something went wrong');
-   } else {
-   
-     console.log("Error", error.message);
-   }
-}
-
-export const getMessages = async ({
-  roomId,
-  
-  after,
-
-}) => {
-  const response = await client
-    .get(`/room/${roomId}/messages`, {
-      params: {
-        after,
-      },
-    })
-    .then((x) => x.data);
-
-    console.log(response)
-
-// const messages = response.messages.reduce((prev, current) => {
-//    prev[current.id] = current;
-//    return prev;
-//  }, {});
-
- 
-
-  return response;
+export const getMessages = async ({ roomId, after }) => {
+  try {
+    const response = await client
+      .get(`/room/${roomId}/messages`, {
+        params: {
+          after,
+        },
+      })
+      .then((x) => x.data);
+    return response;
+  } catch (e) {
+    errorHandler(e);
+  }
 };
 
 export const getMedia = async ({ roomId }) => {
-  const response = await client
-    .get(`/room/${roomId}/media`)
-    .then((x) => x.data);
-
-  return response;
+  try {
+    const response = await client
+      .get(`/room/${roomId}/media`)
+      .then((x) => x.data);
+    return response;
+  } catch (e) {
+    errorHandler(e);
+  }
 };
 
 export const getDocuments = async (id, offset = 0, size = MESSAGES_TO_LOAD) => {
-  const response = await client
-    .get(`/room/${id}/documents`, {
-      params: {
-        offset,
-        size,
-      },
-    })
-    .then((x) => x.data);
-
-  return response;
+  try {
+    const response = await client
+      .get(`/room/${id}/documents`, {
+        params: {
+          offset,
+          size,
+        },
+      })
+      .then((x) => x.data);
+    return response;
+  } catch (e) {
+    errorHandler(e);
+  }
 };
 export const clearUnread = async (roomId) => {
-  const response = await client
-    .post(`/room/${roomId}/clearUnread`)
-    .then((x) => x.data);
+  try {
+    const response = await client
+      .post(`/room/${roomId}/clearUnread`)
+      .then((x) => x.data);
 
-  return response; 
+    return response;
+  } catch (e) {
+    errorHandler(e);
+  }
 };
 export const getUserById = async (userId) => {
-  if(!userId) return null
-  return await client.get(`/user`, { params: { userId } }).then((x) => x.data);
+  try {
+    if (!userId) return null;
+    return await client.get(`/user/${userId}`).then((x) => x.data);
+  } catch (e) {
+    errorHandler(e);
+  }
 };
 export const getUsersbyIds = async (usersIds) => {
-  return await client
-    .get(`/users`, { params: { usersIds } })
-    .then((x) => x.data);
+  try {
+    return await client
+      .get(`/users`, { params: { usersIds } })
+      .then((x) => x.data);
+  } catch (e) {
+    errorHandler(e);
+  }
 };
 
 export const getObjectUrls = async ({
@@ -308,7 +323,7 @@ export const getObjectUrls = async ({
 
     return await Promise.all(
       signedUrls.map(async (url, i) => {
-        const file = i===0?original:preview
+        const file = i === 0 ? original : preview;
         const data = await postTos3({
           file,
           url,
@@ -320,10 +335,7 @@ export const getObjectUrls = async ({
       })
     );
   } catch (e) {
-    console.log(e);
-    if (e.name === "CanceledError") {
-      throw e;
-    }
+    errorHandler(e);
   }
 };
 
@@ -334,7 +346,6 @@ export const postTos3 = async ({ file, url, signal, progressCb }) => {
         signal,
         headers: { "Content-Type": `${file.type}` },
         onUploadProgress: (progressEvent) => {
-
           var percentCompleted = Math.round(
             (progressEvent.loaded * 100) / progressEvent.total
           );
@@ -345,23 +356,32 @@ export const postTos3 = async ({ file, url, signal, progressCb }) => {
 
     return res.data;
   } catch (e) {
-     throw e  }
+    throw errorHandler(e);
+  }
 };
 
-export const uploadMessage = async ({ collection, progressCb,signal, ...data }) => {
+export const uploadMessage = async ({
+  collection,
+  progressCb,
+  signal,
+  ...data
+}) => {
   try {
-    if ((data.message && !data.message.hasOwnProperty("original")) || typeof data.message.original !== 'object'||  data.message.type ==='gif' ) {
-      return { ...data }; 
+    if (
+      (data.message && !data.message.hasOwnProperty("original")) ||
+      typeof data.message.original !== "object" ||
+      data.message.type === "gif"
+    ) {
+      return { ...data };
     }
 
-  const [original, preview] = await getObjectUrls({
-    original: data.message.original?.raw,
-    preview: data.message.preview?.raw,
-    collection,
-    progressCb,
-  });
+    const [original, preview] = await getObjectUrls({
+      original: data.message.original?.raw,
+      preview: data.message.preview?.raw,
+      collection,
+      progressCb,
+    });
 
-     
     const response = {
       ...data,
       message: {
@@ -372,9 +392,6 @@ export const uploadMessage = async ({ collection, progressCb,signal, ...data }) 
     };
     return response;
   } catch (e) {
-
-      console.log(e)
-
-    throw e;
+    errorHandler(e);
   }
 };

@@ -43,8 +43,7 @@ const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   <ErrorBoundary
     fallbackRender={({ error, resetErrorBoundary }) => {
-
- console.log(error)
+console.log('APP')
       return <StartUp>
         <div className=" flex flex-col text-text-primary">
           {error}
