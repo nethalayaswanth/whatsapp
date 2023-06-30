@@ -42,7 +42,6 @@ export const SocketProvider = ({ children, ...props }) => {
 
     if (connected ) {
       const socket = engine.current;
-
       socket.on("verification", (user) => {
         queryClient.setQueryData(["user"], (old) => ({
           ...old,
@@ -66,51 +65,53 @@ export const SocketProvider = ({ children, ...props }) => {
           })
         );
       });
-      
 
-       socket.on("user update", (payload) => {
-
-       
-         queryClient.setQueryData(["user", payload.id], (old) => ({
-           ...old,
-           ...payload,
-         }));
-       });
+      socket.on("user update", (payload) => {
+        queryClient.setQueryData(["user", payload.id], (old) => ({
+          ...old,
+          ...payload,
+        }));
+      });
 
       socket.on("newRoom", (data) => {
-        // console.log(data,'newroom')
-        const { room, message } = data;
+        console.log(data, "newroom");
+        const { room, messages } = data;
 
-        socket.emit("joinRoom", room.roomId);
+        if (room) {
+          const { roomId, type, pinned } = room;
+          socket.emit("joinRoom", room.roomId);
 
-        queryClient.setQueryData(["rooms"], (old) => ({
-          ...(old && old),
-          [room.roomId]: {
-            ...(old[room.roomId] && old[room.roomId]),
+          queryClient.setQueryData(["rooms"], (old) => ({
+            ...(old && old),
+            [room.roomId]: {
+              ...(old[room.roomId] && old[room.roomId]),
+              roomId,
+              type,
+              pinned,
+            },
+          }));
+          queryClient.setQueryData(["room", room.roomId], (old) => ({
+            ...(old && old),
             ...room,
-            lastMessage: message,
-            unread: old[message.roomId].unread
-              ? old[message.roomId].unread + 1
-              : 1,
-          },
-        }));
+          }));
+        }
 
-        queryClient.setQueryData([message.roomId, "messages"], (old) => ({
+        queryClient.setQueryData([room.roomId, "messages"], (old) => ({
           ...old,
-          [message.id]: {
-            ...message,
+          messages: {
+            ...old.messages,
+            ...messages,
           },
         }));
       });
 
       socket.on("deleteMessage", (message) => {
-        console.log(message);
         const { messageId, roomId, everyone } = message;
 
         if (everyone) {
           queryClient.setQueryData([roomId, "messages"], (old) => {
-             if (!old.messages) return old;
-             const { [messageId]: deleted, ...rest } = old.messages;
+            if (!old.messages) return old;
+            const { [messageId]: deleted, ...rest } = old.messages;
             return {
               ...old,
               messages: {
@@ -122,37 +123,55 @@ export const SocketProvider = ({ children, ...props }) => {
               },
             };
           });
-          return;
+        } else {
+          queryClient.setQueryData([roomId, "messages"], (old) => {
+            if (!old.messages) return old;
+            const { [messageId]: removed, ...rest } = old.messages;
+
+            return {
+              ...old,
+              messages: {
+                ...rest,
+              },
+            };
+          });
         }
+        queryClient.setQueryData([roomId, "media"], (old) => {
+          if (!old) return old;
+         const index= old.indexOf(messageId);
 
-        queryClient.setQueryData([roomId, "messages"], (old) => {
-          if(!old.messages) return old
-          const { [messageId]: removed, ...rest } = old.messages;
-
+         if(index!==-1){
+          return old
+         }else{
+          old.splice(index,1)
+          return [...old]
+         }
          
-          return {
-            ...old,
-            messages: {
-              ...rest,  
-            },
-          };
         });
+        queryClient.setQueryData([roomId, "documents"], (old) => {
+          if (!old) return old;
+          const index = old.indexOf(messageId);
+          if (index !== -1) {
+            return old;
+          } else {
+            old.splice(index, 1);
+            return [...old];
+          }
+        });
+
       });
 
       socket.on("message", (data) => {
-    
         const { room, message } = data;
 
         console.log(room, message);
-
-        const lastMessagetime = message?.deliveredTime || message?.sendTime;
 
         queryClient.setQueryData(["rooms"], (old) => {
           return {
             ...(old && old),
             [message.roomId]: {
               ...(old && old[message.roomId]),
-              ...(room &&  room ),
+              ...(room && room),
               unread: old[message.roomId].unread
                 ? old[message.roomId].unread + 1
                 : 1,
@@ -172,13 +191,11 @@ export const SocketProvider = ({ children, ...props }) => {
       });
 
       socket.on("typing", (payload) => {
-        console.log(payload);
         queryClient.setQueryData(["room", payload.roomId], (old) => {
           return {
             ...(old && old),
-          
-              notification: { ...payload, action: "TYPING" },
-          
+
+            notification: { ...payload, action: "TYPING" },
           };
         });
       });

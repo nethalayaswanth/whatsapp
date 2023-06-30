@@ -7,6 +7,7 @@ import useSocket from "../../contexts/socketContext";
 import { useChatRoom } from "../../contexts/roomContext";
 
 import { useMemo } from "react";
+import { useReplyState } from "../../contexts/replyContext";
 import { useLatest } from "../../hooks/useLatest";
 import { useUser } from "../../queries.js/useRequests";
 import { ulid } from "../../utils";
@@ -18,6 +19,7 @@ const MessageHandlerProvider = ({ children }) => {
   const { newRoom, ...room } = useChatRoom();
   const [socket, socketConnected] = useSocket();
   const chatState = useChatState();
+  const replyState = useReplyState();
 
   const roomId = room?.roomId;
   const roomType = room?.type;
@@ -67,13 +69,12 @@ const MessageHandlerProvider = ({ children }) => {
 
   const submitHandler = useCallback(
     (payload) => {
-     
       if (!socket) {
         console.error("Couldn't send message");
       }
       let reply;
-      if (chatState?.reply) {
-        const { from, isSenderUser, ...rest } = chatState.reply;
+      if (replyState) {
+        const { from, isSenderUser, opened, ...rest } = replyState;
 
         reply = { ...rest, from: from.id };
       }
@@ -95,7 +96,7 @@ const MessageHandlerProvider = ({ children }) => {
 
       sendMessage({ ...message, collection: message.roomId });
     },
-    [socket, sendMessage, chatState?.reply, targetUserId, roomId, user.id]
+    [socket, sendMessage, replyState, targetUserId, roomId, user.id]
   );
 
   const submitHandlerLatest = useLatest(submitHandler);
@@ -131,3 +132,4 @@ function useMessageHandler() {
 }
 
 export { MessageHandlerProvider, useMessageHandler };
+

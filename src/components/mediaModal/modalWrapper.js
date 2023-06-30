@@ -11,7 +11,7 @@ import {
 } from "react";
 import { createPortal, flushSync } from "react-dom";
 import { createContext } from "react";
-import { useTransition } from "./trail";
+import { useTransition } from ".";
 import useResizeObserver from "use-resize-observer";
 import { formatDate, mergeRefs } from "../../utils";
 
@@ -23,7 +23,7 @@ const ModalWrapperContext = createContext();
   const {
     showMini,
     containerRef,
-opened,
+    opened,
     mainMounted,
     register,
     onClosed,

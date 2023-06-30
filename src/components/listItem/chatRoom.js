@@ -89,7 +89,6 @@ const Details = ({ roomId, roomType, type, text }) => {
         return messageType.includes(type);
       }
     )[0];
-
     return formatmessage({ text, type: lastMessageType });
   }, [type, text]);
 
@@ -124,6 +123,7 @@ const ChatItem = forwardRef(({ roomId }, ref) => {
   const sender = lastMessage?.from;
   const isSenderUser = sender === userId;
 
+  console.log(room)
   const roomType = room?.type;
   const title = room?.name;
   const unread = room?.unread;

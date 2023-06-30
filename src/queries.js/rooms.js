@@ -184,7 +184,7 @@ export const useRoomQuery = ({ roomId, select, queryOptions }) => {
     ["room", roomId],
     async () => {
       const room = await getRoomById(roomId);
-      if(!room) return null
+      if (!room) return null;
       let members = [];
       if (room.members.length !== 0 && typeof room.members[0] === "object") {
         room.members.forEach((user) => {
@@ -192,7 +192,7 @@ export const useRoomQuery = ({ roomId, select, queryOptions }) => {
           queryClient.prefetchQuery(["user", user.id], () => ({
             ...user,
           }));
-        }); 
+        });
       } else {
         members = room.members;
       }
@@ -210,7 +210,7 @@ export const useRoomQuery = ({ roomId, select, queryOptions }) => {
 };
 const selectRoomData = (data) => {
   if (data) {
-    const { notification, pinned, ...room } = data;
+    const { notification, ...room } = data;
     return room;
   }
 };

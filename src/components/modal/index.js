@@ -104,8 +104,6 @@ export const Modal = (props) => {
   const [mount, unMount] = useMount(show);
   const root = useMemo(() => document.getElementById("globalmodal"), []);
 
-  console.log(mount)
-
   return (
     <>
       {mount &&

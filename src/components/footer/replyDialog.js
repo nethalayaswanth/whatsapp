@@ -1,23 +1,25 @@
 import { ReactComponent as Close } from "../../assets/close.svg";
-import { useChatDispatch, useChatState } from "../../contexts/chatContext";
+import { useReplyDispatch, useReplyState } from "../../contexts/replyContext";
 import useCollapse from "../../hooks/useCollapse";
+import useMount from "../../hooks/useMount";
 import { FormatEmoji } from "../../shared";
 import { ErrorBoundary } from "../errorBoundary";
 
 const ReplyDialog = ({}) => {
-  const state = useChatState();
-  const dispatch = useChatDispatch();
-  console.log(state);
-  const reply = state?.reply;
+  const reply = useReplyState();
+  const dispatch = useReplyDispatch();
+  const { from, message, isSenderUser } = reply;
 
-  const text = reply?.message?.text;
-  const previewUrl = reply?.message?.preview?.url;
-  const name = reply?.from?.name;
-  const isSenderUser = reply?.isSenderUser;
+  if (!from || !message) return null;
+
+  const { text, type, preview } = message;
+  const { name } = from;
+  const previewUrl = preview?.url;
 
   const closeReplyModal = () => {
-    dispatch({ type: "reply", payload: { reply: null } });
+    dispatch({ type: "close" });
   };
+
   return (
     <div className="bg-panel-header  pt-[5px] flex items-center w-full">
       <div className="overflow-hidden ml-[66px] flex flex-grow bg-panel-deeper ">
@@ -62,12 +64,17 @@ const ReplyDialog = ({}) => {
 };
 
 const ReplyDialogWrapper = () => {
-  const state = useChatState();
-
-  const open= state.reply
+  const { opened } = useReplyState();
+   const dispatch = useReplyDispatch();
+  const [mount, unMount] = useMount(opened);
   const { Toggle, getCollapseProps } = useCollapse({
-    isExpanded: !!open,
+    isExpanded: opened,
+    onCollapseEnd() {
+      unMount();
+       dispatch({ type: "reset" });
+    },
   });
+
   return (
     <div
       {...getCollapseProps({
@@ -78,9 +85,7 @@ const ReplyDialogWrapper = () => {
         },
       })}
     >
-      <ErrorBoundary>
-        <ReplyDialog />
-      </ErrorBoundary>
+      <ErrorBoundary>{mount && <ReplyDialog />}</ErrorBoundary>
     </div>
   );
 };

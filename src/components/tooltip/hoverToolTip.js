@@ -9,19 +9,12 @@ import ToolTip from "./index";
 
 const HoverToolTip=({align='left',children,value,style})=>{
 
- const [mountChildren, setMountChildren] = useState(true);
-
+ 
  const { Toggle, getCollapseProps } = useCollapse({
    collapseWidth: true,
    isExpanded:value,
-   onExpandStart() {
-     setMountChildren(true);
-   },
-   onCollapseEnd() {
-     setMountChildren(false);
-   },
  });
-
+    
     return (
       <span>
         <ToolTip

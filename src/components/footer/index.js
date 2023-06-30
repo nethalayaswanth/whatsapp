@@ -17,6 +17,7 @@ import { TextInput } from "./input";
 import Preview from "./preview";
 import ReplyDialog from "./replyDialog";
 import ToolBar from "./toolbar";
+import { useReplyDispatch } from "../../contexts/replyContext";
 
 export const Button = ({ children, ...props }) => {
   return (
@@ -57,7 +58,7 @@ export const AttachmentDialog = ({ isExpanded }) => {
 const Footer = forwardRef(({ footer }, ref) => {
   const footerState = useFooterState();
   const setFooterState = useFooterDispatch();
-
+  const replyDispatch=useReplyDispatch()
   const inputRef = useRef();
 
   const {
@@ -78,8 +79,9 @@ const Footer = forwardRef(({ footer }, ref) => {
         type: "set state",
         payload: { text: "" },
       });
+      replyDispatch({type:'reset'})
     },
-    [onSubmit, setFooterState]
+    [onSubmit,replyDispatch, setFooterState]
   );
 
   const handleInputChange = useCallback(

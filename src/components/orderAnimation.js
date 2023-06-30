@@ -81,6 +81,7 @@ const ListOrderAnimation = ({ children, order, getKey=()=>{} }) => {
         });
         return;
       }
+      
       const changeInY = prevBox.top - currentBox.top;
       const changeInX = prevBox.left - currentBox.left;
 

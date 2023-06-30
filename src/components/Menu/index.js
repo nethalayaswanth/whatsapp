@@ -1,8 +1,8 @@
 import { useSidebar, useSidebarDispatch } from "../../contexts/sidebarContext";
 
 export const MenuItem = ({ index, name, onClick }) => {
-  const handleClick = () => {
-   
+  const handleClick = (e) => {
+   e.stopPropagation()
     onClick?.( name);
   };
   return (

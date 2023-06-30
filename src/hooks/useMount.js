@@ -1,21 +1,45 @@
+import { useRef } from "react";
 import { useCallback, useLayoutEffect, useState } from "react";
 
+// export default function useMount(open) {
+//   const [mount, setMount] = useState(open);
+
+//   const unMount = useCallback(() => {
+//     setMount(false);
+//   }, []);
+
+//    if (open && !mount) {
+//      setMount(true);
+//    }
+  
+//   // useLayoutEffect(() => {
+//   //   if (open) {
+//   //     setMount(true);
+//   //   }
+//   // }, [open]);
+
+//   return [mount, unMount];
+// }
+
 export default function useMount(open) {
-  const [mount, setMount] = useState(open);
+  const mount = useRef(open);
+   const [_, forceRender] = useState();
 
   const unMount = useCallback(() => {
-    setMount(false);
+     mount.current=false
+    forceRender()
   }, []);
 
-   if (open && !mount) {
-     setMount(true);
-   }
-  
+  if (mount.current!== true && open ) {
+    mount.current=true
+  }
+
   // useLayoutEffect(() => {
   //   if (open) {
   //     setMount(true);
   //   }
   // }, [open]);
 
-  return [mount, unMount];
+  return [mount.current, unMount];
 }
+

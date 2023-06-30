@@ -3,7 +3,7 @@ import { useCallback, useRef } from "react";
 
 import { formatDat } from "../utils";
 
-import { getDocuments, getMedia, getMessages } from "./api";
+import { getDocuments, getMedia, getMessage, getMessages } from "./api";
 
 const appLoadedTime = Date.now();
 
@@ -207,10 +207,15 @@ export const useRoomMessages = ({ roomId, queryOptions }) => {
 
 export const useMessage = ({ roomId, messageId, queryOptions }) => {
   const select = useCallback(
-    (data) => {
-      return data.messages[messageId];
+    async(data) => {
+      let message = data.messages[messageId];
+
+      if(!message){
+        const data=await getMessage({roomId, messageId})
+      }
+      return message;
     },
-    [messageId]
+    [messageId,roomId]
   );
   return useMessages({ roomId, select, queryOptions });
 };

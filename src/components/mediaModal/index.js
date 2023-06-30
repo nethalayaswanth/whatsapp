@@ -227,7 +227,7 @@ export const useTransition = ({
       });
     }
   }, [getStyles, show, swiper]);
-
+        
   useLayoutEffect(() => {
     if (!show && prevShow) {
       if (enableMinimize) {
@@ -287,8 +287,6 @@ export const useTransition = ({
     if (show) {
       mountMini(false);
       setOpened(true)
-    
-      // mountMini(false)
       onOpened?.();
       return;
     }

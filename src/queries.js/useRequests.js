@@ -118,6 +118,8 @@ export const usePin = ({ ...mutationOptions } = {}) => {
   return useMutation((data) => pinRoom(data), {
     ...mutationOptions,
     onSuccess: (data, variables) => {
+      console.log('%cred','color:red')
+      console.log(data)
       queryClient.setQueryData(["rooms"], (old) => ({
         ...old,
         [data.roomId]: { ...old[data.roomId], pinned: data.pinned },
@@ -136,7 +138,7 @@ export const useCreateGroup = ({ onSuccess = () => {} } = {}) => {
     onSuccess: (data, variables) => {
       // queryClient.setQueryData(["user"], (old) => ({
       //   ...old,
-      //   ...data,
+      //   ...data, 
       // }));
       // onSuccess?.(data);
     },
@@ -271,6 +273,7 @@ export const useRooms = ({ onSuccess = () => {}, ...options } = {}) => {
             lastMessagetime,
           };
         });
+
       // data
       //   .filter((x) => !!x)
       //   .forEach((room) => {

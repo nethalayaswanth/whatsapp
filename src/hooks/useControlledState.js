@@ -5,7 +5,7 @@ export default function useControlledState(
   defaultExpanded
 ) {
   const [stateExpanded, setStateExpanded] = useState(defaultExpanded || false)
-  const initiallyControlled = useRef(isExpanded != null)
+  const initiallyControlled = useRef(isExpanded !== null)
   const expanded = initiallyControlled.current
     ? (isExpanded )
     : stateExpanded

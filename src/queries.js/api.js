@@ -58,9 +58,9 @@ export const nameUpdate = async ({ name }) => {
 
 export const pinRoom = async ({ roomId, pin }) => {
   try {
-    console.log({ roomId, pin });
     const x = await client.post("/pin", { roomId, pin });
-
+   
+    console.log(x);
     return x.data;
   } catch (e) {
   errorHandler(e);
@@ -150,6 +150,16 @@ export const getUser = async () => {
     return data;
   } catch (e) {
     console.log(e)
+    errorHandler(e);
+  }
+};
+
+export const getMessage = async ({roomId,messageId}) => {
+  try {
+    const { data } = await client.get(`/room/${roomId}/messages /${messageId}`);
+    return data;
+  } catch (e) {
+    console.log(e);
     errorHandler(e);
   }
 };

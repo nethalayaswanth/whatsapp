@@ -28,6 +28,7 @@ import Spinner from "../../spinner";
 import { EmojiTextInput } from "../input";
 import Cropper from "./cropper";
 import Doc from "./docPreview";
+import { useReplyDispatch } from "../../../contexts/replyContext";
 
 const PreviewModalWrapper = forwardRef(({}, ref) => {
   const inputRef = useRef();
@@ -37,6 +38,7 @@ const PreviewModalWrapper = forwardRef(({}, ref) => {
 
   const footer = useFooterState();
   const setFooterState = useFooterDispatch();
+  const replyDispatch=useReplyDispatch()
 
   const file = footer.file;
 
@@ -97,6 +99,7 @@ const PreviewModalWrapper = forwardRef(({}, ref) => {
         attachmentDialogOpened:false
       },
     });
+    replyDispatch({type:'reset'})
   };
 
   const { onSubmit, handleTyping } = useMessageHandler();

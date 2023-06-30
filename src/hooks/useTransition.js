@@ -1,31 +1,25 @@
 import {
-  useState,
-  useRef,
-  useEffect,
   createContext,
-  useContext,
   useCallback,
   useLayoutEffect,
-  cloneElement,
+  useRef,
+  useState,
 } from "react";
 
-import useEffectAfterMount from "./useEffectAfterMount";
 import useControlledState from "./useControlledState";
 
-import { flushSync } from "react-dom";
-import raf from "raf";
-import usePrevious from "./usePrevious";
 import useAnimationFrame from "./useAnimationFrame";
+import usePrevious from "./usePrevious";
 
-import { mergeRefs, callAll } from "../utils";
+import { callAll, mergeRefs } from "../utils";
 
 export const noop = () => {};
 
 const easeInOut = "cubic-bezier(0.4, 0, 0.2, 1)";
- const lerp = (a, b, t) => a + (b - a) * t;
- const easeIn =t => t*t
+const lerp = (a, b, t) => a + (b - a) * t;
+const easeIn = (t) => t * t;
 
- const  easeOut = t => t*(2-t)
+const easeOut = (t) => t * (2 - t);
 
 const DisclosureContext = createContext();
 
@@ -65,7 +59,7 @@ const getTransfrom = (w, h, cw, ch, direction) => {
 };
 
 export default function useTransition({
-  duration=150,
+  duration = 150,
   easing = easeInOut,
   style: parentInitialStyles = {},
   onExpandStart = noop,
@@ -109,8 +103,6 @@ export default function useTransition({
 
   const [styles, setStylesRaw] = useState(initialStyles);
 
-
-
   const mergeStyles = useCallback((newStyles) => {
     setStylesRaw((oldStyles) => ({ ...oldStyles, ...newStyles }));
   }, []);
@@ -123,7 +115,7 @@ export default function useTransition({
     const parent = parentEl.current.getBoundingClientRect();
     const child = el.current.getBoundingClientRect();
 
-     return getTransfrom(
+    return getTransfrom(
       parent.width,
       parent.height,
       child.width,
@@ -131,8 +123,6 @@ export default function useTransition({
       direction
     );
   }, [direction]);
-
- 
 
   // const elRefCb = (node) => {
   //   if (!node) return;
@@ -148,12 +138,9 @@ export default function useTransition({
   //   el.current = node;
   // };
 
-
-
   useLayoutEffect(() => {
     if (isExpanded) {
       setMount(true);
-      
 
       mergeStyles({
         position: "relative",
@@ -164,50 +151,42 @@ export default function useTransition({
       });
     }
   }, [isExpanded]);
-
+ 
   const translate = (t) => {
     const x = direction === "left" || direction === "right";
     return x ? `translateX(${t}px)` : `translateY(${t}px)`;
   };
 
-
-
   useLayoutEffect(() => {
     if (isExpanded && mount) {
-
       currentStyles.current = getTranslate();
     }
-  }, [ getTranslate, isExpanded, mount]);
+  }, [getTranslate, isExpanded, mount]);
 
- 
-  const easeIn = useCallback((x) => x * x,[])
+  const easeIn = useCallback((x) => x * x, []);
   const initial = 0;
-
-
- useAnimationFrame(
-    (progress) => {
-      const [i, f] = currentStyles.current;
-      const t = lerp(i, f, easeOut(progress));
-      el.current.style.transform = translate(t);
-
-    },
-    {
-      shouldAnimate: isExpanded && mount,
-      duration:duration,
-    }
-  );
-
 
   useAnimationFrame(
     (progress) => {
       const [i, f] = currentStyles.current;
-
+      const t = lerp(i, f, easeOut(progress));
+      el.current.style.transform = translate(t);
+    },
+    {
+      shouldAnimate: isExpanded && mount,
+      duration: duration,
+    }
+  );
+   
+  useAnimationFrame(
+    (progress) => {
+      const [i, f] = currentStyles.current;
       const t = lerp(f, i, easeIn(progress));
       el.current.style.transform = translate(t);
 
-      if(progress>=1){
-          onCollapseEnd?.()
-          setMount(false)
+      if (progress >= 1) {
+        onCollapseEnd?.();
+        setMount(false);
       }
     },
     {
@@ -215,7 +194,6 @@ export default function useTransition({
       duration: duration,
     }
   );
-
 
   function getParentProps({
     style = {},

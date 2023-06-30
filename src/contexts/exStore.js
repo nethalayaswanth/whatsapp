@@ -73,6 +73,10 @@ const createStore = (data) => {
     if (key in data) {
       if (key in state) {
         const newVal = val instanceof Function ? val(data[key]) : val;
+        if (isObject(newVal)) {
+          state[key] = createStore(newVal);
+          return;
+        }
         state[key].setSnapshot(newVal);
       }
     } else {
@@ -88,22 +92,20 @@ const createStore = (data) => {
     }
   };
 
-  const clearState = (newState,oldState ) => {
-
-      if (Object.keys(oldState).length !== 0) {
-           Object.keys(oldState).forEach((key) => {
-             if(key in newState)return
-             oldState.delete(key)
-             if(key in state){
-                 state.delete(key)
-             }
-             if(key in methods){
-                 methods.delete(key)
-             }
-           });
-         }
+  const clearState = (newState, oldState) => {
+    if (Object.keys(oldState).length !== 0) {
+      Object.keys(oldState).forEach((key) => {
+        if (key in newState) return;
+        delete oldState[key];
+        if (key in state) {
+          delete state[key];
+        }
+        if (key in methods) {
+          delete methods[key];
+        }
+      });
+    }
   };
-
 
   return new Proxy(() => undefined, {
     get: (target, key) => {
@@ -121,26 +123,22 @@ const createStore = (data) => {
       setState(key, val);
       return true;
     },
-    apply: (_, __,[ update]) => {
-      
-     
-        
+    apply: (_, __, [update]) => {
       if (isObject(update)) {
         if (Object.keys(update).length !== 0) {
           Object.keys(update).forEach((key) => {
             setState(key, update[key]);
           });
         }
-      }else if(typeof update === 'function'){
-        const newVal=update(data)
-        clearState(newVal,data)
-         if (Object.keys(newVal).length !== 0) {
-           Object.keys(newVal).forEach((key) => {
-             setState(key, newVal[key]);  
-           });
-         }
-      }
-      else {
+      } else if (typeof update === "function") {
+        const newVal = update(data);
+        clearState(newVal, data);
+        if (Object.keys(newVal).length !== 0) {
+          Object.keys(newVal).forEach((key) => {
+            setState(key, newVal[key]);
+          });
+        }
+      } else { 
         __DEV_ERR__(`updates  should be a object or function`);
       }
     },

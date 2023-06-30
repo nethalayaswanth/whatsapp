@@ -30,20 +30,23 @@ const ChatHeader = () => {
   //   });
   // };
 
-  const device = useMedia({
-    breakPoints: [740, 540, 420],
-    breakPointValues: ["xl", "l", "sm"],
-    defaultValue: "xs",
-  });
-  const mobile = device === "xs";
+
+  
 
   const title = room?.name;
   const dp = room?.dp?.previewUrl;
 
   const { getCollapseProps } = useCollapse({
-    isExpanded: notification?.typing,
+    isExpanded: notification?.typing ?? false,
   });
 
+    const device = useMedia({
+      breakPoints: [740, 540, 420],
+      breakPointValues: ["xl", "l", "sm"],
+      defaultValue: "xs",
+    });
+
+    const mobile = device === "xs";
 
 
   return (

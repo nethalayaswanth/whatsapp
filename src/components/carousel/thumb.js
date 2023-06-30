@@ -1,6 +1,5 @@
-import { forwardRef,useRef } from "react";
-import { useSwiperSlide } from "swiper/react";
-import { useSwiper } from "swiper/react";
+import { forwardRef, useRef } from "react";
+import { useSwiper, useSwiperSlide } from "swiper/react";
 import { mergeRefs } from "../../utils";
 
 import useMediaFetch from "../../hooks/useMediaFetch";
@@ -11,37 +10,36 @@ const breakPointValues = ["sm"];
 const defaultValue = "xs";
 
 export const ThumbView = forwardRef(
-  ({ src, messageId,roomId, active, onClick, className, style }, ref) => {
-    const {data} = useMessage({ messageId, roomId });
+  ({ src, messageId, roomId, active, onClick, className, style }, ref) => {
+    const { data } = useMessage({ messageId, roomId });
 
-    const message=data?.message
-    const type=message?.type
-  
-    const gif = type?.includes("gif"); 
-      const _original = message?.original;
-      const _preview = message?.preview;
+    const message = data?.message;
+    const type = message?.type;
 
-      const [original, preview, loading] = useMediaFetch({
-        original: _original,
-        preview: _preview,
-        type: type,
-      });
+    const gif = type?.includes("gif");
+    const _original = message?.original;
+    const _preview = message?.preview;
+
+   
+    const [original, preview, loading] = useMediaFetch({
+      original: _original,
+      preview: _preview,
+      type: type,
+    });
 
     const mediaRect = useRef();
 
     const video = message?.type.includes("video");
 
-
     const width = message?.dimensions?.width;
     const height = message?.dimensions?.height;
     const aspectRatio = width / height;
-    
 
     const potrait = aspectRatio <= 1;
 
     const styles = potrait
       ? { width: "100%", aspectRatio: aspectRatio }
-      : { width: `${aspectRatio * 100}% ` ,maxWidth:'none'};
+      : { width: `${aspectRatio * 100}% `, maxWidth: "none" };
 
     const handleClick = () => {
       onClick?.({

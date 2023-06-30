@@ -45,21 +45,22 @@ const fetchGif = async (url) => {
 };
 
 export default function useMediaFetch(props) {
-  const image = props.type.includes("image");
-  const gif = props.type.includes("gif");
-  const video = props.type.includes("video");
-  const doc = props.type.includes("doc");
-
+  const image = props.type?.includes("image");
+  const gif = props.type?.includes("gif");
+  const video = props.type?.includes("video");
+  const doc = props.type?.includes("doc");
+  
   const { data: previewData, previewloading } = useImage({
     src: props.preview?.url,
     fetch: async () => {
       if (props.preview?.raw) return convertToDataUrl(props.preview.raw);
       let data;
       if (image || gif || video) {
+
         const blob = await fetchImage(props.preview.url);
         data = await convertToDataUrl(blob);
-
         props.cacheMedia({ type: "preview", data });
+
       }
 
       return data;
@@ -75,7 +76,6 @@ export default function useMediaFetch(props) {
         data = await fetchImage(props.original.url);
         props.cacheMedia({ type: "original", data });
       }
-
       return data;
     },
   });
@@ -83,7 +83,7 @@ export default function useMediaFetch(props) {
   const { original, preview } = useMemo(() => {
     let original, preview;
 
-    if (!props.type) return;
+    if (!props.type) return {original,preview};
 
     try {
       const originalRaw = originalData ?? props.original?.raw;

@@ -32,6 +32,7 @@ export const useCollapse = ({
     defaultExpanded
   );
 
+
   const el = useRef(null);
 
   const collapsedHeight = `${initialConfig.collapsedHeight || 0}px`;
@@ -78,7 +79,7 @@ export const useCollapse = ({
   );
 
   const mountRef = useRef(true);
-
+  
   useLayoutEffect(() => {
      raf(() => {
         onExpandStart();
@@ -89,7 +90,6 @@ export const useCollapse = ({
           overflow: "hidden",
         });
          raf(() => {
-          
           const change=`${variable}px`
            const value = collapseWidth ? { width: change } : { height: change };
            mergeStyles({
@@ -201,7 +201,6 @@ export const useCollapse = ({
       onTransitionEnd: callAll(handleTransitionEnd, onTransitionEnd),
       style: {
         boxSizing: "border-box",
-
         ...style,
 
         ...styles,
