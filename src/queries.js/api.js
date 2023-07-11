@@ -186,8 +186,8 @@ export const getUser = async () => {
   try {
     const { data } = await client.get("/me");
     return data;
-  } catch (e) {
-    errorHandler(e);
+  } catch (error) {
+    errorHandler(error)
   }
 };
 
