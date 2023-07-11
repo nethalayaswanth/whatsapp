@@ -21,7 +21,7 @@ const Attachment = () => {
     if (event.target.files && event.target.files.length > 0) {
       const file = event.target.files[0];
       if (file.size > 1024 * 1024 * 15) {
-        console.log("file size is larger than 15MB");
+        //console.log("file size is larger than 15MB");
         return;
       }
       setFooterState({

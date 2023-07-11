@@ -1,5 +1,4 @@
-import { useCallback } from "react";
-import { createContext, useContext, useState } from "react";
+import { createContext, useCallback, useContext, useState } from "react";
 import createStore from "../../contexts/exStore";
 import useSocket from "../../contexts/socketContext";
 import { Modal } from "../modal";
@@ -7,14 +6,11 @@ import { Modal } from "../modal";
 const deleteActions = ["Delete for everyone", "Delete for me", "Cancel"];
 
 function DeleteDialog() {
-  
-  
-  const {isSenderUser, deleted, roomId, messageId } =
-    useDeleteState();
-  const dispatch=useDeleteDispatch()
+  const { isSenderUser, deleted, roomId, messageId } = useDeleteState();
+  const dispatch = useDeleteDispatch();
   const [socket, socketConnected] = useSocket();
 
-  console.log(isSenderUser, deleted, roomId, messageId);
+  //console.log(isSenderUser, deleted, roomId, messageId);
   const handleDeleteAction = useCallback(
     async (action) => {
       switch (action) {
@@ -28,7 +24,7 @@ function DeleteDialog() {
             },
             (res) => {}
           );
-          dispatch({type:'reset'})
+          dispatch({ type: "reset" });
           break;
         }
         case "Delete for me": {
@@ -48,7 +44,7 @@ function DeleteDialog() {
         }
       }
     },
-    [messageId, roomId,dispatch, socket]
+    [messageId, roomId, dispatch, socket]
   );
   return (
     <div className="flex h-full w-full p-[24px] justify-center items-center ">
@@ -85,7 +81,6 @@ function DeleteDialog() {
   );
 }
 
-
 const DeleteContext = createContext();
 
 const initialState = {
@@ -101,16 +96,16 @@ const reducer = (state, action) => {
     case "set state":
       return { ...state, ...action.payload };
     case "reset":
-      return { ...initialState};
+      return { ...initialState };
     default:
       return state;
   }
 };
 
-export default function DeleteModal({children}) {
+export default function DeleteModal({ children }) {
   const [store] = useState(() => createStore(initialState));
 
-  const {show}=store
+  const { show } = store;
   return (
     <DeleteContext.Provider value={store}>
       {children}
@@ -143,5 +138,3 @@ export function useDeleteDispatch() {
   );
   return dispatch;
 }
-
-

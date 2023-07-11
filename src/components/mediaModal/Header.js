@@ -84,8 +84,8 @@ export const MessageModalHeader = ({ roomId, messageId }) => {
   ];
   return (
     <HeaderView title={title} details={time} dp={dp}>
-      {actions.map(({ Icon, handler }) => {
-        return <HeaderItem handleClick={handler}>{Icon}</HeaderItem>;
+      {actions.map(({ Icon, handler },index) => {
+        return <HeaderItem key={index}  handleClick={handler}>{Icon}</HeaderItem>;
       })}
     </HeaderView>
   );

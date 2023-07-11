@@ -83,7 +83,7 @@ const GifMessageWrapper = forwardRef(({ ...props }, ref) => {
           setPreview(blobUrl.current);
         };
       } catch (e) {
-        console.log(e);
+        //console.log(e);
       }
     })();
 

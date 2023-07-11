@@ -7,7 +7,7 @@ const fetchImage = async (url) => {
   });
 
   // .then((rs) => {
-  //   console.log(rs);
+  //   //console.log(rs);
   //   const reader = rs.getReader();
 
   //   return new ReadableStream({
@@ -49,18 +49,16 @@ export default function useMediaFetch(props) {
   const gif = props.type?.includes("gif");
   const video = props.type?.includes("video");
   const doc = props.type?.includes("doc");
-  
+
   const { data: previewData, previewloading } = useImage({
     src: props.preview?.url,
     fetch: async () => {
       if (props.preview?.raw) return convertToDataUrl(props.preview.raw);
       let data;
       if (image || gif || video) {
-
         const blob = await fetchImage(props.preview.url);
         data = await convertToDataUrl(blob);
         props.cacheMedia({ type: "preview", data });
-
       }
 
       return data;
@@ -83,7 +81,7 @@ export default function useMediaFetch(props) {
   const { original, preview } = useMemo(() => {
     let original, preview;
 
-    if (!props.type) return {original,preview};
+    if (!props.type) return { original, preview };
 
     try {
       const originalRaw = originalData ?? props.original?.raw;
@@ -101,7 +99,7 @@ export default function useMediaFetch(props) {
         preview = props.preview?.url;
       }
     } catch (e) {
-      console.log(e);
+      //console.log(e);
     }
 
     return {
@@ -125,7 +123,7 @@ export default function useMediaFetch(props) {
 
   //     // const mimeCodec = 'video/mp4; codecs="avc1.42E01E, mp4a.40.2"';
 
-  //     // console.log(videoRef);
+  //     // //console.log(videoRef);
   //     // if (videoRef && MediaSource.isTypeSupported(mimeCodec)) {
   //     //   const myMediaSource = new MediaSource();
   //     //   const url = URL.createObjectURL(myMediaSource);
@@ -147,7 +145,7 @@ export default function useMediaFetch(props) {
   //     //       const response = await fetch(props.original.url);
 
   //     //       const body = response.body;
-  //     //       console.log(body);
+  //     //       //console.log(body);
   //     //       const reader = body.getReader();
 
   //     //       let streamNotDone = true;
@@ -155,7 +153,7 @@ export default function useMediaFetch(props) {
   //     //       while (streamNotDone) {
   //     //         const { value, done } = await reader.read();
 
-  //     //         console.log(value, done);
+  //     //         //console.log(value, done);
   //     //         if (done) {
   //     //           streamNotDone = false;
   //     //           break;
@@ -170,7 +168,7 @@ export default function useMediaFetch(props) {
   //     //         });
   //     //       }
   //     //     } catch (e) {
-  //     //       console.log(e);
+  //     //       //console.log(e);
   //     //     }
   //     //   };
   //     //   myMediaSource.addEventListener("sourceopen", sourceopen, {

@@ -105,7 +105,7 @@ function useFooterDispatch() {
 
   const dispatch = useCallback(
     (action) => {
-      console.log(action.type);
+      //console.log(action.type);
       footerStore((state) => footerReducer(state, action));
     },
     [footerStore]
@@ -115,3 +115,4 @@ function useFooterDispatch() {
 }
 
 export { FooterProvider, useFooterDispatch, useFooterState };
+

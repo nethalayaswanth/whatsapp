@@ -131,6 +131,7 @@ export const formatDat = (unixTime, day) => {
     },
   };
 
+
   const date = formatRelative(unixTime, new Date(), { locale });
   const time = format(unixTime, "h:mm aa");
 

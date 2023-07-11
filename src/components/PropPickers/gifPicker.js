@@ -1,18 +1,9 @@
-import { useLayoutEffect, useState, useRef, useCallback } from "react";
-import {
-  Grid,
-  SearchBar,
-  SearchContext,
-  SearchContextManager,
-  SuggestionBar,
-} from "@giphy/react-components";
 import { GiphyFetch } from "@giphy/js-fetch-api";
+import { Grid } from "@giphy/react-components";
+import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useScrollPosition } from "../../hooks/useScrollPosition";
-import Disclosure from "../Disclosure";
-import useDisclosure from "../../hooks/useDisclosure";
 import useTransition from "../../hooks/useTransition";
 import useWindowSize from "../../hooks/useWindowResize";
-import { useMemo } from "react";
 
 const NavItem = ({ name, onClick, index }) => {
   const handleClick = () => {
@@ -31,14 +22,7 @@ const NavItem = ({ name, onClick, index }) => {
   );
 };
 
-const gifNavMenu = [
-  "trending",
-  "sad",
-  "love",
-  "reactions",
-  "sports",
-  "haha",
-];
+const gifNavMenu = ["trending", "sad", "love", "reactions", "sports", "haha"];
 
 const stickerNavMenu = [
   "trending",
@@ -71,7 +55,7 @@ const Navbar = ({ onClick, sticker }) => {
         return <NavItem key={i} index={i} name={item} onClick={handleClick} />;
       })}
       <div
-        style={{ width: `${100/navMenu.length}%`, ...activeStyles }}
+        style={{ width: `${100 / navMenu.length}%`, ...activeStyles }}
         className={` h-[4px] absolute bottom-[0]  left-0 bg-tab-active z-[500]`}
       ></div>
     </div>
@@ -108,19 +92,15 @@ const GifPicker = ({ onSelect, sticker = false }) => {
     }
   }, [width]);
 
-  const [searchKey, setSearchKey] = useState('');
-   const [render, setRender] = useState("");
+  const [searchKey, setSearchKey] = useState("");
+  const [render, setRender] = useState("");
 
   const handleInputChange = (e) => {
- 
     setSearchKey(e.target.value.trim());
     setRender(e.target.value.trim());
   };
 
-  
-  const [gf] = useState(
-    () => new GiphyFetch("Z4wbRtMknUVNlfwyYDgFICqClEbf5H0E")
-  );
+  const [gf] = useState(() => new GiphyFetch(process.env.REACT_APP_GIPHY_KEY));
   const [category, setCategory] = useState();
 
   const handleNavgation = useMemo(
@@ -133,7 +113,7 @@ const GifPicker = ({ onSelect, sticker = false }) => {
       }
       setCategory(active);
       setSearchKey(active);
-      setRender(active)
+      setRender(active);
     },
     []
   );
@@ -160,11 +140,9 @@ const GifPicker = ({ onSelect, sticker = false }) => {
     [category, gf, searchKey, sticker]
   );
 
-
-  useLayoutEffect(()=>{
+  useLayoutEffect(() => {
     setRender(`${Math.random()}`);
-  },[sticker])
-
+  }, [sticker]);
 
   return (
     <div className="rounded-t-[6px] h-[320px] relative overflow-hidden">
@@ -214,16 +192,16 @@ const GifPicker = ({ onSelect, sticker = false }) => {
             noLink={true}
             onGifClick={(gif) => {
               const images = gif?.images;
-              console.log(images)
-              const {height,width,url,size}=images.original
-              const preview=images.preview_gif.url
-              const aspectRatio=width/height
-       
+              //console.log(images)
+              const { height, width, url, size } = images.original;
+              const preview = images.preview_gif.url;
+              const aspectRatio = width / height;
+
               onSelect({
                 original: url,
                 size,
                 preview,
-                type:'gif',
+                type: "gif",
                 dimensions: { width, height, aspectRatio },
               });
             }}

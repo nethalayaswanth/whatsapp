@@ -17,11 +17,11 @@ export const useRoomsQuery = ({ select, queryOptions }) => {
   return useQuery(
     ["rooms"],
     async () => {
-      console.log(`%cfetching rooms`, "color:blue");
+      //console.log(`%cfetching rooms`, "color:blue");
       const data = await getRooms();
 
-      console.log(`%cfetched rooms`, "color:green");
-      console.log(data);
+      //console.log(`%cfetched rooms`, "color:green");
+      //console.log(data);
 
       const rooms = {};
       data
@@ -226,7 +226,7 @@ export const useRoom = ({ roomId, type, member, queryOptions }) => {
     queryOptions: {
       staleTime: 100000,
       onerror: (e) => {
-        console.log(e);
+        //console.log(e);
       },
       ...queryOptions,
     },
@@ -258,7 +258,7 @@ export const useRoomNotification = ({ roomId, queryOptions }) => {
     return data?.notification;
   }, []);
   const isFetchingRooms = useIsFetching({ queryKey: ["rooms"] });
-  
+
   return useRoomQuery({
     roomId,
     select,
@@ -267,7 +267,7 @@ export const useRoomNotification = ({ roomId, queryOptions }) => {
       staleTime: 10000,
       enabled: !isFetchingRooms,
       onerror: (e) => {
-        console.log(e);
+        //console.log(e);
       },
     },
   });
@@ -287,7 +287,7 @@ export const useTypingNotification = ({ roomId, queryOptions }) => {
       staleTime: 10000,
       enabled: !isFetchingRooms,
       onerror: (e) => {
-        console.log(e);
+        //console.log(e);
       },
     },
   });

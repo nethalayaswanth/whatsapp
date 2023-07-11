@@ -1,16 +1,10 @@
 import data from "@emoji-mart/data/sets/14/facebook.json";
-import Picker from "@emoji-mart/react"
-import useResizeObserver from "use-resize-observer";
+import Picker from "@emoji-mart/react";
 
+const EmojiPicker = ({ onSelect, width, mobile }) => {
+  const perline = Math.floor((width - 40) / 36);
 
-
-const EmojiPicker = ({ onSelect, width,mobile }) => {
-
-
-  const perline=Math.floor((width-40)/36)
-
-
-  console.log('emoji',perline)
+  //console.log('emoji',perline)
   return (
     <div className="h-[320px] relative overflow-hidden rounded-t-[6px]">
       <Picker

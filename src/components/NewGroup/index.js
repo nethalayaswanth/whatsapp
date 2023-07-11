@@ -18,12 +18,11 @@ const NewGroup = () => {
 
   const handleClick = useCallback(
     (user) => {
-      console.log(user);
+      //console.log(user);
       dispatch({ type: "select", user });
     },
     [dispatch]
   );
-
 
   return (
     <span className="absolute top-0 left-0 h-full w-full overflow-x-hidden overflow-y-hidden  ">
@@ -50,7 +49,6 @@ const NewGroup = () => {
               <div className="flex-1   border-solid border-border-list pl-[2px] pb-[2px] pt-[6px]">
                 <ul className="list-none">
                   {selected.map((user, index) => {
-                   
                     return (
                       <Selected
                         key={index}

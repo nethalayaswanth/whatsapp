@@ -27,7 +27,7 @@ import useMount from "../../hooks/useMount";
 
    const [styles, setStyles] = useState(initialStyles);
 
-   console.log('modal');
+   //console.log('modal');
    if (!animate && !show) {
      unMount();
    }

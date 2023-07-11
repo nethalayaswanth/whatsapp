@@ -58,7 +58,7 @@ const DocWrapper = ({ messageId, user, roomId }) => {
 export default function Documents({ documents, user, roomId }) {
   const handleClick = useCallback(() => {}, []);
 
-  console.log(documents, roomId);
+  //console.log(documents, roomId);
   return (
     <div className="w-full  flex flex-col">
       <div className="flex flex-grow flex-wrap justify-center  py-[30px]  overflow-y-scroll">

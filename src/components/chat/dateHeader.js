@@ -8,7 +8,7 @@ import {
 } from "react";
 import { useDateModalDispatch } from "../../contexts/dateModalContext";
 
-const DateHeader = forwardRef(({ date }, ref) => {
+const DateHeader = forwardRef(({ date,time }, ref) => {
   const headers = useDateModalDispatch();
 
 

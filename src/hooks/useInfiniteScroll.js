@@ -25,11 +25,11 @@ const useInfiniteScroll = ({
       const scrollerTop = scroll.getBoundingClientRect().top;
       const threshold = 200;
       const inView = loaderTop > scrollerTop - threshold;
-     
+
       prevScrollTop.current = scroll.scrollTop;
       prevscrollheight.current = scroll.scrollHeight;
 
-      console.log(inView, actionTriggered.current, loadMoreRef.current);
+      // ////console.log(inView, actionTriggered.current, loadMoreRef.current);
 
       if (inView && !actionTriggered.current) {
         actionTriggered.current = true;
@@ -40,10 +40,8 @@ const useInfiniteScroll = ({
   );
 
   useEffect(() => {
-   
     const scroll = getScroller.current?.();
 
-    
     if (!scroll) return;
 
     handleScroll();
@@ -63,7 +61,7 @@ const useInfiniteScroll = ({
     let timeout;
     const scroll = getScroller.current?.();
 
-    console.log(scroll, "scroll");
+    ////console.log(scroll, "scroll");
     if (!scroll) return;
 
     const scrollTop =
@@ -72,7 +70,7 @@ const useInfiniteScroll = ({
       top: scrollTop,
     });
 
-    console.log('effect')
+    ////console.log('effect')
     prevScrollTop.current = scrollTop;
     prevscrollheight.current = scroll.scrollHeight;
     actionTriggered.current = false;

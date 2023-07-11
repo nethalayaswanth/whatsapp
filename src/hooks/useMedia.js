@@ -13,7 +13,7 @@ function useMedia({
   width,
 } = {}) {
   const [_, screen] = useWindowSize();
-  console.log(screen);
+  //console.log(screen);
 
   const variable = width || screen.width;
 
