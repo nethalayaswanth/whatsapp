@@ -9,6 +9,7 @@ import useAnimationFrame from "../../hooks/useAnimationFrame";
 import usePrevious from "../../hooks/usePrevious";
 
 import { Children } from "react";
+import { useRefs } from "./refProvider";
 
 const lerp = (a, b, t) => a + (b - a) * t;
 const easeIn = (t) => t * t;
@@ -16,8 +17,8 @@ const easeOut = (t) => t * (2 - t);
 
 const Stack = ({ children }) => {
   const spacerRef = useRef();
-  const scroller = useRef();
-  const footer = useRef();
+ 
+  const {scroller,footer}=useRefs()
 
   const conversationContainerRef = useRef();
   const currentScrollRef = useRef();
@@ -28,13 +29,13 @@ const Stack = ({ children }) => {
   const prevBottomSheetOpened = usePrevious(bottomSheetOpened);
 
   useLayoutEffect(() => {
-    scroller.current = document.getElementById("chat-scroller");
-    footer.current = document.getElementById("footer-bottomSheet");
+    // scroller.current = document.getElementById("chat-scroller");
+    // footer.current = document.getElementById("footer-bottomSheet");
     if (!scroller.current) return;
     // if (bottomSheetOpened) setFooterState({ type: "toggle bottomSheetMount" });
 
     currentScrollRef.current = scroller.current.scrollTop;
-  }, [bottomSheetOpened, setFooterState, scroller]);
+  }, [bottomSheetOpened,scroller]);
 
   useAnimationFrame(
     (progress) => {

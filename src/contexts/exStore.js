@@ -73,10 +73,9 @@ const createStore = (data) => {
     if (key in data) {
       if (key in state) {
         const newVal = val instanceof Function ? val(data[key]) : val;
-        if (isObject(newVal)) {
-          state[key] = createStore(newVal);
-          return;
-        }
+        // if (isObject(newVal)) {
+        //   return state[key];
+        // }
         state[key].setSnapshot(newVal);
       }
     } else {

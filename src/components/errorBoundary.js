@@ -8,7 +8,7 @@ export function ErrorBoundary({ onReset, reset, children }) {
   return (
     <Boundary
       fallbackRender={({ error, resetErrorBoundary }) => {
-        console.log(error);
+        //console.log(error);
         return (
           <div className="bg-danger-lighter h-full w-full p-[20px] flex justify-center items-center">
             <div className="flex-grow-1  border border-dotted border-danger p-[20px] m-[20px] ">

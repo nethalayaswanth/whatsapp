@@ -1,60 +1,54 @@
 import { memo, useCallback, useRef, useState } from "react";
 import { ReactComponent as Close } from "../../assets/close.svg";
 import { ReactComponent as Done } from "../../assets/done.svg";
-import useMedia from "../../hooks/useMedia";
 
 import { useEffect } from "react";
 import ReactCrop from "react-image-crop";
 
-
-import useHover from "../../hooks/useHover";
-import { createImage, generatecroppedImage } from "../../utils";
-import Spinner from "../spinner";
 import useResizeObserver from "use-resize-observer";
+import useHover from "../../hooks/useHover";
+import { generatecroppedImage } from "../../utils";
+import Spinner from "../spinner";
 
- const getContainerStyles = ({ container, dimensions }) => {
-   if (!container.width || !container.height) return { width: 0, height: 0 };
-   const padding = container.width > 630 ? 58 : 0;
-   const maxHeight = container.height - padding;
-   const maxWidth = container.width - padding;
-   const containerAspectRatio = container.width / container.height;
+const getContainerStyles = ({ container, dimensions }) => {
+  if (!container.width || !container.height) return { width: 0, height: 0 };
+  const padding = container.width > 630 ? 58 : 0;
+  const maxHeight = container.height - padding;
+  const maxWidth = container.width - padding;
+  const containerAspectRatio = container.width / container.height;
+  const aspectRatio = dimensions.aspectRatio;
+  const intrinsicHeight = dimensions.height;
+  const intrinsicWidth = dimensions.width;
 
-   const aspectRatio = dimensions.aspectRatio;
-   const intrinsicHeight = dimensions.height;
-   const intrinsicWidth = dimensions.width;
+  const landscape = aspectRatio > 1;
+  const containerInPotrait = containerAspectRatio <= 1;
 
-   const landscape = aspectRatio > 1;
-   const containerInPotrait = containerAspectRatio <= 1;
+  const clampedWidth = Math.min(intrinsicWidth, maxWidth);
+  const clampedHeight = Math.min(intrinsicHeight, maxHeight);
+  const reducedHeight = clampedWidth / aspectRatio;
+  const reducedWidth = clampedHeight * aspectRatio;
 
-   const clampedWidth = Math.min(intrinsicWidth, maxWidth);
-   const clampedHeight = Math.min(intrinsicHeight, maxHeight);
-   const reducedHeight = clampedWidth / aspectRatio;
-   const reducedWidth = clampedHeight * aspectRatio;
-
-   if (containerInPotrait) {
-     if (landscape) {
-       return { width: clampedWidth, height: reducedHeight };
-     } else {
-       if (reducedWidth > maxWidth)
-         return { width: clampedWidth, height: reducedHeight };
-       return { width: reducedWidth, height: clampedHeight };
-     }
-   } else {
-     if (landscape) {
-       if (reducedHeight > maxHeight)
-         return { width: reducedWidth, height: clampedHeight };
-       return { width: clampedWidth, height: reducedHeight };
-     } else {
-       return { width: reducedWidth, height: clampedHeight };
-     }
-   }
- };
-
-
+  if (containerInPotrait) {
+    if (landscape) {
+      return { width: clampedWidth, height: reducedHeight };
+    } else {
+      if (reducedWidth > maxWidth)
+        return { width: clampedWidth, height: reducedHeight };
+      return { width: reducedWidth, height: clampedHeight };
+    }
+  } else {
+    if (landscape) {
+      if (reducedHeight > maxHeight)
+        return { width: reducedWidth, height: clampedHeight };
+      return { width: clampedWidth, height: reducedHeight };
+    } else {
+      return { width: reducedWidth, height: clampedHeight };
+    }
+  }
+};
 
 export const ImageCropper = memo(({ file, onSubmit, close }) => {
-
-  const fileRef=useRef(file)
+  const fileRef = useRef(file);
   const blobUrl = useRef(URL.createObjectURL(fileRef.current));
 
   const [crop, setCrop] = useState({
@@ -63,7 +57,7 @@ export const ImageCropper = memo(({ file, onSubmit, close }) => {
     height: 50,
     x: 25,
     y: 25,
-    aspectRatio:1,
+    aspectRatio: 1,
   });
 
   const [croppedAreaPixels, setCroppedAreaPixels] = useState({
@@ -76,21 +70,25 @@ export const ImageCropper = memo(({ file, onSubmit, close }) => {
 
   const [uploading, setUploading] = useState(false);
 
-  const [loading,setLoading]=useState(true)
-  const [dimensions, setDimensions] = useState({width:400,height:400,aspectRatio:1});
+  const [loading, setLoading] = useState(true);
+  const [dimensions, setDimensions] = useState({
+    width: 400,
+    height: 400,
+    aspectRatio: 1,
+  });
 
   const onCropComplete = useCallback((crop, percentCrop) => {
     setCroppedAreaPixels(percentCrop);
   }, []);
 
-  const onImageLoad =useCallback((e)=>{
+  const onImageLoad = useCallback((e) => {
     const { width, height } = e.currentTarget;
-  
-    setDimensions({width,height,aspectRatio:width/height})
+
+    setDimensions({ width, height, aspectRatio: width / height });
 
     const x = width > height ? height / 2 : width / 2;
 
-    setLoading(false)
+    setLoading(false);
     setCrop({
       unit: "px",
       width: x,
@@ -98,31 +96,27 @@ export const ImageCropper = memo(({ file, onSubmit, close }) => {
       x: width / 2 - x / 2,
       y: height / 2 - x / 2,
     });
-  },[])
-
+  }, []);
 
   const handleSubmit = async (event) => {
     try {
       setUploading(true);
       const [original, preview] = await generatecroppedImage({
-        src:  blobUrl.current ,
+        src: blobUrl.current,
         crop: croppedAreaPixels,
         quality: 0.66,
       });
 
-
-     
-     await onSubmit({ original, preview });
+      await onSubmit({ original, preview });
 
       setUploading(false);
     } catch (e) {
-      console.log(e);
+      //console.log(e);
     }
   };
 
   useEffect(() => {
-    
-    let url=blobUrl.current
+    let url = blobUrl.current;
     return () => {
       if (url) {
         URL.revokeObjectURL(url);
@@ -136,10 +130,9 @@ export const ImageCropper = memo(({ file, onSubmit, close }) => {
     height: containerHeight,
   } = useResizeObserver();
 
- 
   const containerStyles = getContainerStyles({
     container: { width: containerWidth, height: containerHeight },
-    dimensions
+    dimensions,
   });
 
   return (
@@ -229,7 +222,7 @@ export const DpUpload = ({
   };
   
   
-
+console.log(isHovering);
   return (
     <div className="flex-none my-[28px] flex justify-center ">
       <div

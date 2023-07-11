@@ -49,7 +49,7 @@ const ChatWrapper = ({ children }) => {
       clearTimeout(typingTimeOut.current);
     }
 
-    console.log("emitting typing status");
+    //console.log("emitting typing status");
     socket.emit("typing", {
       roomId: roomId,
       typingBy: user.id,
@@ -92,7 +92,7 @@ const ChatWrapper = ({ children }) => {
       };
       const message = { ...metaData, message: { ...payload } };
 
-      console.log({ ...metaData, message: { ...payload } });
+      //console.log({ ...metaData, message: { ...payload } });
 
       messageMutate.sendMessage({ ...message, collection: message.roomId });
     },
@@ -102,11 +102,10 @@ const ChatWrapper = ({ children }) => {
   return <>{children}</>;
 };
 
-
 const MainDisclosure = ({ children }) => {
-  const {preview} = useAppState();
+  const { preview } = useAppState();
 
-  console.log(`%cpreview`, "color:blue;font-size:32px");
+  //console.log(`%cpreview`, "color:blue;font-size:32px");
 
   return (
     <Disclosure

@@ -11,7 +11,7 @@ const Verification = ({ user }) => {
     try {
        anotherAccount.mutate();
     } catch (e) {
-      console.log(e);
+      //console.log(e);
     }
   };
 

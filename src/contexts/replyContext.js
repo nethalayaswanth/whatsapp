@@ -23,7 +23,7 @@ function Reducer(state, action) {
   }
 }
 
-function ReplyProvider({ children, props }) {
+function ReplyProvider({ children }) {
   const [state, dispatch] = React.useReducer(Reducer, initialState);
 
   return (

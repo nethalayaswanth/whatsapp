@@ -24,7 +24,7 @@ export const StrokeSpinner = ({
         cy="21.5"
         r="20"
         fill={`${fill ? fill : "none"}`}
-        stroke-width="3"
+        strokeWidth="3"
       ></circle>
     </svg>
   );

@@ -1,4 +1,4 @@
-import { useRef, Children, useLayoutEffect } from "react";
+import { Children, useLayoutEffect, useRef } from "react";
 import { ErrorBoundary } from "./errorBoundary";
 
 export const calculateBoundingBoxes = (children) => {
@@ -13,7 +13,7 @@ export const calculateBoundingBoxes = (children) => {
   return boundingBoxes;
 };
 
-const ListOrderAnimation = ({ children, order, getKey=()=>{} }) => {
+const ListOrderAnimation = ({ children, order, getKey = () => {} }) => {
   const list = Children.toArray(children);
   const mountRef = useRef(false);
   const animating = useRef(false);
@@ -37,8 +37,7 @@ const ListOrderAnimation = ({ children, order, getKey=()=>{} }) => {
   }, []);
 
   useLayoutEffect(() => {
-
-    console.log(boxRefs.current);
+    //console.log(boxRefs.current);
     if (Object.keys(boxRefs.current).length === 0) return;
 
     const newBoundingBox = calculateBoundingBoxes(
@@ -56,7 +55,6 @@ const ListOrderAnimation = ({ children, order, getKey=()=>{} }) => {
     if (animating.current) {
       return;
     }
-  
 
     Object.entries(boxRefs.current).forEach(([key, child], index) => {
       const domNode = child;
@@ -81,7 +79,7 @@ const ListOrderAnimation = ({ children, order, getKey=()=>{} }) => {
         });
         return;
       }
-      
+
       const changeInY = prevBox.top - currentBox.top;
       const changeInX = prevBox.left - currentBox.left;
 
@@ -104,7 +102,6 @@ const ListOrderAnimation = ({ children, order, getKey=()=>{} }) => {
     });
   }, [order]);
 
-  
   return (
     <>
       {list.map((child, index) => {

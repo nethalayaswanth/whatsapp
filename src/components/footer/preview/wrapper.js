@@ -17,6 +17,7 @@ import {
 
 import "react-image-crop/dist/ReactCrop.css";
 import useResizeObserver from "use-resize-observer";
+import { useReplyDispatch } from "../../../contexts/replyContext";
 import {
   createImage,
   createVideo,
@@ -28,7 +29,6 @@ import Spinner from "../../spinner";
 import { EmojiTextInput } from "../input";
 import Cropper from "./cropper";
 import Doc from "./docPreview";
-import { useReplyDispatch } from "../../../contexts/replyContext";
 
 const PreviewModalWrapper = forwardRef(({}, ref) => {
   const inputRef = useRef();
@@ -38,13 +38,12 @@ const PreviewModalWrapper = forwardRef(({}, ref) => {
 
   const footer = useFooterState();
   const setFooterState = useFooterDispatch();
-  const replyDispatch=useReplyDispatch()
+  const replyDispatch = useReplyDispatch();
 
   const file = footer.file;
-
-  const image = file.type.includes("image");
-  const video = file.type.includes("video");
-  const gif = file.type.includes("gif");
+  const image = file?.type?.includes("image");
+  const video = file?.type?.includes("video");
+  const gif = file?.type?.includes("gif");
   const doc = footer.fileType === "doc";
 
   const [videoDetails, setvideoDetails] = useState();
@@ -54,8 +53,8 @@ const PreviewModalWrapper = forwardRef(({}, ref) => {
 
   const [preview, setPreview] = useState(() => {
     if (gif) {
-      blobUrl.current = file.original;
-      return file.preview;
+      blobUrl.current = file?.original;
+      return file?.preview;
     }
 
     blobUrl.current = URL.createObjectURL(file);
@@ -63,9 +62,9 @@ const PreviewModalWrapper = forwardRef(({}, ref) => {
   });
 
   const [dimensions, setDimensions] = useState({
-    width: file.dimensions?.width ?? 0,
-    height: file.dimensions?.height ?? 0,
-    aspectRatio: file.dimensions?.aspectRatio ?? 1,
+    width: file?.dimensions?.width ?? 0,
+    height: file?.dimensions?.height ?? 0,
+    aspectRatio: file?.dimensions?.aspectRatio ?? 1,
   });
 
   const [croppedDimensions, setCroppedDimensions] = useState(
@@ -82,7 +81,6 @@ const PreviewModalWrapper = forwardRef(({}, ref) => {
 
   const [croppedImage, setCroppedImage] = useState();
 
-
   const currentDimensions = editMode || !image ? dimensions : croppedDimensions;
 
   const onCropComplete = useCallback((crop, percentCrop) => {
@@ -96,10 +94,10 @@ const PreviewModalWrapper = forwardRef(({}, ref) => {
         text: "",
         bottomSheetOpened: false,
         previewDialogOpened: false,
-        attachmentDialogOpened:false
+        attachmentDialogOpened: false,
       },
     });
-    replyDispatch({type:'reset'})
+    replyDispatch({ type: "reset" });
   };
 
   const { onSubmit, handleTyping } = useMessageHandler();
@@ -130,7 +128,7 @@ const PreviewModalWrapper = forwardRef(({}, ref) => {
       });
       setEditMode(false);
     } catch (e) {
-      console.log(e);
+      ////console.log(e);
     }
   };
 
@@ -203,7 +201,7 @@ const PreviewModalWrapper = forwardRef(({}, ref) => {
         dimensions: _dimensions,
       });
     } catch (e) {
-      console.log(e);
+      ////console.log(e);
     }
   };
 
@@ -247,7 +245,7 @@ const PreviewModalWrapper = forwardRef(({}, ref) => {
           setPreview(blobUrl.current);
         }
       } catch (e) {
-        console.log(e);
+        ////console.log(e);
       }
     })();
   }, [gif, image, video]);

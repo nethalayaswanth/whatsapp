@@ -15,6 +15,6 @@ const AddedToGroup = ({
     isReceiverUser ? "you" : receiverName
   }`;
 };
-
+ 
 
 export default AddedToGroup;

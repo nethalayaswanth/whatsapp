@@ -74,7 +74,7 @@ export const Typing = ({
   const message =
     roomType === "group" ? `${user.name} is typing...` : `typing...`;
 
-  return <span className={`${className?className:''}`}>{message}</span>;
+  return <span className={`${className ? className : ""}`}>{message}</span>;
 };
 
 const Details = ({ roomId, roomType, type, text }) => {
@@ -123,7 +123,7 @@ const ChatItem = forwardRef(({ roomId }, ref) => {
   const sender = lastMessage?.from;
   const isSenderUser = sender === userId;
 
-  console.log(room)
+  //console.log(room)
   const roomType = room?.type;
   const title = room?.name;
   const unread = room?.unread;
@@ -171,7 +171,7 @@ const ChatItem = forwardRef(({ roomId }, ref) => {
           }
         }
       } catch (e) {
-        console.log(e);
+        //console.log(e);
       }
     },
     [pin, roomId]

@@ -1,46 +1,20 @@
 import axios from "axios";
+import { APIError, errorHandler } from "./errors";
+import { endpoint } from "./endpoint";
 
 
-
-const endpoint =
-  process.env.NODE_ENV !== "production"
-    ? `${process.env.REACT_APP_ENDPOINT_LOCAL_URL}`
-    : `${process.env.REACT_APP_ENDPOINT_URL}`;
-
-    
-    
 export const client = axios.create({
-  baseURL: process.env.REACT_APP_ENDPOINT_URL,
+  baseURL: endpoint,
   withCredentials: true,
 });
 
-class APIError extends Error {
-  constructor(name, statusCode, message) {
-    super(message);
-    Object.setPrototypeOf(this, new.target.prototype);
-    this.name = name;
-    this.statusCode = statusCode;
-  }
-}
-
-export const errorHandler = (error) => {
-  console.log(error);
-
-  if (error.response) {
-    if (error.response.data) {
-      console.log(error.response.data);
-      console.log(error.response.statusCode);
-      console.log(error.response.headers);
-      const response = error.response;
-      const data = response.data;
-      throw new APIError(data.name ?? "", response.statusCode, data.message);
-    }
-  } else if (error.request) {
-    throw new APIError("BadRequest", null, "something went wrong");
-  } else {
-    console.log("Error", error.message);
-  }
-}; 
+// client.interceptors.response.use(
+//   (response) => response,
+//   (error) => {
+//     console.log("wffsf", error);
+//     return Promise.reject(error);
+//   }
+// );
 
 export const MESSAGES_TO_LOAD = 9;
 
@@ -183,11 +157,16 @@ export const getOnlineUsers = async () => {
 };
 
 export const getUser = async () => {
+
+
+
   try {
     const { data } = await client.get("/me");
+
     return data;
-  } catch (e) {
-    errorHandler(e);
+  } catch (error) {
+
+    errorHandler(error)
   }
 };
 

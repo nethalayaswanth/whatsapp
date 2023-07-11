@@ -39,16 +39,16 @@
 
   #app {
     position: absolute;
-    top: 0;
-    left: 0;
     --panel-header: 59px;
-  }
+  } 
 
-svg {
+  #webpack-dev-server-client-overlay {
+    display: none;
+  }
+  svg {
     display: block;
     pointer-events: none;
-}
-
+  }
 
   button {
     outline: none;

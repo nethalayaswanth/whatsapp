@@ -2,8 +2,8 @@ import {
   useCallback,
   useEffect,
   useLayoutEffect,
-  useRef,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import usePrevious from "./usePrevious";
@@ -31,7 +31,7 @@ const useRaf = (
 
       timeFraction = timeFraction > 1 ? 1 : timeFraction < 0 ? 0 : timeFraction;
 
-      console.log(timeFraction);
+      //console.log(timeFraction);
       if (timeFraction < 1) {
         cbRef.current(timeFraction);
 
@@ -48,9 +48,6 @@ const useRaf = (
   const currentTrigger = useMemo(() => trigger, [trigger]);
 
   const [prevTriggerState] = usePrevious(currentTrigger);
-
-
-
 
   useLayoutEffect(() => {
     cbRef.current = callback;

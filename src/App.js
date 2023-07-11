@@ -8,21 +8,21 @@ import LoginPage from "./pages/login";
 import Messenger from "./pages/messenger";
 import { useUser } from "./queries.js/useRequests";
 
-function App({ isRestoring }) {
-  const { data } = useUser();
+function App() {
+  const { data,status } = useUser();
 
-  return (
+  return ( data?
     <>
       {
         <div id="app" className="App w-full ">
-          <div className="relative w-full h-full overflow-hidden z-[100]">
+          <div className="relative w-full h-full  overflow-hidden z-[100] flex flex-col items-center ">
             {data.verification ? <Messenger /> : <LoginPage />}
 
             <div className=" z-[-1] w-full h-[127px] fixed top-0 left-0 bg-app-stripe"></div>
           </div>
         </div>
       }
-    </>
+    </>:null
   );
 }
 
@@ -30,12 +30,14 @@ const imagesClient = new ImagesClient();
 function Index() {
   const isRestoring = useIsRestoring();
   
+  console.log(isRestoring);
   return (
     <>
       <QueryErrorResetBoundary>
         {({ reset }) => (
           <ErrorBoundary
             fallbackRender={({ error, resetErrorBoundary }) => {
+             
               return (
                 <StartUp>
                   <div className=" flex flex-col text-text-primary">
@@ -51,10 +53,14 @@ function Index() {
                   </div>
                 </StartUp>
               );
-            }
-     }
+            }}
             onReset={reset}
           >
+            {/* <Suspense fallback={<StartUp />}>
+              <ImagesProvider client={imagesClient}>
+                <App />
+              </ImagesProvider>
+            </Suspense> */}
             {isRestoring ? (
               <div
                 style={{

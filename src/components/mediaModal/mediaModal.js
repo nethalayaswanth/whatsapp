@@ -141,10 +141,11 @@ const MediaModal = () => {
 
   const { data: media } = useMediaOfRoom({ roomId });
 
-  
+  ////console.log(show)
+
   const [mount, unMount] = useMount(show);
 
-  
+  ////console.log(mount);
 
   return (
     <>

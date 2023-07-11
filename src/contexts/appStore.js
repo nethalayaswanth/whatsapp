@@ -1,4 +1,4 @@
-import { useState, useContext, createContext, useCallback } from "react";
+import { createContext, useCallback, useContext, useState } from "react";
 
 import createStore from "./exStore";
 const AppContext = createContext();
@@ -34,14 +34,11 @@ const reducer = (state, action) => {
   }
 };
 
-
 function AppProvider({ children }) {
-  const [store] = useState(()=>createStore(initialState));
-
+  const [store] = useState(() => createStore(initialState));
 
   return <AppContext.Provider value={store}>{children}</AppContext.Provider>;
 }
-
 
 function useAppState() {
   const context = useContext(AppContext);
@@ -60,14 +57,12 @@ function useAppDispatch() {
 
   const dispatch = useCallback(
     (action) => {
-      console.log(action.type)
+      //console.log(action.type)
       appStore((state) => reducer(state, action));
     },
     [appStore]
   );
   return dispatch;
 }
-
-
 
 export { AppProvider, useAppDispatch, useAppState };

@@ -52,7 +52,7 @@ const PreviewModalWrapper = forwardRef(({}, ref) => {
 
   const [preview, setPreview] = useState(createPreview);
 
-  console.log(file, preview, blobUrl.current, file.dimensions?.aspectRatio);
+  //console.log(file, preview, blobUrl.current, file.dimensions?.aspectRatio);
 
   const [dimensions, setDimensions] = useState({
     width: file.dimensions?.width ?? 1,
@@ -111,7 +111,7 @@ const PreviewModalWrapper = forwardRef(({}, ref) => {
       }
       const croppedUrl = URL.createObjectURL(croppedFile);
 
-      console.log(croppedUrl, URL.createObjectURL(previewFile));
+      //console.log(croppedUrl, URL.createObjectURL(previewFile));
 
       const { naturalWidth, naturalHeight, ascpectRatio } = await createImage(
         croppedUrl
@@ -122,7 +122,7 @@ const PreviewModalWrapper = forwardRef(({}, ref) => {
       setCroppedDimensions({ width, height, ascpectRatio });
       setEditMode(false);
     } catch (e) {
-      console.log(e);
+      //console.log(e);
     }
   };
 
@@ -161,7 +161,7 @@ const PreviewModalWrapper = forwardRef(({}, ref) => {
         },
       });
     } catch (e) {
-      console.log(e);
+      //console.log(e);
     }
   };
 
@@ -200,12 +200,12 @@ const PreviewModalWrapper = forwardRef(({}, ref) => {
           const height = 320;
           const width = height * ascpectRatio;
 
-          console.log(width, height, ascpectRatio);
+          //console.log(width, height, ascpectRatio);
           setPreview(blobUrl.current);
           setDimensions({ width, height, ascpectRatio });
         }
       } catch (e) {
-        console.log(e);
+        //console.log(e);
       }
     })();
   }, [gif, image, video]);
@@ -384,7 +384,7 @@ const NoPreviewModal = () => {
         },
       });
     } catch (e) {
-      console.log(e);
+      //console.log(e);
     }
   };
 
@@ -456,7 +456,7 @@ const PreviewModal = ({ ...props }, ref) => {
 
   const open = footer.previewDialogOpened;
 
-  console.log(open);
+  //console.log(open);
   const { mount, getDisclosureProps, getParentProps } = useDisclosure({
     isExpanded: open,
     direction: "bottom",

@@ -168,7 +168,7 @@ const PreviewModalWrapper = forwardRef(({}, ref) => {
       });
       setEditMode(false);
     } catch (e) {
-      console.log(e);
+      //console.log(e);
     }
   };
 
@@ -241,7 +241,7 @@ const PreviewModalWrapper = forwardRef(({}, ref) => {
       //   dimensions: _dimensions,
       // });
     } catch (e) {
-      console.log(e);
+      //console.log(e);
     }
   };
 
@@ -286,7 +286,7 @@ const PreviewModalWrapper = forwardRef(({}, ref) => {
           setPreview(blobUrl.current);
         }
       } catch (e) {
-        console.log(e);
+        //console.log(e);
       }
     })();
   }, [gif, image, video]);

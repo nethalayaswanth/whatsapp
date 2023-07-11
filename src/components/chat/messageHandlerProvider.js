@@ -1,6 +1,11 @@
-import { createContext, useCallback, useContext, useRef } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+} from "react";
 
-import { useChatState } from "../../contexts/chatContext";
 import { useMessageMutation } from "../../contexts/mutationContext";
 import useSocket from "../../contexts/socketContext";
 
@@ -11,25 +16,22 @@ import { useReplyState } from "../../contexts/replyContext";
 import { useLatest } from "../../hooks/useLatest";
 import { useUser } from "../../queries.js/useRequests";
 import { ulid } from "../../utils";
+import { useRefs } from "./refProvider";
+import { useScrollToBottomDispatch } from "./scrollToBottom";
 
 const Context = createContext();
 
 const MessageHandlerProvider = ({ children }) => {
   const { data: user } = useUser();
-  const { newRoom, ...room } = useChatRoom();
+
+  const currentRoom = useChatRoom();
+  const { newRoom, ...room } = currentRoom;
   const [socket, socketConnected] = useSocket();
-  const chatState = useChatState();
   const replyState = useReplyState();
 
-  const roomId = room?.roomId;
-  const roomType = room?.type;
-  const targetUserId = room.id;
 
-  // useEffect(() => {
-  //   if (roomId && room?.unread !== 0 && !newRoom && socket) {
-  //     socket.emit("clearUnread", { roomId });
-  //   }
-  // }, [newRoom, room?.unread, roomId, socket]);
+  const roomId = room?.roomId;
+  const targetUserId = room.id;
 
   const typingTimeOut = useRef();
   const isTyping = useRef(false);
@@ -67,13 +69,14 @@ const MessageHandlerProvider = ({ children }) => {
 
   const { sendMessage } = useMessageMutation();
 
+
   const submitHandler = useCallback(
     (payload) => {
       if (!socket) {
         console.error("Couldn't send message");
       }
       let reply;
-      if (replyState) {
+      if (replyState.from) {
         const { from, isSenderUser, opened, ...rest } = replyState;
 
         reply = { ...rest, from: from.id };
@@ -91,12 +94,17 @@ const MessageHandlerProvider = ({ children }) => {
       };
 
       const message = { ...metaData, message: { ...payload } };
-
-      console.log({ ...metaData, message: { ...payload } });
-
       sendMessage({ ...message, collection: message.roomId });
+     
     },
-    [socket, sendMessage, replyState, targetUserId, roomId, user.id]
+    [
+      socket,
+      sendMessage,
+      targetUserId,
+      roomId,
+      user.id,
+      replyState
+    ]
   );
 
   const submitHandlerLatest = useLatest(submitHandler);
@@ -132,4 +140,3 @@ function useMessageHandler() {
 }
 
 export { MessageHandlerProvider, useMessageHandler };
-
