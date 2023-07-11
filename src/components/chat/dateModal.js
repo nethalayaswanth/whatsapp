@@ -1,5 +1,6 @@
 import { useDateModalState } from "../../contexts/dateModalContext";
 import useDisclosure from "../../hooks/useDisclosure";
+import { formatDat } from "../../utils";
 
 const DateModal = () => {
   const { isScrolling, date } = useDateModalState();
@@ -10,6 +11,7 @@ const DateModal = () => {
     easing: "ease-in-out",
     duration: 50,
   });
+
 
   return (
     <>

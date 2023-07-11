@@ -18,9 +18,7 @@ export default function MutationProvider({ children }) {
   const abortRefs = useRef({});
 
   const progressCb = useCallback(({ progress, id, roomId }) => {
-  
     const circle = document.getElementById(`${id}-progress-circle`);
-   
 
     if (!circle) return;
     const radius = circle.r.baseVal.value;
@@ -38,7 +36,7 @@ export default function MutationProvider({ children }) {
   useEffect(() => {
     queryClient.setMutationDefaults(["rooms", "messages"], {
       mutationFn: async ({ ...args }) => {
-        console.log("signal");
+        //console.log("signal");
         await queryClient.cancelQueries(["messages", args.roomId]);
         const controller = new AbortController();
         const signal = controller.signal;
@@ -74,11 +72,12 @@ export default function MutationProvider({ children }) {
             status: { sending: true, error: false },
           },
         },
+        latestUpdate:'MESSAGEBYCURRENTUSER'
       });
 
-      console.log(queryClient.getQueryData([roomId, "messages"]));
+      //console.log(queryClient.getQueryData([roomId, "messages"]));
 
-      console.log("setdata");
+      //console.log("setdata");
 
       return { previousData };
     },
@@ -94,12 +93,13 @@ export default function MutationProvider({ children }) {
               ...old.messages[variables.id],
               status: { sending: false, error: true },
             },
+            
           },
         }));
       }
     },
     onSuccess: async (data) => {
-      console.log(data, "success");
+
 
       if (!socket) {
         console.error("Couldn't send message");
@@ -111,7 +111,7 @@ export default function MutationProvider({ children }) {
       abortRefs[data.id] = null;
 
       if (data) {
-        console.log("emiting");
+        //console.log("emiting");
 
         const { original, preview, ...rest } = data.message;
         const messagePayload = {
@@ -124,7 +124,7 @@ export default function MutationProvider({ children }) {
         };
 
         socket.emit("message", messagePayload, (res) => {
-          console.log("success");
+          //console.log("success");
 
           const message = {
             ...data,
@@ -148,6 +148,8 @@ export default function MutationProvider({ children }) {
       }
     },
   });
+
+
 
   const value = useMemo(() => {
     return { sendMessage, cancelMessage };

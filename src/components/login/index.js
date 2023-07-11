@@ -47,6 +47,7 @@ const Login = () => {
     },
   });
   const onSubmit = (data) => {
+    console.log(data)
     if (loginRoute) {
       login.mutate({
         input: data.username,

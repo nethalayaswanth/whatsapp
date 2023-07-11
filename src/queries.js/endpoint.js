@@ -3,4 +3,4 @@
    process.env.NODE_ENV !== "production"
      ? `${process.env.REACT_APP_ENDPOINT_LOCAL_URL}`
      : `${process.env.REACT_APP_ENDPOINT_URL}`;
- console.log(endpoint)
+ console.log(endpoint);

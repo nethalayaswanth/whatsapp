@@ -8,6 +8,7 @@ import EmojiPicker from "../PropPickers/emojiPicker";
 
 import { forwardRef } from "react";
 import useResizeObserver from "use-resize-observer";
+import { useReplyDispatch } from "../../contexts/replyContext";
 import useDisclosure from "../../hooks/useDisclosure";
 import useMedia from "../../hooks/useMedia";
 import GifPicker from "../PropPickers/gifPicker";
@@ -17,7 +18,7 @@ import { TextInput } from "./input";
 import Preview from "./preview";
 import ReplyDialog from "./replyDialog";
 import ToolBar from "./toolbar";
-import { useReplyDispatch } from "../../contexts/replyContext";
+import { useRefs } from "../chat/refProvider";
 
 export const Button = ({ children, ...props }) => {
   return (
@@ -55,11 +56,12 @@ export const AttachmentDialog = ({ isExpanded }) => {
   );
 };
 
-const Footer = forwardRef(({ footer }, ref) => {
+const Footer = forwardRef(({  }, ref) => {
   const footerState = useFooterState();
   const setFooterState = useFooterDispatch();
-  const replyDispatch=useReplyDispatch()
+  const replyDispatch = useReplyDispatch();
   const inputRef = useRef();
+  const {footer}=useRefs()
 
   const {
     activeTab,
@@ -69,7 +71,7 @@ const Footer = forwardRef(({ footer }, ref) => {
   } = footerState;
 
   const { onSubmit, handleTyping } = useMessageHandler();
-  console.log("%cfooter", "color:blue");
+  //console.log("%cfooter", "color:blue");
 
   const handleSubmit = useCallback(
     ({ text }) => {
@@ -79,16 +81,16 @@ const Footer = forwardRef(({ footer }, ref) => {
         type: "set state",
         payload: { text: "" },
       });
-      replyDispatch({type:'reset'})
+      replyDispatch({ type: "reset" });
     },
-    [onSubmit,replyDispatch, setFooterState]
+    [onSubmit, replyDispatch, setFooterState]
   );
 
   const handleInputChange = useCallback(
     (value) => {
       setFooterState({
         type: "set state",
-        payload: { text: value},
+        payload: { text: value },
       });
     },
     [setFooterState]
@@ -120,7 +122,7 @@ const Footer = forwardRef(({ footer }, ref) => {
   }, []);
 
   const { ref: resizeRef, width, height } = useResizeObserver();
-
+ 
   const device = useMedia({
     breakPoints: [740, 540, 420],
     breakPointValues: ["xl", "l", "sm"],

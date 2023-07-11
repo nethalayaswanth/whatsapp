@@ -1,8 +1,9 @@
-import { Suspense, useDeferredValue } from "react";
 import {
-  forwardRef,
   Fragment,
+  Suspense,
+  forwardRef,
   useCallback,
+  useEffect,
   useLayoutEffect,
   useRef,
   useState,
@@ -18,6 +19,7 @@ import Message from "../message";
 import { StrokeSpinner } from "../spinner";
 import DateHeader from "./dateHeader";
 import DateModal from "./dateModal";
+import { useRefs } from "./refProvider";
 
 const Notification = ({ children }) => {
   return (
@@ -30,9 +32,9 @@ const Notification = ({ children }) => {
 };
 
 export const Loading = forwardRef(({ inView }, ref) => {
-  useLayoutEffect(()=>{
-    console.log('loading')
-  },[])
+  useLayoutEffect(() => {
+    //console.log('loading')
+  }, []);
   return (
     <div
       ref={ref}
@@ -54,18 +56,6 @@ const easeOut = (t) => t * (2 - t);
 
 const UnreadMessages = ({ unread }) => {
   const [mount, setMount] = useState(true);
-
-  // useLayoutEffect(() => {
-  //   let timeout;
-  //   if (mount) {
-  //     timeout = setTimeout(() => {
-  //       setMount(false);
-  //     }, 5000);
-  //   }
-  //   return () => {
-  //     if (timeout) clearTimeout(timeout);
-  //   };
-  // }, [mount]);
 
   return (
     <>
@@ -107,39 +97,35 @@ const MessageList = forwardRef(({ room }, ref) => {
   });
 
  
-  console.log(data);
 
   const containerRef = useRef();
-  const scrollerRef = useRef(null);
-
+  const { scroller } = useRefs();
   const scrollerCb = (node) => {
-    if (node) scrollerRef.current = node;
+   
+    if (node) scroller.current = node;
   };
 
   const containerCb = (node) => {
     if (node) containerRef.current = node;
   };
   const getScroller = useCallback(() => {
-   
-    return scrollerRef.current;
-  }, []);
+    return scroller.current;
+  }, [scroller]);
 
-  useLayoutEffect(() => {
-    if (!scrollerRef.current) return;
-    scrollerRef.current.scrollTo({
-      top: scrollerRef.current.scrollHeight,
-    });
-  }, [scrollerRef]);
+ 
 
   const loadMore = useCallback(() => {
-    console.log(data?.currentCursor, "nxt page");
+    console.log('next page')
     fetchNextPage(data?.currentCursor);
   }, [data?.currentCursor, fetchNextPage]);
+
+
 
   const { ref: loaderRef } = useInfiniteScroll({
     loadMore,
     getScroller,
   });
+ 
 
   if (!user) {
     return null;
@@ -147,8 +133,9 @@ const MessageList = forwardRef(({ room }, ref) => {
 
   let unreadShown;
 
+
   return (
-    <DateModalProvider getBoundingElement={getScroller}>
+    <DateModalProvider >
       <DateModal />
       <div
         id="chat-scroller"
@@ -163,8 +150,7 @@ const MessageList = forwardRef(({ room }, ref) => {
           {data && (
             <>
               <div>
-               
-                {data.hasMore ? ( 
+                {data.hasMore ? (
                   <Loading ref={loaderRef} />
                 ) : (
                   <Notification>
@@ -172,16 +158,16 @@ const MessageList = forwardRef(({ room }, ref) => {
                   </Notification>
                 )}
               </div>
-        
+
               {data.messages &&
                 data.messages.length !== 0 &&
                 data.messages.map((message, i) => {
-                  const {  date, dateChanged,types, ...metaData } = message;
+                  const { date, dateChanged, types, ...metaData } = message;
                   const { id, time } = metaData;
 
                   let showUnread;
                   if (time > lastSeenAt && !unreadShown) {
-                    unreadShown = true;  
+                    unreadShown = true;
                     showUnread = true;
                   }
 
@@ -189,9 +175,10 @@ const MessageList = forwardRef(({ room }, ref) => {
                     <Fragment key={id}>
                       {dateChanged && (
                         <DateHeader
-                          key={`${date}-${date}`}
+                          key={`$date-${date}`}
                           type={["date"]}
                           date={date}
+                          time={time}
                         />
                       )}
                       {showUnread && (

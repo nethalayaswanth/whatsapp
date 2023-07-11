@@ -76,6 +76,7 @@ const Form = ({
             "Login"
           ) : (
             "SignUp"
+            
           )}
         </button>
         <div className="flex items-center justify-center ">

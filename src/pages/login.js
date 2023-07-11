@@ -11,7 +11,7 @@ const LoginPage = () => {
 
   return (
     <SidebarProvider>
-      <div className="relative top-0 w-full h-full overflow-hidden flex xl:m-auto xl:shadow-lg xl:w-[calc(100%-30x)] max-w-[1356px] xl:h-[calc(100%-30px)] xl:top-[15px] bg-panel-bg-lighter  ">
+      <div className="relative top-0 w-full h-full overflow-hidden flex xl:m-auto xl:shadow-lg xl:w-[calc(100%-30x)] max-w-[1356px] xl:h-[calc(100%-60px)] xl:top-[15px] bg-panel-bg-lighter  ">
         <div
           style={{
             transform: "translateZ(0px)",

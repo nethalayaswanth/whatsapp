@@ -1,21 +1,22 @@
 import { useCallback, useLayoutEffect, useRef, useState } from "react";
 import { ReactComponent as Done } from "../../assets/done.svg";
 import { ReactComponent as Group } from "../../assets/group.svg";
-import { useSidebarDispatch,useSidebarState } from "../../contexts/sidebarContext";
+import {
+  useSidebarDispatch,
+  useSidebarState,
+} from "../../contexts/sidebarContext";
 import DrawerHeader from "../header/drawer";
 
 import { nanoid } from "nanoid";
 
 import { DpUpload, ImageCropper } from "../dpUpload";
 
-import moment from "moment";
-import { forwardRef } from "react";
+import { forwardRef, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import Textarea from "react-textarea-autosize";
 import useSocket from "../../contexts/socketContext";
 import { getObjectUrls } from "../../queries.js/api";
 import { Modal } from "../modal";
-import { useMemo } from "react";
 
 const Input = forwardRef(
   ({ className, label, name, error, as, ...props }, ref) => {
@@ -58,16 +59,13 @@ const Input = forwardRef(
 );
 
 const CreateNewGroup = () => {
-
-  const {selected:members}=useSidebarState()
-  const dispatch=useSidebarDispatch()
+  const { selected: members } = useSidebarState();
+  const dispatch = useSidebarDispatch();
   const aboutRef = useRef();
   const nameRef = useRef();
 
   const [socket, socketConnected] = useSocket();
   // const createGroupMutation = useCreateGroup();
-
-
 
   const [file, setFile] = useState();
 
@@ -76,7 +74,7 @@ const CreateNewGroup = () => {
   const {
     register,
     handleSubmit,
-   
+
     formState: { errors, isValid },
   } = useForm();
   const onFileSelect = async (event) => {
@@ -89,57 +87,58 @@ const CreateNewGroup = () => {
 
   const [croppedFiles, setCroppedFiles] = useState();
   const handleDpSubmit = useCallback(async (files) => {
-    
     setCroppedFiles(files);
     setShowModal(false);
     setFile(null);
   }, []);
 
-  console.log(members)
+  //console.log(members)
 
-  const onSubmit = useCallback(async (data) => {
-    let dp = { url: null, previewUrl: null };
-    if (croppedFiles) {
-      const [url,previewUrl] = await getObjectUrls({
-         ...croppedFiles,
-        collection: "dp",
+  const onSubmit = useCallback(
+    async (data) => {
+      let dp = { url: null, previewUrl: null };
+      if (croppedFiles) {
+        const [url, previewUrl] = await getObjectUrls({
+          ...croppedFiles,
+          collection: "dp",
+        });
+        dp = { url, previewUrl };
+      }
+
+      socket.emit("createGroup", {
+        dp,
+        members: members.map((member) => member.id),
+        name: data.name,
+        about: data.about,
+        roomId: nanoid(),
+        createdAt: Date.now(),
       });
-      dp = { url, previewUrl } };
-    
-    socket.emit("createGroup", {
-      dp,
-      members: members.map((member) => member.id),
-      name: data.name,
-      about: data.about,
-      roomId: nanoid(),
-      createdAt: Date.now(),
-    });
 
-    dispatch({
-      type: "reset",
-    });
-  }, [croppedFiles, dispatch, members, socket]);
+      dispatch({
+        type: "reset",
+      });
+    },
+    [croppedFiles, dispatch, members, socket]
+  );
 
-  const [dp,revoke]=useMemo(()=>{
-     let dp;
-     if(!croppedFiles) return [null,null];
-     if (croppedFiles.original) {
-       dp = URL.createObjectURL(croppedFiles.original);
-     }
+  const [dp, revoke] = useMemo(() => {
+    let dp;
+    if (!croppedFiles) return [null, null];
+    if (croppedFiles.original) {
+      dp = URL.createObjectURL(croppedFiles.original);
+    }
 
-     const revoke= () => {
-       if (dp) {
-         URL.revokeObjectURL(dp);
-       }
-     };
-     return [dp,revoke]
-  },[croppedFiles])
-
+    const revoke = () => {
+      if (dp) {
+        URL.revokeObjectURL(dp);
+      }
+    };
+    return [dp, revoke];
+  }, [croppedFiles]);
 
   useLayoutEffect(() => {
-  
     return () => {
-     revoke?.()
+      revoke?.();
     };
   }, [revoke]);
 
@@ -220,16 +219,16 @@ const CreateNewGroup = () => {
               />
             </div>
           </div>
-            <span className="pb-[40px] pt-[24px] flex flex-grow-0 basis-auto flex-col justify-center items-center">
-              <button
-                type="submit"
-                className="rounded-full cursor-pointer h-[46px] w-[46px] flex justify-center items-center bg-panel-header-coloured shadow-lg text-white"
-              >
-                <span>
-                  <Done />
-                </span>
-              </button>
-            </span>
+          <span className="pb-[40px] pt-[24px] flex flex-grow-0 basis-auto flex-col justify-center items-center">
+            <button
+              type="submit"
+              className="rounded-full cursor-pointer h-[46px] w-[46px] flex justify-center items-center bg-panel-header-coloured shadow-lg text-white"
+            >
+              <span>
+                <Done />
+              </span>
+            </button>
+          </span>
         </form>
       </div>
     </span>

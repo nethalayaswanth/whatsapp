@@ -29,7 +29,7 @@ export default function NewChat() {
   const handleRoom = useCallback(
     (preview) => {
       const user = queryClient.getQueryData("user");
-      console.log(preview, user);
+      //console.log(preview, user);
       const roomId = createRoomId([preview.id, user.id]);
       dispatch({
         type: "set current room",

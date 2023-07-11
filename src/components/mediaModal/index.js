@@ -235,7 +235,7 @@ export const useTransition = ({
 
           const styles = getStyles();
           const mini = refs.current['mini'];
-          console.log(mini);
+         
           const currentStyles = {
             mini: {
               transform: `translate(${styles.fx}px,${styles.fy}px) scale(1) `,

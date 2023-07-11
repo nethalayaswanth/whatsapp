@@ -30,6 +30,7 @@ function useHover(getNode) {
   );
 
   useEffect(() => {
+    if(!getNode) return
     if (typeof getNode ==='function') {
       const node = getNode();
       if (node) {

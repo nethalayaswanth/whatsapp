@@ -1,9 +1,8 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { forwardRef, useCallback, useRef,useMemo } from "react";
+import { forwardRef, useCallback, useRef } from "react";
 import { useModalDispatch } from "../../contexts/modalContext";
 import useMediaFetch from "../../hooks/useMediaFetch";
 import { useMessage } from "../../queries.js/messages";
-import { useProps } from "../mediaModal/mediaModal";
 import { useModal } from "../mediaModal/modalWrapper";
 import { getDimensions } from "../mediaModal/utils";
 
@@ -35,14 +34,6 @@ export const MainView = forwardRef(
     const { width, height } = (() => {
       if (!containerWidth || !containerHeight) return { width: 0, height: 0 };
 
-      console.log({
-        containerWidth,
-        containerHeight,
-        aspectRatio,
-        height: mediaHeight,
-        width: mediaWidth,
-        paddingLeft: 92,
-      });
       return getDimensions({
         containerWidth,
         containerHeight,
@@ -88,7 +79,7 @@ export const MainView = forwardRef(
             <>
               <img
                 // onLoad={(e) => {
-                //   console.log("loaded", e.target.height);
+                //   //console.log("loaded", e.target.height);
                 // }}
                 style={{
                   filter: "blur(10px)",

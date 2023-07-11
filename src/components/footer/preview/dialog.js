@@ -1,6 +1,5 @@
 import { forwardRef } from "react";
 import { createPortal } from "react-dom";
-import useDisclosure from "../../../hooks/useDisclosure";
 
 import {
   useFooterDispatch,
@@ -22,11 +21,12 @@ const PreviewDialog = forwardRef(({ children, ...props }, ref) => {
     isExpanded: open,
     direction: "bottom",
     onCollapseEnd: () => {
-      console.log("collapsing");
+      //console.log("collapsing");
       setFooterState({ type: "reset previewDialog" });
     },
   });
 
+  console.log(open)
   return (
     <>
       {mount &&

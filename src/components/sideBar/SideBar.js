@@ -20,9 +20,7 @@ const SideBar = () => {
 
   useEffect(() => {
     if (!rooms || rooms.length === 0 || !socket || !socketConnected) return;
-
     socket.emit("joinRooms", rooms, (r) => {
-      console.log("joined", r);
     });
   }, [queryClient, rooms, rooms.length, socket, socketConnected]);
 

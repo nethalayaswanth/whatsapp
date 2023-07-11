@@ -1,5 +1,5 @@
 
-import { forwardRef, memo, useCallback, useRef, useState } from "react";
+import { forwardRef, useCallback, useEffect, useRef } from "react";
 
 import { useChatDispatch } from "../../contexts/chatContext";
 import { useMessage } from "../../queries.js/messages";
@@ -17,6 +17,8 @@ import Text from "./text";
 import { formatDat } from "../../utils";
 
 import { MessageProvider } from "../../contexts/messageContext";
+import { useReplyDispatch } from "../../contexts/replyContext";
+import { useScrollToBottomDispatch } from "../chat/scrollToBottom";
 import { useDeleteDispatch } from "../modal/deleteModal";
 import Actions from "./actions";
 import AddedToGroup from "./addedToGroup";
@@ -24,8 +26,7 @@ import Container from "./container";
 import Footer from "./footer";
 import Name from "./name";
 import Tail from "./tail";
-import { compareProps, getMediaData, getMessageType } from "./utils";
-import { useReplyDispatch } from "../../contexts/replyContext";
+import { getMediaData, getMessageType } from "./utils";
 
 const MessageWrapper = ({ roomId, metaData }) => {
   const container = useRef();
@@ -37,11 +38,13 @@ const MessageWrapper = ({ roomId, metaData }) => {
   });
   const sender = useSenderDetails({ userId: senderId, roomId });
 
+  ////console.log(data)
+
   const status = data?.status;
   const sending = status?.sending;
   const color = useRef("red");
 
-  console.log(`%crendering`, `color:${color.current}`, data);
+  ////console.log(`%crendering`, `color:${color.current}`, data);
 
   // useLayoutEffect(() => {
   // if (last){
@@ -51,7 +54,7 @@ const MessageWrapper = ({ roomId, metaData }) => {
 
   //   if (sending) {
   //     const scroller = container.current.offsetParent;
-  //     console.log(scroller, scroller.scrollHeight);
+  //     ////console.log(scroller, scroller.scrollHeight);
   //     scroller.scroll({
   //       behaviour: "smooth",
   //       left: 0,
@@ -125,9 +128,8 @@ const Message = forwardRef(({ roomId, data }, container) => {
   const reply = !deleted && data?.reply;
 
   const dispatch = useChatDispatch();
-  const replyDispatch=useReplyDispatch()
+  const replyDispatch = useReplyDispatch();
   const deleteDispatch = useDeleteDispatch();
-
 
   const handleMessgeAction = useCallback(
     (action) => {
@@ -136,15 +138,14 @@ const Message = forwardRef(({ roomId, data }, container) => {
           replyDispatch({
             type: "open",
             payload: {
-                from: sender,
-                message: {
-                  text,
-                  type,
-                  preview,
-                },
-                id: messageId,
-                isSenderUser,
-            
+              from: sender,
+              message: {
+                text,
+                type,
+                preview,
+              },
+              id: messageId,
+              isSenderUser,
             },
           });
           break;
@@ -153,7 +154,7 @@ const Message = forwardRef(({ roomId, data }, container) => {
           deleteDispatch({
             type: "set state",
             payload: {
-              show:true,
+              show: true,
               isSenderUser,
               deleted,
               roomId,
@@ -167,7 +168,7 @@ const Message = forwardRef(({ roomId, data }, container) => {
         }
       }
     },
-    [deleteDispatch, deleted, dispatch, isSenderUser, messageId, preview, roomId, sender, text, type]
+    [deleteDispatch, deleted, isSenderUser, messageId, preview, replyDispatch, roomId, sender, text, type]
   );
 
   const props = {
@@ -184,6 +185,14 @@ const Message = forwardRef(({ roomId, data }, container) => {
     roomId,
     dimensions,
   };
+
+ const scrollToBottom= useScrollToBottomDispatch()
+
+  useEffect(() => {
+    if(sending){
+      scrollToBottom()
+    }
+  }, [scrollToBottom, sending]);
 
   if (createdGroup) {
     return (
@@ -254,4 +263,5 @@ const Message = forwardRef(({ roomId, data }, container) => {
   );
 });
 
-export default memo(MessageWrapper,compareProps);
+export default MessageWrapper;
+// export default memo(MessageWrapper,compareProps);

@@ -4,15 +4,14 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import throttle from "lodash/throttle";
 import { useMemo } from "react";
 import { useLatest } from "../hooks/useLatest";
+import { useRefs } from "../components/chat/refProvider";
 
 const DateModalState = React.createContext();
 const DateModalDispatch = React.createContext();
 
 function DateModalProvider({
   children,
-  getBoundingElement = () => {
-    return document.documentElement;
-  },
+ 
   wait = 400,
 }) {
   const [date, setDate] = useState(null);
@@ -23,7 +22,8 @@ function DateModalProvider({
   const scrollRef = useRef(false);
   const timeoutRef = useRef();
   const currentDateRef = useRef();
-  const _getBoundingElement = useLatest(getBoundingElement);
+
+  const { scroller } = useRefs();
 
   const handleScrollChange = useCallback(() => {
     if (scrollRef.current === false) {
@@ -41,13 +41,14 @@ function DateModalProvider({
 
   const getCurrentDate = useCallback(() => {
     let current, recent;
-    const boundingElement = _getBoundingElement.current?.();
+  const boundingElement = scroller.current;
+
+  if(!boundingElement) return
 
 
     const headers = Object.entries(headerRefs.current);
 
-    const { top: rootTop } =
-      boundingElement === window ? 0 : boundingElement?.getBoundingClientRect();
+    const { top: rootTop } = boundingElement?.getBoundingClientRect();
 
     
     for (let i = 0; i < headers.length; i++) {
@@ -60,6 +61,7 @@ function DateModalProvider({
       }
       current = date;
     }
+    
 
     if (!current) {
       setDate(recent);
@@ -71,7 +73,7 @@ function DateModalProvider({
       currentDateRef.current = current;
       setDate(current);
     }
-  }, [_getBoundingElement]);
+  }, [scroller]);
 
   const callBack = useCallback(() => {
     handleScrollChange();
@@ -82,22 +84,25 @@ function DateModalProvider({
     return throttle((boundingEl) => callBack(boundingEl), wait);
   }, [callBack, wait]);
 
+
+
   useEffect(() => {
     const handleScroll = () => {
       // throttlFn();
       callBack();
     };
-    const boundingElement = _getBoundingElement.current?.();
-    boundingElement?.addEventListener("scroll", handleScroll, {
+    const boundingElement = scroller.current;
+    if(!boundingElement)return
+    boundingElement.addEventListener("scroll", handleScroll, {
       passive: true,
     });
     handleScroll();
     return () => {
       if (boundingElement) {
-        boundingElement?.removeEventListener("scroll", handleScroll);
+        boundingElement.removeEventListener("scroll", handleScroll);
       }
     };
-  }, [ callBack, throttlFn, wait, _getBoundingElement]);
+  }, [ callBack, throttlFn,scroller]);
 
   return (
     <DateModalState.Provider value={{ date, isScrolling }}>

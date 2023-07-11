@@ -31,7 +31,13 @@ export const useUser = (queryOptions) => {
   return useQuery(["user"], getUser, {
     ...(queryOptions && queryOptions),
     suspense: true,
-    refetchOnMount:false
+    useErrorBoundary:true,
+    refetchOnMount: false,
+    retry:false,
+    onError:(err) => {
+      console.log('query')
+      console.log(err.message);
+    }
   });
 };
 
@@ -118,8 +124,8 @@ export const usePin = ({ ...mutationOptions } = {}) => {
   return useMutation((data) => pinRoom(data), {
     ...mutationOptions,
     onSuccess: (data, variables) => {
-      console.log('%cred','color:red')
-      console.log(data)
+      //console.log('%cred','color:red')
+      //console.log(data)
       queryClient.setQueryData(["rooms"], (old) => ({
         ...old,
         [data.roomId]: { ...old[data.roomId], pinned: data.pinned },
@@ -138,7 +144,7 @@ export const useCreateGroup = ({ onSuccess = () => {} } = {}) => {
     onSuccess: (data, variables) => {
       // queryClient.setQueryData(["user"], (old) => ({
       //   ...old,
-      //   ...data, 
+      //   ...data,
       // }));
       // onSuccess?.(data);
     },
@@ -210,7 +216,7 @@ export const useOnlineUsers = ({ queryOptions } = {}) => {
     async () => {
       const data = await getOnlineUsers();
 
-      console.log(data, "online");
+      //console.log(data, "online");
       const users = data.map((user) => {
         queryClient.setQueryData(["user", user.id], (old) => ({
           ...(old && old),
@@ -255,7 +261,7 @@ export const useRooms = ({ onSuccess = () => {}, ...options } = {}) => {
     async () => {
       const data = await getRooms();
 
-      // console.log(data, "%cfetching rooms", "color:blue");
+      // //console.log(data, "%cfetching rooms", "color:blue");
 
       const rooms = {};
 
@@ -351,14 +357,14 @@ export const useRooms = ({ onSuccess = () => {}, ...options } = {}) => {
 export const useRoom = ([roomId], queryOptions) => {
   const queryClient = useQueryClient();
 
-  // console.log(`%cfetching onlyy roomhook`, "color:blue");
+  // //console.log(`%cfetching onlyy roomhook`, "color:blue");
   return useQuery(
     ["room", roomId],
     async () => {
       const data = await getRoom({ roomId, queryClient });
 
-      // console.log(`%cfetching room-${roomId}`, "color:orange");
-      // console.log(data)
+      // //console.log(`%cfetching room-${roomId}`, "color:orange");
+      // //console.log(data)
       return data;
     },
     {
@@ -367,8 +373,6 @@ export const useRoom = ([roomId], queryOptions) => {
     }
   );
 };
-
-
 
 export const useUserById = ([userId], { ...options } = {}) => {
   return useQuery(["user", userId], async () => await getUserById(userId), {
@@ -383,10 +387,10 @@ export const useUsers = (users, { ...options } = {}) => {
       return {
         queryKey: ["user", userId],
         queryFn: async () => {
-          // console.log(`%cfetching user-${userId}`, "color:blue");
+          // //console.log(`%cfetching user-${userId}`, "color:blue");
           return await getUserById(userId);
         },
-        refetchOnWindowFocus: false, 
+        refetchOnWindowFocus: false,
         ...options,
       };
     });
@@ -396,8 +400,6 @@ export const useUsers = (users, { ...options } = {}) => {
     queries,
   });
 };
-
- 
 
 export const useMediaOfRoom = ([roomId], queryOptions) => {
   return useQuery([roomId, "media"], async () => await getMedia(roomId), {
@@ -420,12 +422,12 @@ export const useMessagesOfRoom = ([roomId], { queryOptions } = {}) => {
 
   const [hasMore, setHasMore] = useState(true);
 
-  // console.log("%cmessages hok", "color:blue;font-size:24px");
+  // //console.log("%cmessages hok", "color:blue;font-size:24px");
 
   const messagesQuery = useQuery(
     [roomId, "messages"],
     async () => {
-      // console.log("%cfetching messages", "color:red;font-size:32px");
+      // //console.log("%cfetching messages", "color:red;font-size:32px");
       const response = await getMessages({ roomId });
 
       setHasMore(Object.keys(response).length !== 0);
@@ -442,7 +444,7 @@ export const useMessagesOfRoom = ([roomId], { queryOptions } = {}) => {
   // const messagesQuery = useInfiniteQuery({
   //   queryKey: [roomId, "messages"],
   //   queryFn:
-  //     ({ pageParam = 0 }) =>{  console.log("%cfetching messages", "color:red;font-size:'32px"); return getMessages({ roomId, offset: pageParam })},
+  //     ({ pageParam = 0 }) =>{  //console.log("%cfetching messages", "color:red;font-size:'32px"); return getMessages({ roomId, offset: pageParam })},
   //   ...(queryOptions && queryOptions),
   //   getNextPageParam: (lastPage, allPages) =>{
   //     if(Object.keys(lastPage).length===0){

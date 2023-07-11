@@ -131,7 +131,7 @@ export default function useTransition({
   //   }
   //   if (node.getBoundingClientRect() !== el.current.getBoundingClientRect()) {
   //     if (isExpanded && mount) {
-  //       console.log(getTranslate());
+  //       //console.log(getTranslate());
   //     }
   //     return;
   //   }
@@ -151,7 +151,7 @@ export default function useTransition({
       });
     }
   }, [isExpanded]);
- 
+
   const translate = (t) => {
     const x = direction === "left" || direction === "right";
     return x ? `translateX(${t}px)` : `translateY(${t}px)`;
@@ -177,7 +177,7 @@ export default function useTransition({
       duration: duration,
     }
   );
-   
+
   useAnimationFrame(
     (progress) => {
       const [i, f] = currentStyles.current;
