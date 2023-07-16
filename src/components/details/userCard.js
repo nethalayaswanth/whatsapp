@@ -4,8 +4,7 @@ import useHover from "../../hooks/useHover";
 import { MessageActions } from "../Menu";
 import { ReactComponent as DefaultAvatar } from "../../assets/avatar.svg";
 import HoverToolTip from "../tooltip/hoverToolTip";
-import { useUserById } from "../../queries.js/useRequests";
-import { useUserQuery } from "../../queries.js/user";
+import { useUserQuery, useUserById } from "../../queries.js/user";
 import { Avatar } from "../Avatar";
 import { mergeRefs } from "../../utils";
 

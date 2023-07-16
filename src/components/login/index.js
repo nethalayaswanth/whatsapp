@@ -47,7 +47,6 @@ const Login = () => {
     },
   });
   const onSubmit = (data) => {
-    console.log(data)
     if (loginRoute) {
       login.mutate({
         input: data.username,
@@ -74,7 +73,6 @@ const Login = () => {
           if (data.taken) {
             setError("username", {
               type: "server side",
-
               message: data.message,
             });
           }
@@ -118,11 +116,6 @@ const caption = loginRoute ? "Hi, Welcome back 👋" : "join our community";
               }}
             />
     </LoginView>
-          // {!verificationPending ? (
-            
-          // ) : (
-          //   <Verification verification={verification} />
-          // )}
       
   );
 };

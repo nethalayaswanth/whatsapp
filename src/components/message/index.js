@@ -3,7 +3,7 @@ import { forwardRef, useCallback, useEffect, useRef } from "react";
 
 import { useChatDispatch } from "../../contexts/chatContext";
 import { useMessage } from "../../queries.js/messages";
-import { useSenderDetails } from "../../queries.js/user";
+import { useSenderDetails } from "../../queries.js/users";
 
 import { Avatar } from "../Avatar";
 import Deleted from "./deleted";
@@ -27,6 +27,9 @@ import Footer from "./footer";
 import Name from "./name";
 import Tail from "./tail";
 import { getMediaData, getMessageType } from "./utils";
+import { useAppDispatch } from "../../contexts/appStore";
+import { useQueryClient } from "@tanstack/react-query";
+import SenderAvatar from "./senderAvatar";
 
 const MessageWrapper = ({ roomId, metaData }) => {
   const container = useRef();
@@ -38,31 +41,8 @@ const MessageWrapper = ({ roomId, metaData }) => {
   });
   const sender = useSenderDetails({ userId: senderId, roomId });
 
-  ////console.log(data)
-
   const status = data?.status;
-  const sending = status?.sending;
-  const color = useRef("red");
-
-  ////console.log(`%crendering`, `color:${color.current}`, data);
-
-  // useLayoutEffect(() => {
-  // if (last){
-  //   console.timeEnd("time",index)
-  // }else {console.timeLog("time", index)}
-  //   color.current = "yellow";
-
-  //   if (sending) {
-  //     const scroller = container.current.offsetParent;
-  //     ////console.log(scroller, scroller.scrollHeight);
-  //     scroller.scroll({
-  //       behaviour: "smooth",
-  //       left: 0,
-  //       top: scroller.scrollHeight,
-  //     });
-  //   }
-  // }, [index, last, sending, status]);
-
+  
   return (
     <>
       {data && (
@@ -171,6 +151,7 @@ const Message = forwardRef(({ roomId, data }, container) => {
     [deleteDispatch, deleted, isSenderUser, messageId, preview, replyDispatch, roomId, sender, text, type]
   );
 
+  
   const props = {
     messageId,
     sending,
@@ -228,11 +209,7 @@ const Message = forwardRef(({ roomId, data }, container) => {
       {tail && <Tail incoming={incoming} />}
 
       {incoming && (
-        <div>
-          <div className="absolute w-[28px] h-[28px] rounded-full cursor-pointer left-[-38px]">
-            <Avatar src={senderDp} />
-          </div>
-        </div>
+        <SenderAvatar senderDp={senderDp}senderId={senderId}/>
       )}
 
       <div

@@ -1,6 +1,4 @@
-import {
-  useLayoutEffect
-} from "react";
+import { useLayoutEffect } from "react";
 
 import data from "@emoji-mart/data/sets/14/facebook.json";
 import Chat from "../components/chat/chat";
@@ -14,7 +12,7 @@ import {
   useSidebarState,
 } from "../contexts/sidebarContext";
 import { SocketProvider } from "../contexts/socketContext";
-import { useUser } from "../queries.js/useRequests";
+import { useUser } from "../queries.js/user";
 
 import { init } from "emoji-mart";
 import Disclosure from "../components/Disclosure";
@@ -38,9 +36,9 @@ const SideBarWrapper = ({ children }) => {
   );
 };
 
-
 const ChatWrapper = () => {
   const { preview, roomId } = useAppState();
+
 
   return (
     <Disclosure
@@ -82,7 +80,7 @@ const DetailsWrapper = () => {
 };
 
 export const Main = () => {
-  const { data: user } = useUser();
+  const { data: user } = useUser({ refetchOnMount: true });
 
   const dispatch = useSidebarDispatch();
 
@@ -102,7 +100,7 @@ export const Main = () => {
           <SideBar />
         </QueryErrorBoundary>
       </SideBarWrapper>
-      <ChatWrapper/>
+      <ChatWrapper />
       <DetailsWrapper />
     </>
   );
@@ -111,7 +109,7 @@ export const Main = () => {
 const App = () => {
   const { data: user } = useUser();
 
-  const {detailsOpened}= useSidebarState()
+  const { detailsOpened } = useSidebarState();
 
   const verified = user.verification === "VERIFIED";
   const success = user.verification === "SUCCESS";
@@ -121,10 +119,7 @@ const App = () => {
     <>
       <span id="image-overlay" className="w-full"></span>
       <span id="globalmodal" className="w-full"></span>
-      <div
-        
-        className="animate-zoomIn relative top-0 w-full h-full overflow-hidden flex max-w-[1300px] xl:m-auto xl:shadow-lg xl:w-[calc(100%-60x)]  xl:h-[calc(100%-60px)] xl:top-[15px] bg-panel-bg-lighter  "
-      >
+      <div className="animate-zoomIn relative top-0 w-full h-full overflow-hidden flex max-w-[1300px] xl:m-auto xl:shadow-lg xl:w-[calc(100%-60x)]  xl:h-[calc(100%-60px)] xl:top-[15px] bg-panel-bg-lighter  ">
         <div
           className={`absolute top-0 left-0 z-[200] w-full pointer-events-none h-full flex  overflow-hidden `}
         >

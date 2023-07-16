@@ -1,17 +1,31 @@
-import { QueryErrorResetBoundary, useIsRestoring } from "@tanstack/react-query";
+import {
+  QueryErrorResetBoundary,
+  useIsRestoring,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import { Suspense } from "react";
+import { persistQueryClientSave } from "@tanstack/react-query-persist-client";
+import { Suspense, useEffect } from "react";
 import { ErrorBoundary } from "react-error-boundary";
+import { persister } from ".";
 import StartUp from "./components/startUp";
 import { ImagesClient, ImagesProvider } from "./contexts/imageFetchContext";
 import LoginPage from "./pages/login";
 import Messenger from "./pages/messenger";
-import { useUser } from "./queries.js/useRequests";
-
+import { useUser } from "./queries.js/user";
 function App() {
-  const { data,status } = useUser();
+  const { data, status } = useUser();
 
-  return ( data?
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    const verification = data.verification;
+    if (verification && verification.id) {
+      persistQueryClientSave({ buster: verification.id, persister });
+    }
+  }, [data.verification]);
+
+  return data ? (
     <>
       {
         <div id="app" className="App w-full ">
@@ -22,22 +36,20 @@ function App() {
           </div>
         </div>
       }
-    </>:null
-  );
+    </>
+  ) : null;
 }
 
 const imagesClient = new ImagesClient();
 function Index() {
   const isRestoring = useIsRestoring();
-  
-  console.log(isRestoring);
+
   return (
     <>
       <QueryErrorResetBoundary>
         {({ reset }) => (
           <ErrorBoundary
             fallbackRender={({ error, resetErrorBoundary }) => {
-             
               return (
                 <StartUp>
                   <div className=" flex flex-col text-text-primary">

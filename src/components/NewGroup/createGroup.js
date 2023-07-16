@@ -65,8 +65,7 @@ const CreateNewGroup = () => {
   const nameRef = useRef();
 
   const [socket, socketConnected] = useSocket();
-  // const createGroupMutation = useCreateGroup();
-
+  
   const [file, setFile] = useState();
 
   const [showModal, setShowModal] = useState();
@@ -92,7 +91,6 @@ const CreateNewGroup = () => {
     setFile(null);
   }, []);
 
-  //console.log(members)
 
   const onSubmit = useCallback(
     async (data) => {

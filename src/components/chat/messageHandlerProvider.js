@@ -14,7 +14,7 @@ import { useChatRoom } from "../../contexts/roomContext";
 import { useMemo } from "react";
 import { useReplyState } from "../../contexts/replyContext";
 import { useLatest } from "../../hooks/useLatest";
-import { useUser } from "../../queries.js/useRequests";
+import { useUser } from "../../queries.js/user";
 import { ulid } from "../../utils";
 import { useRefs } from "./refProvider";
 import { useScrollToBottomDispatch } from "./scrollToBottom";

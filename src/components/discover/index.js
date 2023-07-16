@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { useOnlineUsers, useSearch } from "../../queries.js/user";
+import { useOnlineUsers, useSearch } from "../../queries.js/users";
 import Search from "../search";
 
-import ListOrderAnimation from "../orderAnimation";
 import UserCard from "../listItem/userCard";
+import ListOrderAnimation from "../orderAnimation";
+import Layout from "../layout";
 
 const Discover = ({ handleClick,selected, children }) => {
   const [query, setQuery] = useState();
@@ -19,7 +20,7 @@ const Discover = ({ handleClick,selected, children }) => {
   const { data: queryUsers } = useSearch(query, {
     enabled: !!queryEnabled,
   });
-
+  
   const data = queryEnabled ? queryUsers : onlineUsers;
 
   return (
@@ -28,20 +29,23 @@ const Discover = ({ handleClick,selected, children }) => {
       <div className="flex-grow bg-white flex flex-col z-[1] relative scrollbar">
         {!queryEnabled && children}
         {data && data.length !== 0 ? (
-          <ListOrderAnimation getKey={(item) => item.props.userId}>
+          <>
             {data.map((userId, index) => {
               const last = data.length - 1 === index;
-              
+
               return (
-                <UserCard
-                  key={userId}
-                  onClick={handleClick}
-                  userId={userId}
-                  last={last}
-                />
+                
+                <Layout key={userId}>
+                  <UserCard
+                    key={userId}
+                    onClick={handleClick}
+                    userId={userId}
+                    last={last}
+                  />
+                </Layout>
               );
             })}
-          </ListOrderAnimation>
+          </>
         ) : (
           <div className="flex flex-grow basis-0 flex-col overflow-y-auto relative">
             <div className="items-center flex-grow-0 flex-shrink-0 basis-auto px-[50px] py-[72px] text-center h-[1] text-input-inActive ">

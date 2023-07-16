@@ -3,8 +3,8 @@ import { ReactComponent as Reply } from "../../assets/reply.svg";
 
 import { useModalDispatch } from "../../contexts/modalContext";
 import { useMessage } from "../../queries.js/messages";
-import { useUser } from "../../queries.js/useRequests";
-import { useUserDetails } from "../../queries.js/user";
+import { useUser } from "../../queries.js/user";
+import { useUserDetails } from "../../queries.js/users";
 import { formatDat } from "../../utils";
 import { Avatar } from "../Avatar";
 import Card from "../card";

@@ -29,10 +29,8 @@ const Stack = ({ children }) => {
   const prevBottomSheetOpened = usePrevious(bottomSheetOpened);
 
   useLayoutEffect(() => {
-    // scroller.current = document.getElementById("chat-scroller");
-    // footer.current = document.getElementById("footer-bottomSheet");
+    
     if (!scroller.current) return;
-    // if (bottomSheetOpened) setFooterState({ type: "toggle bottomSheetMount" });
 
     currentScrollRef.current = scroller.current.scrollTop;
   }, [bottomSheetOpened,scroller]);

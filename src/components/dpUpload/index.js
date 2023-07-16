@@ -222,7 +222,6 @@ export const DpUpload = ({
   };
   
   
-console.log(isHovering);
   return (
     <div className="flex-none my-[28px] flex justify-center ">
       <div

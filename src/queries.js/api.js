@@ -45,6 +45,20 @@ export const signUp = async ({ username, email }) => {
   }
 };
 
+
+export const logout = async () => {
+  try {
+
+    const x = await client.post("/logout");
+   
+    return x.data;
+  } catch (e) {
+   
+    errorHandler(e);
+  }
+};
+
+
 export const aboutUpdate = async (data) => {
   try {
     const { about } = data;

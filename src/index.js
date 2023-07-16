@@ -35,13 +35,12 @@ export function createIDBPersister(idbValidKey = "reactQuery") {
   };
 }
 
-const persister = createIDBPersister();
+export const persister = createIDBPersister();
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   <ErrorBoundary
     fallbackRender={({ error, resetErrorBoundary }) => {
-      //console.log('APP')
       return (
         <StartUp>
           <div className=" flex flex-col text-text-primary">

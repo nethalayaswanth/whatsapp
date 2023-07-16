@@ -26,7 +26,7 @@ const PreviewDialog = forwardRef(({ children, ...props }, ref) => {
     },
   });
 
-  console.log(open)
+ 
   return (
     <>
       {mount &&

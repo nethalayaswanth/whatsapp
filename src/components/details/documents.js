@@ -1,25 +1,22 @@
 import { useCallback } from "react";
 import { useMessage } from "../../queries.js/messages";
 import DocContainer from "../message/document";
+import { useUser } from "../../queries.js/user";
 
-const DocWrapper = ({ messageId, user, roomId }) => {
+const DocWrapper = ({ messageId, roomId }) => {
   const { data } = useMessage({ messageId, roomId });
-
-
+  const {data:userId}=useUser({select:(user)=>user?.id})
   const status = data?.status;
   const sending = status?.sending;
   const error = status?.error;
   const message = data?.message;
   const original = message?.original;
   const preview = message?.preview;
-
   const type = message?.type;
-
   const fileName = message?.fileName;
   const fileSize = message?.fileSize;
-
   const sender = message?.from;
-  const incoming = sender !== user?.id;
+  const incoming = sender !== userId;
   return (
     <div
       id={data?.id}
@@ -55,10 +52,8 @@ const DocWrapper = ({ messageId, user, roomId }) => {
     </div>
   );
 };
-export default function Documents({ documents, user, roomId }) {
-  const handleClick = useCallback(() => {}, []);
+export default function Documents({ documents, roomId }) {
 
-  //console.log(documents, roomId);
   return (
     <div className="w-full  flex flex-col">
       <div className="flex flex-grow flex-wrap justify-center  py-[30px]  overflow-y-scroll">
@@ -67,10 +62,9 @@ export default function Documents({ documents, user, roomId }) {
           documents.reverse().map((messageId, i) => {
             return (
               <DocWrapper
-                user={user}
                 roomId={roomId}
                 key={messageId}
-                onClick={handleClick}
+               
                 messageId={messageId}
               />
             );

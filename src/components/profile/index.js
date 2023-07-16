@@ -5,13 +5,13 @@ import { ReactComponent as Edit } from "../../assets/edit.svg";
 import { useSidebarDispatch } from "../../contexts/sidebarContext";
 import DrawerHeader from "../header/drawer";
 
-import { useUser } from "../../queries.js/useRequests";
+import { useUser } from "../../queries.js/user";
 import { DpUpload, ImageCropper } from "../dpUpload";
 
 import { Modal } from "../modal";
 
 import { forwardRef, useLayoutEffect } from "react";
-import { useUpdateProfile } from "../../queries.js/user";
+import { useUpdateProfile } from "../../queries.js/users";
 
 export const Input = forwardRef(
   (

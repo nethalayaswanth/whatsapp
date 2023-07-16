@@ -22,9 +22,7 @@ function ScrollToBottom({ children }) {
 
     const scrollerContainer = scroller.current;
     if (!scrollerContainer) return;
-    console.log(scrollerContainer,
-      scrollerContainer.scrollHeight - scrollerContainer.clientHeight
-    );
+
     scrollerContainer.scrollTop =
       scrollerContainer.scrollHeight - scrollerContainer.clientHeight;
   }, [i, scroller]);

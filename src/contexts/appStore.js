@@ -6,7 +6,7 @@ const AppContext = createContext();
 const initialState = {
   roomId: null,
   roomType: "private",
-  privateMember: null,
+  member: null,
   preview: false,
 };
 

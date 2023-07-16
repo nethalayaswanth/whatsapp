@@ -18,7 +18,7 @@ import { RoomProvider, useChatRoom } from "../../contexts/roomContext";
 import Stack from "./stack";
 
 import { ModalProvider } from "../../contexts/modalContext";
-import { useUser } from "../../queries.js/useRequests";
+import { useUser } from "../../queries.js/user";
 import MessageHandlerProvider from "./messageHandlerProvider";
 
 const ChatWrapper = ({ children }) => {

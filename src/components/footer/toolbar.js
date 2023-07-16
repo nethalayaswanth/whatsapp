@@ -48,42 +48,49 @@ const ToolBar = ({ mobile }) => {
    const footerState = useFooterState();
    const setFooterState = useFooterDispatch();
 
+    const {
+      activeTab,
+      bottomSheetOpened: openMenu,
+      bottomSheetMounted,
+      attachmentDialogOpened: attachmentActive,
+    } = footerState;
+
+     const handleNavigation = useCallback(
+       (active) => {
+         setFooterState({
+           type: "set activeTab",
+           payload: { activeTab: active },
+         });
+       },
+       [setFooterState]
+     );
+
+     const handleAttachment = useCallback(
+       () => {
+         setFooterState({
+           type: "toggle attachment",
+          //  payload: { activeTab: active },
+         });
+       },
+       [setFooterState]
+     );
+
+
   const handleClose = useCallback(
     (e) => {
+      if (attachmentActive) {
+        handleAttachment();
+        return;
+      }
       setFooterState({
         type: "close bottomSheet",
       });
     },
-    [setFooterState]
+    [setFooterState,attachmentActive, handleAttachment]
   );
 
-  const handleNavigation = useCallback(
-    (active) => {
-      setFooterState({
-        type: "set activeTab",
-        payload: {activeTab: active },
-      });
-    },
-    [setFooterState]
-  );
-
-    const handleAttachment = useCallback(
-      (active) => {
-        setFooterState({
-          type: "toggle attachment",
-          payload: { activeTab: active },
-        });
-      },
-      [setFooterState]
-    );
-
-  const {
-    activeTab,
-    bottomSheetOpened: openMenu,
-    bottomSheetMounted,
-    attachmentDialogOpened: attachmentActive,
-  } = footerState;
-
+ 
+ 
   const menu = useMemo(
     () => ({
       close: {

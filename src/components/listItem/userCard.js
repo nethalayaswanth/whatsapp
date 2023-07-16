@@ -1,6 +1,6 @@
 import { Suspense, forwardRef, memo, useCallback } from "react";
 
-import { useUserDetails } from "../../queries.js/user";
+import { useUserDetails } from "../../queries.js/users";
 import { Avatar } from "../Avatar";
 import Card from "../card";
 import CardView from "../card/cardView";
@@ -9,7 +9,9 @@ export const UserCardView = forwardRef(({ userId, onClick }, ref) => {
 
   const title = user?.name;
   const details = user?.username;
+  const online = user?.online;
   const dp = user?.dp?.previewUrl;
+
 
   const handleClick = useCallback(() => {
     onClick?.(user);
@@ -21,13 +23,8 @@ export const UserCardView = forwardRef(({ userId, onClick }, ref) => {
       onClick={handleClick}
       avatar={<Avatar src={dp} />}
       title={title}
-      top={<Card.Online />}
+      top={online ? <Card.Online /> : null}
       main={<Card.Main>{details}</Card.Main>}
-      //   bottom={[
-      //     pinned ? <Card.Pin /> : null,
-      //     unread !== 0 && unread ? <Card.Unread>{unread}</Card.Unread> : null,
-      //     <Card.ToolTip actions={actions} onClick={handleActions} />,
-      //   ]}
     />
   );
 });

@@ -5,7 +5,7 @@ import { useModalDispatch } from "../../contexts/modalContext";
 
 export default function Gallery({ media, roomId,length }) {
   const modalDispatch=useModalDispatch()
-
+  
   const handleClick = useCallback(
     ({ id, preview, width,gif, height, aspectRatio, mediaRect }) => {
       modalDispatch({

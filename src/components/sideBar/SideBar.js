@@ -1,7 +1,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import React, { memo, useEffect } from "react";
 import useSocket from "../../contexts/socketContext";
-import { useUser } from "../../queries.js/useRequests";
+import { useUser } from "../../queries.js/user";
 import Header from "../header/Header";
 
 import { createPortal } from "react-dom";

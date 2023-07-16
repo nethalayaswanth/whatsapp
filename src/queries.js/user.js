@@ -1,9 +1,47 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useCallback } from "react";
+import {
+  useMutation,
+  useQueries,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
+import { useCallback, useMemo, useState } from "react";
+
+import {
+  aboutUpdate,
+  anotherAccount,
+  clearUnread,
+  createGroup,
+  dpUpdate,
+  getDocuments,
+  getMedia,
+  getMessages,
+  getOnlineUsers,
+  getRoomById,
+  getRooms,
+  getUser,
+  getUserById,
+  login,
+  nameUpdate,
+  pinRoom,
+  search,
+  signUp,
+  getObjectUrls,
+} from "./api";
 
 import useSocket from "../contexts/socketContext";
 
-import { getObjectUrls, getOnlineUsers, getUserById, search } from "./api";
+export const useUser = (queryOptions) => {
+  return useQuery(["user"], getUser, {
+    suspense: true,
+    useErrorBoundary: true,
+    refetchOnMount: false,
+    retry: false,
+    ...(queryOptions && queryOptions),
+  });
+};
+
+
+
 
 export const useUpdateProfile = () => {
   const [socket] = useSocket();
@@ -37,121 +75,3 @@ export const useUpdateProfile = () => {
   return updateProfile;
 };
 
-export const useUserQuery = ({ userId, select, queryOptions } = {}) => {
-  return useQuery(
-    ["user", userId],
-    async () => {
-      return await getUserById(userId);
-    },
-    {
-      select,
-      ...(queryOptions && queryOptions),
-    }
-  );
-};
-
-export const useUserById = ({ userId, queryOptions } = {}) => {
-  const select = useCallback((data) => {
-    return data;
-  }, []);
-
-  return useUserQuery({ userId, select, queryOptions });
-};
-
-export const useUserDetails = ({ userId, queryOptions } = {}) => {
-  const select = useCallback((data) => {
-    return {
-      name: data?.name,
-      dp: data?.dp,
-      username: data?.username,
-      id: data?.id,
-    };
-  }, []);
-
-  return useUserQuery({ userId, select, queryOptions });
-};
-
-export const useSenderDetails = ({ userId, roomId, queryOptions } = {}) => {
-  const queryClient = useQueryClient();
-  const { data: user } = useUserDetails({ userId, queryOptions });
-  const rooms = queryClient.getQueryData(["rooms"]);
-  const colors = rooms[roomId]?.colors;
-  const color = colors ? colors[userId] : null;
-  return { ...(user && user), color };
-};
-
-export const useExistingUsers = () => {
-  const queryClient = useQueryClient();
-
-  return queryClient.getQueriesData({ queryKey: ["user"] });
-};
-
-export const useOnlineUsers = ({ queryOptions } = {}) => {
-  const queryClient = useQueryClient();
-  return useQuery(
-    ["onlineUsers"],
-    async () => {
-      const data = await getOnlineUsers();
-
-      const users = data.map((user) => {
-        const prevData = queryClient.getQueryData(["user", user.id]);
-        if (prevData) {
-          queryClient.setQueryData(["user", user.id], (old) => ({
-            ...(old && old),
-            ...user,
-          }));
-        } else {
-          queryClient.prefetchQuery(
-            ["user", user.id],
-            () => ({
-              ...user,
-            }),
-            { staleTime: Infinity }
-          );
-        }
-
-        return user.id;
-      });
-      return users;
-    },
-    {
-      ...(queryOptions && queryOptions),
-    }
-  );
-};
-
-export const useSearch = (queryKey, queryOptions) => {
-  const queryClient = useQueryClient();
-  return useQuery(
-    ["search", queryKey],
-    async () => {
-      const data = await search(queryKey);
-
-      if (data.length === 0) return [];
-
-      const users = data.map((user) => {
-        const prevData = queryClient.getQueryData(["user", user.id]);
-        if (prevData) {
-          queryClient.setQueryData(["user", user.id], (old) => ({
-            ...(old && old),
-            ...user,
-          }));
-        } else {
-          queryClient.prefetchQuery(
-            ["user", user.id],
-            () => ({
-              ...user,
-            }),
-            { staleTime: Infinity }
-          );
-        }
-
-        return user.id;
-      });
-      return users;
-    },
-    {
-      ...(queryOptions && queryOptions),
-    }
-  );
-};

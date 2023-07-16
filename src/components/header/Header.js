@@ -1,14 +1,14 @@
 import React, { useCallback } from "react";
-import { ReactComponent as DefaultAvatar } from "../../assets/avatar.svg";
 import { ReactComponent as ChatIcon } from "../../assets/chat.svg";
 import { ReactComponent as MenuIcon } from "../../assets/menu.svg";
 import { useSidebarDispatch } from "../../contexts/sidebarContext";
+import { useLogout } from "../../queries.js/useRequests";
 import { callAll } from "../../utils";
 import { Avatar } from "../Avatar";
 import { MenuContainer } from "../Menu";
 import ToolTip from "../tooltip";
 
- const items = ["New Group", "New Chat", "Log out"];
+const items = ["New Group", "New Chat", "Log Out"];
 
 export const HeaderItem = ({ children, name, style, className, onClick }) => {
   const handleClick = useCallback(
@@ -30,8 +30,10 @@ export const HeaderItem = ({ children, name, style, className, onClick }) => {
   );
 };
 
-const Header = ({user}) => {
-  const dispatch=useSidebarDispatch()
+const Header = ({ user }) => {
+  const dispatch = useSidebarDispatch();
+
+  const logout = useLogout();
 
   const handleClick = useCallback(
     (name) => {
@@ -43,10 +45,10 @@ const Header = ({user}) => {
     [dispatch]
   );
 
-  const handleMenuAction= ({ name }) => {
+  const handleMenuAction = (name) => {
+   
     switch (name) {
       case "New Group": {
-        
         dispatch({
           type: "set state",
           payload: { open: true, active: "new group" },
@@ -54,11 +56,15 @@ const Header = ({user}) => {
         break;
       }
       case "New Chat": {
-
         dispatch({
           type: "set state",
           payload: { open: true, active: "new chat" },
         });
+        break;
+      }
+      case "Log Out": {
+        console.log('Log out')
+        logout.mutate();
         break;
       }
 
@@ -76,7 +82,6 @@ const Header = ({user}) => {
             handleClick("profile");
           }}
         >
-    
           <Avatar src={user?.dp?.previewUrl} />
         </div>
       </div>

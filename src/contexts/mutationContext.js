@@ -36,7 +36,6 @@ export default function MutationProvider({ children }) {
   useEffect(() => {
     queryClient.setMutationDefaults(["rooms", "messages"], {
       mutationFn: async ({ ...args }) => {
-        //console.log("signal");
         await queryClient.cancelQueries(["messages", args.roomId]);
         const controller = new AbortController();
         const signal = controller.signal;

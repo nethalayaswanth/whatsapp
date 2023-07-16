@@ -1,4 +1,4 @@
-import { useSenderDetails } from "../../queries.js/user";
+import { useSenderDetails } from "../../queries.js/users";
 
 const AddedToGroup = ({
   receiverId,
@@ -15,6 +15,5 @@ const AddedToGroup = ({
     isReceiverUser ? "you" : receiverName
   }`;
 };
- 
 
 export default AddedToGroup;

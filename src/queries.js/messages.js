@@ -61,8 +61,6 @@ export const useRoomMessages = ({ roomId, queryOptions }) => {
   const prevRoomId = useRef(roomId);
 
   if (roomId !== prevRoomId.current) {
-    ////console.log("resetting");
-
     prevRoomId.current = roomId;
   }
 
@@ -103,20 +101,15 @@ export const useRoomMessages = ({ roomId, queryOptions }) => {
   const select = useCallback(
     (data) => {
       const user = queryClient.getQueryData(["user"]);
-
       if (!user || !data.messages)
         return { messages: [], hasMore: data.hasMore };
-
-    
-
       let prevDate;
       let prevSender;
       let currentCursor;
       let media = [];
       let documents = [];
 
-      const slice = Object.keys(data.messages).slice(size);
-
+      const slice = Object.keys(data.messages).slice(0,size);
 
       const userId = user.id;
 

@@ -11,9 +11,14 @@ import { ReactComponent as Photo } from "../../assets/photo.svg";
 import { ReactComponent as Video } from "../../assets/video.svg";
 import { useAppDispatch } from "../../contexts/appStore";
 import { useLastMessage } from "../../queries.js/messages";
-import { useRoom, useRoomNotification } from "../../queries.js/rooms";
-import { usePin, useUser } from "../../queries.js/useRequests";
-import { useUserDetails } from "../../queries.js/user";
+import {
+  usePin,
+  useRoom,
+  useRoomNotification,
+} from "../../queries.js/rooms";
+import {useUser } from "../../queries.js/user";
+
+import { useUserDetails } from "../../queries.js/users";
 import { FormatEmoji } from "../../shared";
 import { formatDat } from "../../utils";
 import { Avatar } from "../Avatar";
@@ -123,7 +128,6 @@ const ChatItem = forwardRef(({ roomId }, ref) => {
   const sender = lastMessage?.from;
   const isSenderUser = sender === userId;
 
-  //console.log(room)
   const roomType = room?.type;
   const title = room?.name;
   const unread = room?.unread;

@@ -5,10 +5,10 @@ import { MenuContainer } from "../Menu";
 import { useMessageState } from "../../contexts/messageContext";
 
 const messageActions = [
-  "Message info",
+  // "Message info",
   "Reply",
-  "React to message",
-  "Forward message",
+  // "React to message",
+  // "Forward message",
   "Delete message",
 ];
 

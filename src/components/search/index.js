@@ -2,6 +2,8 @@ import { ReactComponent as Close } from "../../assets/closeThin.svg";
 import { ReactComponent as SearchIcon } from "../../assets/search.svg";
 
 export const Search = ({query, setQuery }) => {
+
+  
   return (
     <div className="h-[49px] px-[12px] bg-white  flex flex-none items-center z-[100] relative">
       <div className="flex-1 relative  ">
@@ -16,8 +18,9 @@ export const Search = ({query, setQuery }) => {
           <div className="flex-1 px-0 flex ">
             <input
               type="text"
+              value={query}
               onChange={(event) => {
-                setQuery(event.target.value);
+                setQuery(event.target.value.trim());
               }}
               placeholder="search user"
               className="h-[20px] px-[2px] flex-1 bg-inherit leading-[20px] text-ellipsis whitespace-nowrap outline-none text-input-inActive focus:text-primary-default text-[15px] align-top"
@@ -25,9 +28,7 @@ export const Search = ({query, setQuery }) => {
           </div>
         </div>
         <button
-          onClick={() => {
-            setQuery("");
-          }}
+          onClick={() => {setQuery('')}}
           style={{
             transform: `scale(${query ? 1 : 0})`,
             opacity: query ? 1 : 0,

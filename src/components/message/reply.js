@@ -1,4 +1,4 @@
-import { useSenderDetails } from "../../queries.js/user";
+import { useSenderDetails } from "../../queries.js/users";
 import { FormatEmoji } from "../../shared";
 
 const Reply = ({ reply, roomId }) => {
@@ -8,9 +8,7 @@ const Reply = ({ reply, roomId }) => {
 
   const replyUserId = reply?.from;
 
- 
-
-  const  replyuser = useSenderDetails({ userId: replyUserId, roomId });
+  const replyuser = useSenderDetails({ userId: replyUserId, roomId });
 
   const color = replyuser?.color;
   const name = replyuser?.name ?? replyUserId;

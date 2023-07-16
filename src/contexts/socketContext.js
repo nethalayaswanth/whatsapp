@@ -1,7 +1,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 import io from "socket.io-client";
-import { useUser } from "../queries.js/useRequests";
+import { useUser } from "../queries.js/user";
 import { endpoint } from "../queries.js/endpoint";
 const SocketContext = createContext();
 
@@ -12,6 +12,8 @@ export const SocketProvider = ({ children, ...props }) => {
     })
   );
   const [connected, setConnected] = useState(false);
+  
+  const socket = engine.current;
   const queryClient = useQueryClient();
 
   const { data: user } = useUser();
@@ -40,18 +42,16 @@ export const SocketProvider = ({ children, ...props }) => {
     if (connected) {
       const socket = engine.current;
       socket.on("verification", (user) => {
-        console.log(user)
+     
         queryClient.setQueryData(["user"], (old) => ({
           ...old,
           ...user,
         }));
       });
-      socket.on("user.connected", (recentlyConnectedUser) => {
-        queryClient.setQueryData(["user", recentlyConnectedUser.id], (old) => ({
+      socket.on("user.connected", (user) => {
+        queryClient.setQueryData(["user", user.id], (old) => ({
           ...old,
-          username: recentlyConnectedUser.username,
-          name: recentlyConnectedUser.name,
-          isOnline: recentlyConnectedUser.isOnline,
+          isOnline: true,
         }));
       });
       socket.on("user.disconnected", (recentlyDisconnectedUser) => {
@@ -72,7 +72,7 @@ export const SocketProvider = ({ children, ...props }) => {
       });
 
       socket.on("newRoom", (data) => {
-        //console.log(data, "newroom");
+       
         const { room, messages } = data;
 
         if (room) {
@@ -168,17 +168,12 @@ export const SocketProvider = ({ children, ...props }) => {
       socket.on("message", (data) => {
         const { room, message } = data;
 
-        //console.log(room, message);
-
         queryClient.setQueryData(["rooms"], (old) => {
           return {
             ...(old && old),
             [message.roomId]: {
               ...(old && old[message.roomId]),
               ...(room && room),
-              unread: old[message.roomId].unread
-                ? old[message.roomId].unread + 1
-                : 1,
             },
           };
         });
@@ -211,20 +206,19 @@ export const SocketProvider = ({ children, ...props }) => {
       });
 
       socket.on("disconnect", () => {
-        //console.log(socket.id,'disconnected'); // undefined
+        
         setConnected(false);
       });
     }
-    //  else {
-    //   if (socket) {
-    //     socket.off();
-    //   }
-    // }
-  }, [connected, queryClient]);
+     else {
+      if (socket) {
+        socket.off();
+      }
+    }
+  }, [connected,socket, queryClient]);
 
 
 
-  const socket = engine.current;
   const value = [socket, connected];
 
   value.socket = socket;

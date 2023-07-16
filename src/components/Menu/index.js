@@ -35,8 +35,8 @@ export const MenuContainer = ({ items, onClick }) => {
   );
 };
 
-export default function Menu({ handleClose }) {
-  const items = ["New Group", "New Chat", "Log out"];
+export default function Menu({ handleClose,items }) {
+  
 
   const setSideBar= useSidebarDispatch()
 

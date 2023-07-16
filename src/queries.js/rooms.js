@@ -1,15 +1,17 @@
 import {
   QueriesObserver,
   useIsFetching,
+  useMutation,
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import isEqual from "lodash/isEqual";
-import { getRoomById, getRooms } from "./api";
+import { getDocuments, getMedia, getRoomById, getRooms, pinRoom } from "./api";
+
 // import { selectLastMessage } from "./messages";
-import { useUserById } from "./user";
+import { useUserById } from "./users";
 
 export const useRoomsQuery = ({ select, queryOptions }) => {
   const queryClient = useQueryClient();
@@ -35,8 +37,7 @@ export const useRoomsQuery = ({ select, queryOptions }) => {
             room.members.forEach((user) => {
               users.push(user.id);
               queryClient.prefetchQuery(["user", user.id], () => ({
-                ...user,
-                nope: "abey",
+                ...user
               }));
             });
           } else {
@@ -216,15 +217,13 @@ const selectRoomData = (data) => {
 };
 
 export const useRoom = ({ roomId, type, member, queryOptions }) => {
-  const queryClient = useQueryClient();
 
-  const isFetchingRooms = useIsFetching({ queryKey: ["rooms"] });
 
   const { data: room } = useRoomQuery({
     roomId,
     select: selectRoomData,
     queryOptions: {
-      staleTime: 100000,
+      // staleTime: 100000,
       onerror: (e) => {
         //console.log(e);
       },
@@ -232,17 +231,17 @@ export const useRoom = ({ roomId, type, member, queryOptions }) => {
     },
   });
 
-  const rooms = queryClient.getQueryData(["rooms"]);
-  const roomMeta = rooms ? rooms[roomId] : null;
-  const roomType = roomMeta?.type ?? type;
+  const roomType = room?.type ?? type;
 
   const isPrivate = roomType === "private";
-
-  const [otherUserId] = isPrivate ? room?.members : [member];
-
+  
+  const [otherUserId] = isPrivate ? room?.members ?? [member]:[null];
+  
   const { data: otherUser } = useUserById({
     userId: otherUserId,
-    queryOptions: { enabled: !!otherUserId, staleTime: 10000 },
+    queryOptions: { enabled: !!isPrivate,
+      //  staleTime: 10000
+       },
   });
 
   return {
@@ -291,4 +290,40 @@ export const useTypingNotification = ({ roomId, queryOptions }) => {
       },
     },
   });
+};
+
+export const usePin = ({ ...mutationOptions } = {}) => {
+  const queryClient = useQueryClient();
+
+  return useMutation((data) => pinRoom(data), {
+    ...mutationOptions,
+    onSuccess: (data, variables) => {
+      //console.log('%cred','color:red')
+      //console.log(data)
+      queryClient.setQueryData(["rooms"], (old) => ({
+        ...old,
+        [data.roomId]: { ...old[data.roomId], pinned: data.pinned },
+      }));
+      queryClient.setQueryData(["room", data.roomId], (old) => ({
+        ...old,
+        pinned: data.pinned,
+      }));
+    },
+  });
+};
+
+export const useMediaOfRoom = ([roomId], queryOptions) => {
+  return useQuery([roomId, "media"], async () => await getMedia(roomId), {
+    ...(queryOptions && queryOptions),
+  });
+};
+
+export const useDocumentsOfRoom = ([roomId], queryOptions) => {
+  return useQuery(
+    [roomId, "documents"],
+    async () => await getDocuments(roomId),
+    {
+      ...(queryOptions && queryOptions),
+    }
+  );
 };

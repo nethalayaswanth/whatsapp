@@ -12,7 +12,7 @@ import { DateModalProvider } from "../../contexts/dateModalContext";
 import { useChatRoom } from "../../contexts/roomContext";
 import useInfiniteScroll from "../../hooks/useInfiniteScroll";
 import { useRoomMessages } from "../../queries.js/messages";
-import { useUser } from "../../queries.js/useRequests";
+import { useUser } from "../../queries.js/user";
 import { mergeRefs } from "../../utils";
 import { ErrorBoundary } from "../errorBoundary";
 import Message from "../message";
@@ -96,7 +96,6 @@ const MessageList = forwardRef(({ room }, ref) => {
     queryOptions: { enabled: !!roomId && !newRoom },
   });
 
- 
 
   const containerRef = useRef();
   const { scroller } = useRefs();
@@ -115,7 +114,7 @@ const MessageList = forwardRef(({ room }, ref) => {
  
 
   const loadMore = useCallback(() => {
-    console.log('next page')
+ 
     fetchNextPage(data?.currentCursor);
   }, [data?.currentCursor, fetchNextPage]);
 
@@ -162,8 +161,10 @@ const MessageList = forwardRef(({ room }, ref) => {
               {data.messages &&
                 data.messages.length !== 0 &&
                 data.messages.map((message, i) => {
+                  
                   const { date, dateChanged, types, ...metaData } = message;
                   const { id, time } = metaData;
+
 
                   let showUnread;
                   if (time > lastSeenAt && !unreadShown) {

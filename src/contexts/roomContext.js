@@ -6,9 +6,9 @@ import { useAppState } from "./appStore";
 const RoomContext = React.createContext();
 
 function RoomProvider({ children }) {
-  const { roomId, roomType: type,privateMember: member } = useAppState();
+  const { roomId, roomType, member } = useAppState();
 
-  const room = useRoom({ roomId, type, member });
+  const room = useRoom({ roomId, type: roomType, member });
 
   return <RoomContext.Provider value={room}>{children}</RoomContext.Provider>;
 }
