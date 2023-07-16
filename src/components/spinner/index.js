@@ -30,7 +30,7 @@ export const StrokeSpinner = ({
   );
 };
 
-const Spinner = ({ fill,width,height,style, className }) => {
+const Spinner = ({ fill,style, className }) => {
   return (
     <svg
       aria-hidden="true"

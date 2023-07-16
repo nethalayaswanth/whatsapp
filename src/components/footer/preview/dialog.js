@@ -21,7 +21,7 @@ const PreviewDialog = forwardRef(({ children, ...props }, ref) => {
     isExpanded: open,
     direction: "bottom",
     onCollapseEnd: () => {
-      //console.log("collapsing");
+      
       setFooterState({ type: "reset previewDialog" });
     },
   });

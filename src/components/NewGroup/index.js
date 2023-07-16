@@ -66,7 +66,13 @@ const NewGroup = () => {
               </div>
             </div>
           )}
-          <Suspense fallback={<Spinner />}>
+          <Suspense
+            fallback={
+              <div className="flex-grow bg-white flex justify-center items-center z-[1] relative ">
+                <Spinner className={"fill-panel-header-coloured"} />
+              </div>
+            }
+          >
             <Discover selected={selected} handleClick={handleClick} />
           </Suspense>
         </div>
