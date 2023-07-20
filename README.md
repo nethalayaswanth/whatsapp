@@ -94,7 +94,7 @@ option to create `groups`
             <img width='66.66%'   alt='' src="https://github.com/nethalayaswanth/whatsapp/assets/55290314/f535b2b0-6965-4c53-a2cd-ffd7d50e0488" />
         </p>
 				<p  align="center">
-				<i>Pin chats</i>	
+				<i>Delete for me or for everyone</i>	
 				</p>
 				<p></p>
       </td>
@@ -105,7 +105,7 @@ option to create `groups`
             <img  height='400px'  alt='' src="https://github.com/nethalayaswanth/whatsapp/assets/55290314/6b1ea2ff-5d43-422e-b2f7-be4f40d2888f" />
         </p>
 				<p  align="center">
-				<i>Delete for me or for everyone</i>	
+				<i>Pin chats</i>	
 				</p>
 				<p></p>
       </td>
