@@ -5,6 +5,7 @@ import ReactDOM from "react-dom/client";
 import App from "./App";
 import "./index.css";
 import reportWebVitals from "./reportWebVitals";
+import { Analytics } from "@vercel/analytics/react";
 
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { ErrorBoundary } from "react-error-boundary";
@@ -64,6 +65,7 @@ root.render(
     >
       <App />
     </PersistQueryClientProvider>
+    <Analytics />
   </ErrorBoundary>
 );
 
